@@ -5,16 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** Phase 1 complete — ready for Phase 2 (Batch Processor)
+**Current focus:** v1.0 shipped — planning Phase 2 (Batch Orchestration and CLI)
 
 ## Current Position
 
-Phase: 1 of 3 (Single-File Pipeline) — COMPLETE
-Plan: 2 of 2 in current phase — COMPLETE
-Status: Phase 1 complete
-Last activity: 2026-02-24 — Completed 01-02: run_ocr, build_alto21, count_words, process_tiff, main()
+Phase: v1.0 complete — Phase 2 not started
+Status: Ready for Phase 2 planning (`/gsd:plan-phase 2`)
+Last activity: 2026-02-24 — Completed v1.0 milestone (single-file pipeline archived)
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 33% (1/3 phases)
 
 ## Performance Metrics
 
@@ -67,5 +66,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 01-02-PLAN.md — full pipeline.py with run_ocr, build_alto21, count_words, process_tiff, main()
+Stopped at: Completed v1.0 milestone archive
 Resume file: None
