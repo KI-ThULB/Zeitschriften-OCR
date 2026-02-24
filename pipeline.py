@@ -345,6 +345,76 @@ def write_error_log(output_dir: Path, errors: list[dict]) -> 'Path | None':
     return log_path
 
 
+def run_batch(
+    tiff_files: list,
+    output_dir: Path,
+    workers: int,
+    lang: str,
+    psm: int,
+    padding: int,
+    force: bool,
+) -> tuple:
+    """Run OCR on all tiff_files in parallel using ProcessPoolExecutor.
+
+    Implements:
+      BATC-01: Parallel processing with configurable worker count
+      BATC-02: Skip-if-exists logic (bypassed by force=True)
+      BATC-03: Per-file error isolation — one failure does not abort the batch
+      BATC-04: Error collection returned as list of dicts for write_error_log()
+
+    Returns:
+        (processed_count, skipped_count, error_list)
+        error_list entries: {file, exc_type, exc_message, traceback}
+    """
+    errors = []
+    skipped = 0
+    processed = 0
+
+    # BATC-02: Separate skip check from submission
+    to_process = []
+    for tiff_path in tiff_files:
+        out_path = output_dir / 'alto' / (tiff_path.stem + '.xml')
+        if not force and out_path.exists():
+            skipped += 1
+        else:
+            to_process.append(tiff_path)
+
+    if skipped:
+        print(f"Skipping {skipped} already-processed file(s). Use --force to reprocess.")
+
+    if not to_process:
+        return processed, skipped, errors
+
+    # BATC-01: ProcessPoolExecutor — process-based parallelism bypasses GIL
+    # BATC-03: submit() + as_completed() isolates per-file failures
+    # NOTE: process_tiff() must NOT call sys.exit() (fixed in Plan 01) — it must raise
+    with ProcessPoolExecutor(max_workers=workers) as executor:
+        futures = {
+            executor.submit(process_tiff, tiff_path, output_dir, lang, psm, padding, False): tiff_path
+            for tiff_path in to_process
+        }
+        # tqdm wraps the as_completed iterator; total= is required (as_completed has no __len__)
+        with tqdm(total=len(futures), unit='file', desc='OCR') as pbar:
+            for fut in as_completed(futures):
+                tiff_path = futures[fut]
+                try:
+                    fut.result()
+                    processed += 1
+                except Exception as e:
+                    # BATC-04: Collect per-file error with full traceback
+                    # traceback.format_exc() captures the _RemoteTraceback chain from the worker
+                    errors.append({
+                        'file': str(tiff_path),
+                        'exc_type': type(e).__name__,
+                        'exc_message': str(e),
+                        'traceback': traceback.format_exc(),
+                    })
+                finally:
+                    pbar.update(1)
+
+    return processed, skipped, errors
+
+
 # ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
