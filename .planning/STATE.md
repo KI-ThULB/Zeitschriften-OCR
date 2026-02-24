@@ -5,31 +5,32 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.0 shipped — planning Phase 2 (Batch Orchestration and CLI)
+**Current focus:** Phase 2 in progress — Plan 01 complete (pipeline bug fixes and batch helpers)
 
 ## Current Position
 
-Phase: v1.0 complete — Phase 2 not started
-Status: Ready for Phase 2 planning (`/gsd:plan-phase 2`)
-Last activity: 2026-02-24 — Completed v1.0 milestone (single-file pipeline archived)
+Phase: 02-batch-orchestration-and-cli — Plan 01 complete
+Status: Ready for Plan 02 (batch orchestrator implementation)
+Last activity: 2026-02-24 — Completed 02-01 pipeline bug fixes and batch helpers
 
 Progress: [███░░░░░░░] 33% (1/3 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
+- Total plans completed: 3
 - Average duration: 2 min
-- Total execution time: 4 min
+- Total execution time: 6 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Single-File Pipeline | 2/2 | 4 min | 2 min |
+| 2. Batch Orchestration and CLI | 1/? | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (2 min)
+- Last 5 plans: 01-01 (2 min), 01-02 (2 min), 02-01 (2 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -51,6 +52,9 @@ Recent decisions affecting current work:
 - WIDTH and HEIGHT NOT offset by crop box — only HPOS and VPOS get crop_box[0]/crop_box[1] added
 - xsi:schemaLocation for ALTO 3 stripped from ALTO 2.1 output to avoid contradictory schema references
 - run_ocr passes PIL Image directly to pytesseract (not numpy array) — pytesseract writes temp PNG internally
+- process_tiff() uses raise (not sys.exit) in except block — safe for ProcessPoolExecutor spawn on macOS (02-01)
+- xsi:schemaLocation stripped via root.attrib.pop BEFORE serialization, not string-replace after namespace rewrite (02-01)
+- validate_tesseract() calls sys.exit(1) directly — it is a pre-flight guard, not a worker function (02-01)
 
 ### Pending Todos
 
@@ -66,5 +70,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed v1.0 milestone archive
+Stopped at: Completed 02-01 (pipeline bug fixes and batch helpers)
 Resume file: None

@@ -16,8 +16,8 @@
 
 - [ ] **BATC-01**: Tool processes all TIFFs in the input folder in parallel using ProcessPoolExecutor; worker count defaults to `min(os.cpu_count(), 4)` and is overridable via CLI
 - [ ] **BATC-02**: Tool skips a TIFF if the corresponding ALTO XML already exists in the output directory (idempotent reruns); skipping is bypassed when `--force` is passed
-- [ ] **BATC-03**: A single TIFF that raises an error during processing does not abort the batch; remaining files continue processing
-- [ ] **BATC-04**: Tool writes a run error log recording each failed file's path, exception type, error message, and stack trace
+- [x] **BATC-03**: A single TIFF that raises an error during processing does not abort the batch; remaining files continue processing
+- [x] **BATC-04**: Tool writes a run error log recording each failed file's path, exception type, error message, and stack trace
 
 ### CLI
 
@@ -25,7 +25,7 @@
 - [ ] **CLI-02**: Tool accepts `--workers N` to set parallel worker count; defaults to `min(os.cpu_count(), 4)` with documented memory guidance
 - [ ] **CLI-03**: Tool accepts `--force` flag to reprocess TIFFs that already have ALTO XML output
 - [ ] **CLI-04**: Tool accepts `--lang LANG` (default `deu`), `--padding PX` (default 50), and `--psm N` (default 1) to control OCR language, crop padding, and Tesseract page segmentation mode
-- [ ] **CLI-05**: Tool validates at startup that Tesseract is installed and the requested language pack is available; exits with a clear error message if either is missing
+- [x] **CLI-05**: Tool validates at startup that Tesseract is installed and the requested language pack is available; exits with a clear error message if either is missing
 
 ### Validation & Reporting
 
@@ -75,13 +75,13 @@
 | PIPE-04 | Phase 1 | Complete |
 | BATC-01 | Phase 2 | Pending |
 | BATC-02 | Phase 2 | Pending |
-| BATC-03 | Phase 2 | Pending |
-| BATC-04 | Phase 2 | Pending |
+| BATC-03 | Phase 2 | Complete |
+| BATC-04 | Phase 2 | Complete |
 | CLI-01 | Phase 2 | Pending |
 | CLI-02 | Phase 2 | Pending |
 | CLI-03 | Phase 2 | Pending |
 | CLI-04 | Phase 2 | Pending |
-| CLI-05 | Phase 2 | Pending |
+| CLI-05 | Phase 2 | Complete |
 | VALD-01 | Phase 3 | Pending |
 | VALD-02 | Phase 3 | Pending |
 | VALD-03 | Phase 3 | Pending |
@@ -93,4 +93,4 @@
 
 ---
 *Requirements defined: 2026-02-24*
-*Last updated: 2026-02-24 after 01-02 completion (PIPE-03, PIPE-04 complete)*
+*Last updated: 2026-02-24 after 02-01 completion (BATC-03, BATC-04, CLI-05 complete)*

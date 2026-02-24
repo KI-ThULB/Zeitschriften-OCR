@@ -34,7 +34,7 @@ See archive: `.planning/milestones/v1.0-ROADMAP.md`
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Fix critical bugs (sys.exit in worker, schemaLocation) + add validate_tesseract, discover_tiffs, write_error_log helpers
+- [x] 02-01-PLAN.md — Fix critical bugs (sys.exit in worker, schemaLocation) + add validate_tesseract, discover_tiffs, write_error_log helpers
 - [ ] 02-02-PLAN.md — Add run_batch() orchestrator + rewrite main() for full batch CLI
 
 #### Phase 3: Validation and Reporting
@@ -52,5 +52,5 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Single-File Pipeline | v1.0 | 2/2 | Complete | 2026-02-24 |
-| 2. Batch Orchestration and CLI | v1.1 | 0/2 | Not started | - |
+| 2. Batch Orchestration and CLI | v1.1 | 1/2 | In progress | - |
 | 3. Validation and Reporting | v1.1 | 0/? | Not started | - |
