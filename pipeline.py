@@ -205,7 +205,77 @@ def count_words(alto_root: etree._Element, namespace: str) -> int:
 
 
 # ---------------------------------------------------------------------------
-# CLI entry point (argparse skeleton — main logic in Plan 02)
+# Orchestration
+# ---------------------------------------------------------------------------
+
+def process_tiff(
+    tiff_path: Path,
+    output_dir: Path,
+    lang: str,
+    psm: int,
+    padding: int,
+    no_crop: bool,
+) -> None:
+    """Process a single TIFF file through the full OCR pipeline.
+
+    Loads the TIFF, optionally detects the crop box, runs OCR, converts to
+    ALTO 2.1 XML, writes output, and prints a single result line to stdout.
+
+    Args:
+        tiff_path: Path to the input TIFF file
+        output_dir: Root output directory; ALTO XML is written to output_dir/alto/{stem}.xml
+        lang: Tesseract language code (e.g. 'deu')
+        psm: Tesseract page segmentation mode
+        padding: Padding pixels for crop box detection
+        no_crop: If True, bypass border detection and use full image bounds
+    """
+    warnings_list: list[str] = []
+    t0 = time.monotonic()
+
+    try:
+        # Load TIFF
+        img, dpi, load_warnings = load_tiff(tiff_path)
+        warnings_list.extend(load_warnings)
+
+        # Determine crop box
+        if no_crop:
+            crop_box = (0, 0, img.size[0], img.size[1])
+        else:
+            crop_box, fallback = detect_crop_box(img, padding=padding)
+            if fallback:
+                warnings_list.append('crop fallback, using full image')
+
+        # Crop and OCR
+        cropped = img.crop(crop_box)
+        alto_bytes = run_ocr(cropped, lang=lang, psm=psm, dpi=int(dpi[0]))
+
+        # Build ALTO 2.1 XML with crop offset applied
+        alto_out = build_alto21(alto_bytes, crop_box)
+
+        # Write output
+        out_path = output_dir / 'alto' / (tiff_path.stem + '.xml')
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_bytes(alto_out)
+
+        # Word count
+        root = etree.fromstring(alto_out)
+        word_count = count_words(root, ALTO21_NS)
+
+        # Elapsed time
+        elapsed = time.monotonic() - t0
+
+        # Warnings suffix
+        warn_str = (' [WARN: ' + '; '.join(warnings_list) + ']') if warnings_list else ''
+
+        print(f"{tiff_path.name} \u2192 {out_path} ({elapsed:.1f}s, {word_count} words){warn_str}")
+
+    except Exception as e:
+        print(f"ERROR: {tiff_path.name}: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# CLI entry point
 # ---------------------------------------------------------------------------
 
 def main() -> None:
@@ -219,8 +289,19 @@ def main() -> None:
                         help='Bypass border detection, use full image bounds')
     args = parser.parse_args()
 
-    # Stub: process_tiff() implemented in Plan 02
-    pass
+    tiff_path = args.input
+    if not tiff_path.exists():
+        print(f"ERROR: Input file not found: {tiff_path}", file=sys.stderr)
+        sys.exit(1)
+
+    process_tiff(
+        tiff_path=tiff_path,
+        output_dir=args.output,
+        lang=args.lang,
+        psm=args.psm,
+        padding=args.padding,
+        no_crop=args.no_crop,
+    )
 
 
 if __name__ == '__main__':
