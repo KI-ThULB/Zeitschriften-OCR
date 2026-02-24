@@ -31,7 +31,11 @@ See archive: `.planning/milestones/v1.0-ROADMAP.md`
   3. A TIFF that raises an error during processing does not abort the batch — remaining files continue and complete
   4. A run error log is written recording each failed file's path, exception type, error message, and stack trace
   5. At startup, the tool validates that Tesseract is installed and the requested language pack is available, exiting with a clear error message if either is missing
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Fix critical bugs (sys.exit in worker, schemaLocation) + add validate_tesseract, discover_tiffs, write_error_log helpers
+- [ ] 02-02-PLAN.md — Add run_batch() orchestrator + rewrite main() for full batch CLI
 
 #### Phase 3: Validation and Reporting
 **Goal**: Every ALTO output file is validated against the ALTO 2.1 XSD schema and a per-run JSON summary report is written, giving the operator confidence in the batch before Goobi ingest
@@ -40,7 +44,7 @@ See archive: `.planning/milestones/v1.0-ROADMAP.md`
 **Success Criteria** (what must be TRUE):
   1. Each ALTO output file is validated against the ALTO 2.1 XSD schema; violations are logged per file without aborting the batch
   2. Each ALTO file is checked for word bounding boxes that exceed the page dimensions; violations are logged per file without aborting
-  3. After a batch run, a JSON summary report exists containing for each file: input path, output path, processing duration, word count, and error status
+  3. After a batch run, a JSON summary report exists containing for each file: input path, output path, processing duration (seconds), word count, and error status
 **Plans**: TBD
 
 ## Progress
@@ -48,5 +52,5 @@ See archive: `.planning/milestones/v1.0-ROADMAP.md`
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Single-File Pipeline | v1.0 | 2/2 | Complete | 2026-02-24 |
-| 2. Batch Orchestration and CLI | v1.1 | 0/? | Not started | - |
+| 2. Batch Orchestration and CLI | v1.1 | 0/2 | Not started | - |
 | 3. Validation and Reporting | v1.1 | 0/? | Not started | - |
