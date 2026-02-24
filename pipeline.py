@@ -28,9 +28,6 @@ POSITIONAL_TAGS = {
     'TextLine', 'String', 'SP', 'Illustration', 'GraphicalElement',
 }
 
-# run_ocr, build_alto21, count_words, process_tiff — implemented in 01-02-PLAN
-
-
 # ---------------------------------------------------------------------------
 # Foundation functions
 # ---------------------------------------------------------------------------
@@ -117,6 +114,94 @@ def detect_crop_box(
     lower = min(img_h, y + h + padding)
 
     return (left, upper, right, lower), False
+
+
+# ---------------------------------------------------------------------------
+# OCR and ALTO XML functions
+# ---------------------------------------------------------------------------
+
+def run_ocr(image: Image.Image, lang: str = 'deu', psm: int = 1, dpi: int = 300) -> bytes:
+    """Run Tesseract OCR on a PIL Image and return raw ALTO XML bytes.
+
+    Args:
+        image: PIL Image to process (passed directly — pytesseract handles temp PNG internally)
+        lang: Tesseract language code (default: 'deu')
+        psm: Page segmentation mode (default: 1 — auto with OSD)
+        dpi: DPI to pass to Tesseract via --dpi config flag
+
+    Returns:
+        ALTO XML as bytes (UTF-8)
+    """
+    config = f'--psm {psm} --dpi {dpi}'
+    result = pytesseract.image_to_alto_xml(image, lang=lang, config=config)
+    return result if isinstance(result, bytes) else result.encode('utf-8')
+
+
+def build_alto21(alto_bytes: bytes, crop_box: tuple[int, int, int, int]) -> bytes:
+    """Convert Tesseract ALTO 3.x XML to ALTO 2.1 (CCS-GmbH namespace) with crop offset applied.
+
+    CRITICAL: crop offset is applied BEFORE namespace rewrite. The offset uses ALTO3_NS
+    to find elements; after the string replace the namespace changes to ALTO21_NS and
+    the tag lookup would fail.
+
+    Args:
+        alto_bytes: Raw ALTO XML bytes from Tesseract (uses ALTO 3.x namespace)
+        crop_box: (left, upper, right, lower) crop box — HPOS offset by crop_box[0],
+                  VPOS offset by crop_box[1]. WIDTH and HEIGHT are NOT modified.
+
+    Returns:
+        ALTO 2.1 XML bytes with UTF-8 XML declaration and pretty-printed
+    """
+    crop_x, crop_y = crop_box[0], crop_box[1]
+
+    # Step 1: Parse the raw Tesseract output
+    root = etree.fromstring(alto_bytes)
+
+    # Step 2: Apply crop offset BEFORE namespace rewrite (uses ALTO3_NS for element lookup)
+    if crop_x != 0 or crop_y != 0:
+        ns_prefix = '{' + ALTO3_NS + '}'
+        for elem in root.iter():
+            local = elem.tag[len(ns_prefix):] if elem.tag.startswith(ns_prefix) else elem.tag
+            if local in POSITIONAL_TAGS:
+                if 'HPOS' in elem.attrib:
+                    elem.attrib['HPOS'] = str(int(elem.attrib['HPOS']) + crop_x)
+                if 'VPOS' in elem.attrib:
+                    elem.attrib['VPOS'] = str(int(elem.attrib['VPOS']) + crop_y)
+                # WIDTH and HEIGHT are intentionally NOT modified — only HPOS and VPOS get the offset
+
+    # Step 3: Serialize to string for namespace rewrite
+    xml_str = etree.tostring(root, encoding='unicode')
+
+    # Step 4: Rewrite namespace from ALTO 3.x to ALTO 2.1 (CCS-GmbH)
+    xml_str = xml_str.replace(ALTO3_NS, ALTO21_NS)
+
+    # Step 5: Remove the ALTO 3 xsi:schemaLocation to avoid contradictory schema reference
+    xml_str = xml_str.replace(
+        'xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v3# '
+        'http://www.loc.gov/alto/v3/alto-3-0.xsd"',
+        ''
+    )
+
+    # Step 6: Re-parse and serialize with XML declaration
+    new_root = etree.fromstring(xml_str.encode())
+    return etree.tostring(new_root, xml_declaration=True, encoding='UTF-8', pretty_print=True)
+
+
+def count_words(alto_root: etree._Element, namespace: str) -> int:
+    """Count all String elements in an ALTO XML tree.
+
+    Args:
+        alto_root: Root element of the parsed ALTO XML
+        namespace: XML namespace string (e.g. 'http://schema.ccs-gmbh.com/ALTO')
+
+    Returns:
+        Total number of String elements (each represents one OCR word)
+    """
+    count = 0
+    for elem in alto_root.iter():
+        if elem.tag == f'{{{namespace}}}String' or elem.tag == 'String':
+            count += 1
+    return count
 
 
 # ---------------------------------------------------------------------------
