@@ -1,0 +1,98 @@
+# Requirements: Zeitschriften-OCR
+
+**Defined:** 2026-02-24
+**Core Value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
+
+## v1 Requirements
+
+### Pipeline
+
+- [ ] **PIPE-01**: Tool loads each TIFF using Pillow lazy loading and extracts DPI from TIFF metadata; if DPI is absent, defaults to 300 DPI and logs a warning
+- [ ] **PIPE-02**: Tool detects scan border via OpenCV contour analysis and crops to the content area; configurable padding (default 50px); falls back to original bounds if detected area is < 40% or > 98% of original, and logs the fallback
+- [ ] **PIPE-03**: Tool runs Tesseract 5.x (LSTM engine) on the cropped image with configurable language (default `deu`) and configurable page segmentation mode (`--psm`)
+- [ ] **PIPE-04**: Tool produces a schema-valid ALTO 2.1 XML file per TIFF, with namespace corrected from Tesseract's ALTO 3.x output to `xmlns="http://schema.ccs-gmbh.com/ALTO"` and all word coordinates offset by the crop box (HPOS += crop_x, VPOS += crop_y) so they align with the original (uncropped) TIFF
+
+### Batch
+
+- [ ] **BATC-01**: Tool processes all TIFFs in the input folder in parallel using ProcessPoolExecutor; worker count defaults to `min(os.cpu_count(), 4)` and is overridable via CLI
+- [ ] **BATC-02**: Tool skips a TIFF if the corresponding ALTO XML already exists in the output directory (idempotent reruns); skipping is bypassed when `--force` is passed
+- [ ] **BATC-03**: A single TIFF that raises an error during processing does not abort the batch; remaining files continue processing
+- [ ] **BATC-04**: Tool writes a run error log recording each failed file's path, exception type, error message, and stack trace
+
+### CLI
+
+- [ ] **CLI-01**: Tool accepts `--input DIR` (folder containing TIFFs) and `--output DIR` (folder for ALTO output); creates output directory if it does not exist
+- [ ] **CLI-02**: Tool accepts `--workers N` to set parallel worker count; defaults to `min(os.cpu_count(), 4)` with documented memory guidance
+- [ ] **CLI-03**: Tool accepts `--force` flag to reprocess TIFFs that already have ALTO XML output
+- [ ] **CLI-04**: Tool accepts `--lang LANG` (default `deu`), `--padding PX` (default 50), and `--psm N` (default 1) to control OCR language, crop padding, and Tesseract page segmentation mode
+- [ ] **CLI-05**: Tool validates at startup that Tesseract is installed and the requested language pack is available; exits with a clear error message if either is missing
+
+### Validation & Reporting
+
+- [ ] **VALD-01**: Tool validates each ALTO XML output against the ALTO 2.1 XSD schema using lxml; logs schema violations per file without aborting the batch
+- [ ] **VALD-02**: Tool checks that all word bounding boxes in each ALTO file fall within the page dimensions; logs coordinate violations per file without aborting
+- [ ] **VALD-03**: Tool writes a per-run summary report as JSON containing for each file: input path, output path, processing duration (seconds), word count, and error status
+
+## v2 Requirements
+
+### Image Preprocessing
+
+- **PREP-01**: Deskew detection — detect and correct slight scan rotation before OCR (OpenCV Hough transform or scikit-image `determine_skew`)
+- **PREP-02**: Adaptive thresholding — improve binarization for uneven scan illumination before OCR
+
+### Operational
+
+- **OPER-01**: Dry run mode (`--dry-run`) — show what would be processed without executing
+- **OPER-02**: Verbose logging (`--verbose`) — per-file Tesseract output and timing details
+
+### Output Formats
+
+- **OUTP-01**: ALTO 3.x / 4.x output option (`--alto-version`) for systems requiring newer schemas
+
+### Integration
+
+- **INTG-01**: Goobi/Kitodo plugin packaging — wrap CLI as a Goobi script step plugin
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| GUI or web interface | CLI batch tool only; GUI adds complexity with no batch benefit |
+| PDF input | Input is TIFF only per project spec |
+| Database tracking of processed files | Disk-based skip logic (file existence) is sufficient and simpler |
+| Multi-language OCR in a single run | Single language per run; `--lang` flag covers edge cases |
+| Image quality scoring | Out of scope; quality judged by downstream Goobi operator review |
+| Cloud or distributed processing | Local CLI tool; hundreds of files is manageable on a single machine |
+| Saving cropped TIFFs as deliverables | Crop is intermediate only; originals stay untouched per project requirement |
+
+## Traceability
+
+Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| PIPE-01 | — | Pending |
+| PIPE-02 | — | Pending |
+| PIPE-03 | — | Pending |
+| PIPE-04 | — | Pending |
+| BATC-01 | — | Pending |
+| BATC-02 | — | Pending |
+| BATC-03 | — | Pending |
+| BATC-04 | — | Pending |
+| CLI-01 | — | Pending |
+| CLI-02 | — | Pending |
+| CLI-03 | — | Pending |
+| CLI-04 | — | Pending |
+| CLI-05 | — | Pending |
+| VALD-01 | — | Pending |
+| VALD-02 | — | Pending |
+| VALD-03 | — | Pending |
+
+**Coverage:**
+- v1 requirements: 16 total
+- Mapped to phases: 0
+- Unmapped: 16 ⚠️
+
+---
+*Requirements defined: 2026-02-24*
+*Last updated: 2026-02-24 after initial definition*
