@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 1 of 3 (Single-File Pipeline)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-02-24 — Roadmap created (3 phases)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-24 — Completed 01-01: pipeline.py skeleton + requirements.txt
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 10%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: —
+- Total plans completed: 1
+- Average duration: 2 min
+- Total execution time: 2 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 1. Single-File Pipeline | 1/2 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: —
+- Last 5 plans: 01-01 (2 min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -44,6 +44,10 @@ Recent decisions affecting current work:
 
 - Stack confirmed: Pillow, opencv-python-headless, pytesseract, lxml, ProcessPoolExecutor, tqdm, argparse
 - Build order is a correctness constraint: single-file pipeline must be correct before parallelism is introduced
+- THRESH_BINARY (not THRESH_BINARY_INV): archival scans have dark border, light page — light page becomes white largest-contour
+- ALTO21_NS = http://schema.ccs-gmbh.com/ALTO (CCS-GmbH namespace, not Tesseract ALTO 3.x default)
+- opencv-python-headless chosen over opencv-python for server/batch use without display dependency
+- load_tiff keeps image lazy (no .load() call) to handle large TIFF files efficiently
 
 ### Pending Todos
 
@@ -59,5 +63,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Roadmap written; ready to plan Phase 1
+Stopped at: Completed 01-01-PLAN.md — pipeline.py skeleton and requirements.txt
 Resume file: None

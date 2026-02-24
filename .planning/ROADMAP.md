@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — requirements.txt + pipeline.py skeleton: load_tiff() and detect_crop_box()
+- [x] 01-01-PLAN.md — requirements.txt + pipeline.py skeleton: load_tiff() and detect_crop_box()
 - [ ] 01-02-PLAN.md — Complete pipeline.py: run_ocr(), build_alto21(), process_tiff(), main() wiring
 
 ### Phase 2: Batch Orchestration and CLI
@@ -63,6 +63,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Single-File Pipeline | 0/2 | Planned | - |
+| 1. Single-File Pipeline | 1/2 | In Progress|  |
 | 2. Batch Orchestration and CLI | 0/? | Not started | - |
 | 3. Validation and Reporting | 0/? | Not started | - |
