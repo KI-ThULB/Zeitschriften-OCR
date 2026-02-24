@@ -140,9 +140,17 @@ def run_ocr(image: Image.Image, lang: str = 'deu', psm: int = 1, dpi: int = 300)
 def build_alto21(alto_bytes: bytes, crop_box: tuple[int, int, int, int]) -> bytes:
     """Convert Tesseract ALTO 3.x XML to ALTO 2.1 (CCS-GmbH namespace) with crop offset applied.
 
-    CRITICAL: crop offset is applied BEFORE namespace rewrite. The offset uses ALTO3_NS
-    to find elements; after the string replace the namespace changes to ALTO21_NS and
-    the tag lookup would fail.
+    CRITICAL step order:
+      Step 1: Parse raw Tesseract output.
+      Step 2: Remove xsi:schemaLocation BEFORE serialization (while element is still parsed).
+      Step 3: Apply crop offset BEFORE namespace rewrite (uses ALTO3_NS for element lookup).
+      Step 4: Serialize to string for namespace rewrite.
+      Step 5: Rewrite namespace from ALTO 3.x to ALTO 2.1 (CCS-GmbH).
+      Step 6: Re-parse and serialize with XML declaration.
+
+    The crop offset (Step 3) must run before the namespace string-replace (Step 5) because the
+    offset uses ALTO3_NS tag names; after the string replace the namespace changes to ALTO21_NS
+    and the tag lookup would fail.
 
     Args:
         alto_bytes: Raw ALTO XML bytes from Tesseract (uses ALTO 3.x namespace)
@@ -157,7 +165,11 @@ def build_alto21(alto_bytes: bytes, crop_box: tuple[int, int, int, int]) -> byte
     # Step 1: Parse the raw Tesseract output
     root = etree.fromstring(alto_bytes)
 
-    # Step 2: Apply crop offset BEFORE namespace rewrite (uses ALTO3_NS for element lookup)
+    # Step 2: Remove xsi:schemaLocation BEFORE serialization to avoid contradictory ALTO 3 XSD reference.
+    # Must run before the namespace rewrite (Step 5), while the element is still parsed.
+    root.attrib.pop('{http://www.w3.org/2001/XMLSchema-instance}schemaLocation', None)
+
+    # Step 3: Apply crop offset BEFORE namespace rewrite (uses ALTO3_NS for element lookup)
     if crop_x != 0 or crop_y != 0:
         ns_prefix = '{' + ALTO3_NS + '}'
         for elem in root.iter():
@@ -169,18 +181,11 @@ def build_alto21(alto_bytes: bytes, crop_box: tuple[int, int, int, int]) -> byte
                     elem.attrib['VPOS'] = str(int(elem.attrib['VPOS']) + crop_y)
                 # WIDTH and HEIGHT are intentionally NOT modified — only HPOS and VPOS get the offset
 
-    # Step 3: Serialize to string for namespace rewrite
+    # Step 4: Serialize to string for namespace rewrite
     xml_str = etree.tostring(root, encoding='unicode')
 
-    # Step 4: Rewrite namespace from ALTO 3.x to ALTO 2.1 (CCS-GmbH)
+    # Step 5: Rewrite namespace from ALTO 3.x to ALTO 2.1 (CCS-GmbH)
     xml_str = xml_str.replace(ALTO3_NS, ALTO21_NS)
-
-    # Step 5: Remove the ALTO 3 xsi:schemaLocation to avoid contradictory schema reference
-    xml_str = xml_str.replace(
-        'xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v3# '
-        'http://www.loc.gov/alto/v3/alto-3-0.xsd"',
-        ''
-    )
 
     # Step 6: Re-parse and serialize with XML declaration
     new_root = etree.fromstring(xml_str.encode())
@@ -271,7 +276,7 @@ def process_tiff(
 
     except Exception as e:
         print(f"ERROR: {tiff_path.name}: {e}", file=sys.stderr)
-        sys.exit(1)
+        raise
 
 
 # ---------------------------------------------------------------------------
