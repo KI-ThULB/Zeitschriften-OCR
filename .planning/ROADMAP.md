@@ -12,7 +12,7 @@ Three phases, each building on the correctness of the last. Phase 1 gets the sin
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Single-File Pipeline** - Process one TIFF to a schema-valid ALTO 2.1 file with correct coordinates
+- [x] **Phase 1: Single-File Pipeline** - Process one TIFF to a schema-valid ALTO 2.1 file with correct coordinates
 - [ ] **Phase 2: Batch Orchestration and CLI** - Process a full folder in parallel with skip logic, error isolation, and full CLI
 - [ ] **Phase 3: Validation and Reporting** - Validate all output and produce per-run summary reports
 
@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md — requirements.txt + pipeline.py skeleton: load_tiff() and detect_crop_box()
-- [ ] 01-02-PLAN.md — Complete pipeline.py: run_ocr(), build_alto21(), process_tiff(), main() wiring
+- [x] 01-02-PLAN.md — Complete pipeline.py: run_ocr(), build_alto21(), process_tiff(), main() wiring
 
 ### Phase 2: Batch Orchestration and CLI
 **Goal**: The tool processes a full folder of TIFFs in parallel, skips already-processed files on rerun, isolates per-file errors, and exposes a complete CLI surface
@@ -63,6 +63,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Single-File Pipeline | 1/2 | In Progress|  |
+| 1. Single-File Pipeline | 2/2 | Complete | 2026-02-24 |
 | 2. Batch Orchestration and CLI | 0/? | Not started | - |
 | 3. Validation and Reporting | 0/? | Not started | - |

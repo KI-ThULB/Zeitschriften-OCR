@@ -9,8 +9,8 @@
 
 - [x] **PIPE-01**: Tool loads each TIFF using Pillow lazy loading and extracts DPI from TIFF metadata; if DPI is absent, defaults to 300 DPI and logs a warning
 - [x] **PIPE-02**: Tool detects scan border via OpenCV contour analysis and crops to the content area; configurable padding (default 50px); falls back to original bounds if detected area is < 40% or > 98% of original, and logs the fallback
-- [ ] **PIPE-03**: Tool runs Tesseract 5.x (LSTM engine) on the cropped image with configurable language (default `deu`) and configurable page segmentation mode (`--psm`)
-- [ ] **PIPE-04**: Tool produces a schema-valid ALTO 2.1 XML file per TIFF, with namespace corrected from Tesseract's ALTO 3.x output to `xmlns="http://schema.ccs-gmbh.com/ALTO"` and all word coordinates offset by the crop box (HPOS += crop_x, VPOS += crop_y) so they align with the original (uncropped) TIFF
+- [x] **PIPE-03**: Tool runs Tesseract 5.x (LSTM engine) on the cropped image with configurable language (default `deu`) and configurable page segmentation mode (`--psm`)
+- [x] **PIPE-04**: Tool produces a schema-valid ALTO 2.1 XML file per TIFF, with namespace corrected from Tesseract's ALTO 3.x output to `xmlns="http://schema.ccs-gmbh.com/ALTO"` and all word coordinates offset by the crop box (HPOS += crop_x, VPOS += crop_y) so they align with the original (uncropped) TIFF
 
 ### Batch
 
@@ -71,8 +71,8 @@
 |-------------|-------|--------|
 | PIPE-01 | Phase 1 | Complete |
 | PIPE-02 | Phase 1 | Complete |
-| PIPE-03 | Phase 1 | Pending |
-| PIPE-04 | Phase 1 | Pending |
+| PIPE-03 | Phase 1 | Complete |
+| PIPE-04 | Phase 1 | Complete |
 | BATC-01 | Phase 2 | Pending |
 | BATC-02 | Phase 2 | Pending |
 | BATC-03 | Phase 2 | Pending |
@@ -93,4 +93,4 @@
 
 ---
 *Requirements defined: 2026-02-24*
-*Last updated: 2026-02-24 after roadmap creation*
+*Last updated: 2026-02-24 after 01-02 completion (PIPE-03, PIPE-04 complete)*
