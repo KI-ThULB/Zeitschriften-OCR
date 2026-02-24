@@ -5,9 +5,16 @@ Usage:
     python pipeline.py --input <tiff_path> --output <output_dir>
 """
 import argparse
+import json
+import os
 import sys
 import time
+import traceback
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from datetime import datetime
 from pathlib import Path
+
+from tqdm import tqdm
 
 import cv2
 import numpy as np
@@ -277,6 +284,65 @@ def process_tiff(
     except Exception as e:
         print(f"ERROR: {tiff_path.name}: {e}", file=sys.stderr)
         raise
+
+
+# ---------------------------------------------------------------------------
+# Batch helpers
+# ---------------------------------------------------------------------------
+
+def validate_tesseract(lang: str) -> None:
+    """Validate Tesseract is installed and the requested language pack is available.
+
+    Call this BEFORE creating ProcessPoolExecutor — validation failure exits cleanly
+    with no dangling worker processes.
+
+    Raises SystemExit(1) with a clear error message if either check fails.
+    """
+    try:
+        available = pytesseract.get_languages()
+    except pytesseract.TesseractNotFoundError:
+        print(
+            "ERROR: Tesseract OCR is not installed or not on PATH.\n"
+            "  macOS:  brew install tesseract\n"
+            "  Ubuntu: apt install tesseract-ocr",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    if lang not in available:
+        print(
+            f"ERROR: Tesseract language pack '{lang}' is not installed.\n"
+            f"  Available packs: {', '.join(sorted(available))}\n"
+            f"  macOS:  brew install tesseract-lang\n"
+            f"  Ubuntu: apt install tesseract-ocr-{lang}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
+def discover_tiffs(input_dir: Path) -> list[Path]:
+    """Find all .tif/.tiff files in input_dir (case-insensitive suffix), sorted for deterministic ordering."""
+    return sorted(
+        f for f in input_dir.iterdir()
+        if f.is_file() and f.suffix.lower() in ('.tif', '.tiff')
+    )
+
+
+def write_error_log(output_dir: Path, errors: list[dict]) -> 'Path | None':
+    """Write per-file error entries to a JSONL file in output_dir.
+
+    Each entry has keys: file, exc_type, exc_message, traceback.
+    File is named errors_{timestamp}.jsonl (1-second granularity is sufficient).
+    Returns the log path, or None if errors is empty.
+    """
+    if not errors:
+        return None
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    log_path = output_dir / f'errors_{timestamp}.jsonl'
+    with log_path.open('w', encoding='utf-8') as f:
+        for entry in errors:
+            f.write(json.dumps(entry, ensure_ascii=False) + '\n')
+    return log_path
 
 
 # ---------------------------------------------------------------------------
