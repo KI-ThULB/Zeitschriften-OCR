@@ -420,29 +420,61 @@ def run_batch(
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Process a single TIFF to ALTO 2.1 XML')
-    parser.add_argument('--input', required=True, type=Path, help='Path to input TIFF file')
-    parser.add_argument('--output', required=True, type=Path, help='Output directory')
-    parser.add_argument('--lang', default='deu', help='Tesseract language (default: deu)')
-    parser.add_argument('--psm', type=int, default=1, help='Tesseract page segmentation mode (default: 1)')
-    parser.add_argument('--padding', type=int, default=50, help='Crop padding in pixels (default: 50)')
-    parser.add_argument('--no-crop', action='store_true', dest='no_crop',
-                        help='Bypass border detection, use full image bounds')
+    parser = argparse.ArgumentParser(
+        description='Batch OCR: TIFF folder → ALTO 2.1 XML'
+    )
+    parser.add_argument('--input', required=True, type=Path,
+                        help='Input folder containing TIFF files')
+    parser.add_argument('--output', required=True, type=Path,
+                        help='Output folder for ALTO XML files')
+    parser.add_argument('--workers', type=int, default=None,
+                        help='Parallel workers (default: min(cpu_count, 4); ~150-250 MB RAM per worker)')
+    parser.add_argument('--force', action='store_true',
+                        help='Reprocess TIFFs that already have ALTO XML output')
+    parser.add_argument('--lang', default='deu',
+                        help='Tesseract language code (default: deu)')
+    parser.add_argument('--padding', type=int, default=50,
+                        help='Crop border padding in pixels (default: 50)')
+    parser.add_argument('--psm', type=int, default=1,
+                        help='Tesseract page segmentation mode (default: 1 = auto with OSD)')
     args = parser.parse_args()
 
-    tiff_path = args.input
-    if not tiff_path.exists():
-        print(f"ERROR: Input file not found: {tiff_path}", file=sys.stderr)
+    # Resolve default workers at runtime (NOT at parse-time — avoids hardcoding on import)
+    n_workers = args.workers if args.workers is not None else min(os.cpu_count() or 1, 4)
+
+    # CLI-05: Startup validation — run BEFORE pool creation
+    validate_tesseract(args.lang)
+
+    # CLI-01: Validate --input is a directory
+    if not args.input.is_dir():
+        print(f"ERROR: --input must be an existing directory: {args.input}", file=sys.stderr)
         sys.exit(1)
 
-    process_tiff(
-        tiff_path=tiff_path,
-        output_dir=args.output,
-        lang=args.lang,
-        psm=args.psm,
-        padding=args.padding,
-        no_crop=args.no_crop,
+    # CLI-01: Create output directory if it does not exist
+    args.output.mkdir(parents=True, exist_ok=True)
+
+    # Discover TIFFs
+    tiff_files = discover_tiffs(args.input)
+    if not tiff_files:
+        print(f"No TIFF files found in {args.input}", file=sys.stderr)
+        sys.exit(0)
+
+    print(f"Found {len(tiff_files)} TIFF(s) in {args.input}")
+
+    # Run batch
+    processed, skipped, errors = run_batch(
+        tiff_files, args.output, n_workers, args.lang, args.psm, args.padding, args.force
     )
+
+    # BATC-04: Write error log if any failures
+    log_path = write_error_log(args.output, errors)
+
+    # Summary line
+    print(f"Done: {processed} processed, {skipped} skipped, {len(errors)} failed")
+    if log_path:
+        print(f"Error log: {log_path}")
+
+    sys.exit(1 if errors else 0)
 
 
 if __name__ == '__main__':
