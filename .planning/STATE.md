@@ -5,32 +5,32 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** Phase 2 in progress — Plan 01 complete (pipeline bug fixes and batch helpers)
+**Current focus:** Phase 2 complete — both plans done (pipeline bug fixes, batch orchestrator)
 
 ## Current Position
 
-Phase: 02-batch-orchestration-and-cli — Plan 01 complete
-Status: Ready for Plan 02 (batch orchestrator implementation)
-Last activity: 2026-02-24 — Completed 02-01 pipeline bug fixes and batch helpers
+Phase: 02-batch-orchestration-and-cli — Plan 02 complete (all Phase 2 plans done)
+Status: Phase 2 complete — ready for Phase 3 (XSD validation and reporting)
+Last activity: 2026-02-24 — Completed 02-02 batch orchestrator and batch CLI
 
-Progress: [███░░░░░░░] 33% (1/3 phases)
+Progress: [██████░░░░] 66% (2/3 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 2 min
-- Total execution time: 6 min
+- Total execution time: 8 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Single-File Pipeline | 2/2 | 4 min | 2 min |
-| 2. Batch Orchestration and CLI | 1/? | 2 min | 2 min |
+| 2. Batch Orchestration and CLI | 2/2 | 4 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (2 min), 02-01 (2 min)
+- Last 5 plans: 01-01 (2 min), 01-02 (2 min), 02-01 (2 min), 02-02 (2 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -55,6 +55,10 @@ Recent decisions affecting current work:
 - process_tiff() uses raise (not sys.exit) in except block — safe for ProcessPoolExecutor spawn on macOS (02-01)
 - xsi:schemaLocation stripped via root.attrib.pop BEFORE serialization, not string-replace after namespace rewrite (02-01)
 - validate_tesseract() calls sys.exit(1) directly — it is a pre-flight guard, not a worker function (02-01)
+- executor.submit() + as_completed() chosen over executor.map() — map() aborts on first exception (02-02)
+- --workers default=None resolved at runtime as min(os.cpu_count() or 1, 4) — not evaluated at import time (02-02)
+- Skip-if-exists check before ProcessPoolExecutor creation — avoids spawning workers when all files already processed (02-02)
+- no_crop=False passed in run_batch submit() — batch mode always attempts crop detection, same as single-file default (02-02)
 
 ### Pending Todos
 
@@ -70,5 +74,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 02-01 (pipeline bug fixes and batch helpers)
+Stopped at: Completed 02-02 (batch orchestrator and batch CLI — Phase 2 complete)
 Resume file: None

@@ -18,7 +18,7 @@ See archive: `.planning/milestones/v1.0-ROADMAP.md`
 
 ### 📋 v1.1 Batch Processor (Planned)
 
-- [ ] **Phase 2: Batch Orchestration and CLI** - Process a full folder in parallel with skip logic, error isolation, and full CLI
+- [x] **Phase 2: Batch Orchestration and CLI** - Process a full folder in parallel with skip logic, error isolation, and full CLI (completed 2026-02-24)
 - [ ] **Phase 3: Validation and Reporting** - Validate all output and produce per-run summary reports
 
 #### Phase 2: Batch Orchestration and CLI
@@ -52,5 +52,5 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Single-File Pipeline | v1.0 | 2/2 | Complete | 2026-02-24 |
-| 2. Batch Orchestration and CLI | v1.1 | 1/2 | In progress | - |
+| 2. Batch Orchestration and CLI | 2/2 | Complete   | 2026-02-24 | - |
 | 3. Validation and Reporting | v1.1 | 0/? | Not started | - |
