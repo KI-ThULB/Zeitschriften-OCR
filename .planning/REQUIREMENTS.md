@@ -14,17 +14,17 @@
 
 ### Batch
 
-- [ ] **BATC-01**: Tool processes all TIFFs in the input folder in parallel using ProcessPoolExecutor; worker count defaults to `min(os.cpu_count(), 4)` and is overridable via CLI
-- [ ] **BATC-02**: Tool skips a TIFF if the corresponding ALTO XML already exists in the output directory (idempotent reruns); skipping is bypassed when `--force` is passed
+- [x] **BATC-01**: Tool processes all TIFFs in the input folder in parallel using ProcessPoolExecutor; worker count defaults to `min(os.cpu_count(), 4)` and is overridable via CLI
+- [x] **BATC-02**: Tool skips a TIFF if the corresponding ALTO XML already exists in the output directory (idempotent reruns); skipping is bypassed when `--force` is passed
 - [x] **BATC-03**: A single TIFF that raises an error during processing does not abort the batch; remaining files continue processing
 - [x] **BATC-04**: Tool writes a run error log recording each failed file's path, exception type, error message, and stack trace
 
 ### CLI
 
-- [ ] **CLI-01**: Tool accepts `--input DIR` (folder containing TIFFs) and `--output DIR` (folder for ALTO output); creates output directory if it does not exist
-- [ ] **CLI-02**: Tool accepts `--workers N` to set parallel worker count; defaults to `min(os.cpu_count(), 4)` with documented memory guidance
-- [ ] **CLI-03**: Tool accepts `--force` flag to reprocess TIFFs that already have ALTO XML output
-- [ ] **CLI-04**: Tool accepts `--lang LANG` (default `deu`), `--padding PX` (default 50), and `--psm N` (default 1) to control OCR language, crop padding, and Tesseract page segmentation mode
+- [x] **CLI-01**: Tool accepts `--input DIR` (folder containing TIFFs) and `--output DIR` (folder for ALTO output); creates output directory if it does not exist
+- [x] **CLI-02**: Tool accepts `--workers N` to set parallel worker count; defaults to `min(os.cpu_count(), 4)` with documented memory guidance
+- [x] **CLI-03**: Tool accepts `--force` flag to reprocess TIFFs that already have ALTO XML output
+- [x] **CLI-04**: Tool accepts `--lang LANG` (default `deu`), `--padding PX` (default 50), and `--psm N` (default 1) to control OCR language, crop padding, and Tesseract page segmentation mode
 - [x] **CLI-05**: Tool validates at startup that Tesseract is installed and the requested language pack is available; exits with a clear error message if either is missing
 
 ### Validation & Reporting
@@ -73,14 +73,14 @@
 | PIPE-02 | Phase 1 | Complete |
 | PIPE-03 | Phase 1 | Complete |
 | PIPE-04 | Phase 1 | Complete |
-| BATC-01 | Phase 2 | Pending |
-| BATC-02 | Phase 2 | Pending |
+| BATC-01 | Phase 2 | Complete |
+| BATC-02 | Phase 2 | Complete |
 | BATC-03 | Phase 2 | Complete |
 | BATC-04 | Phase 2 | Complete |
-| CLI-01 | Phase 2 | Pending |
-| CLI-02 | Phase 2 | Pending |
-| CLI-03 | Phase 2 | Pending |
-| CLI-04 | Phase 2 | Pending |
+| CLI-01 | Phase 2 | Complete |
+| CLI-02 | Phase 2 | Complete |
+| CLI-03 | Phase 2 | Complete |
+| CLI-04 | Phase 2 | Complete |
 | CLI-05 | Phase 2 | Complete |
 | VALD-01 | Phase 3 | Pending |
 | VALD-02 | Phase 3 | Pending |
