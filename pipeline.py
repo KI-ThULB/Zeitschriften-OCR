@@ -296,12 +296,27 @@ def process_tiff(
         no_crop: If True, bypass border detection and use full image bounds
     """
     warnings_list: list[str] = []
+    deskew_str = ''
     t0 = time.monotonic()
 
     try:
         # Load TIFF
         img, dpi, load_warnings = load_tiff(tiff_path)
         warnings_list.extend(load_warnings)
+
+        # Deskew step (PREP-01: applied to every TIFF automatically)
+        img, deskew_angle, deskew_fallback = deskew_image(img)
+        if deskew_fallback:
+            if deskew_angle is None:
+                warnings_list.append('deskew: detection failed, using original orientation')
+            else:
+                warnings_list.append(
+                    f'deskew: implausible angle {deskew_angle:.1f}\u00b0, using original orientation'
+                )
+            deskew_str = ''
+        else:
+            # PREP-02: angle annotation appears in result line for every successful correction
+            deskew_str = f'[deskew: {deskew_angle:.1f}\u00b0]'
 
         # Determine crop box
         if no_crop:
@@ -333,7 +348,8 @@ def process_tiff(
         # Warnings suffix
         warn_str = (' [WARN: ' + '; '.join(warnings_list) + ']') if warnings_list else ''
 
-        print(f"{tiff_path.name} \u2192 {out_path} ({elapsed:.1f}s, {word_count} words){warn_str}")
+        deskew_suffix = (' ' + deskew_str) if deskew_str else ''
+        print(f"{tiff_path.name} \u2192 {out_path} ({elapsed:.1f}s, {word_count} words){deskew_suffix}{warn_str}")
 
     except Exception as e:
         print(f"ERROR: {tiff_path.name}: {e}", file=sys.stderr)
