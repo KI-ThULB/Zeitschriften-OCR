@@ -45,7 +45,10 @@ See archive: `.planning/milestones/v1.1-ROADMAP.md`
   2. Each per-file result line reports the detected angle (e.g. `[deskew: 1.4°]`) so the operator can see what was corrected
   3. When deskew fails or produces an implausible angle, the file is processed using its original orientation and a warning appears in the output — the batch does not abort
   4. A zero-degree (no rotation needed) scan passes through without any quality degradation or extra processing artifacts
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 04-01-PLAN.md — Add deskew_image() function and wire into process_tiff() with angle reporting
 
 ### Phase 5: Adaptive Thresholding
 **Goal**: Scans with uneven illumination can be binarized using adaptive Gaussian thresholding when the operator opts in, without affecting the default pipeline behavior
@@ -64,5 +67,5 @@ See archive: `.planning/milestones/v1.1-ROADMAP.md`
 | 1. Single-File Pipeline | v1.0 | 2/2 | Complete | 2026-02-24 |
 | 2. Batch Orchestration and CLI | v1.1 | 2/2 | Complete | 2026-02-24 |
 | 3. Validation and Reporting | v1.1 | 2/2 | Complete | 2026-02-25 |
-| 4. Deskew | v1.2 | 0/? | Not started | - |
+| 4. Deskew | v1.2 | 0/1 | Not started | - |
 | 5. Adaptive Thresholding | v1.2 | 0/? | Not started | - |
