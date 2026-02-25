@@ -647,10 +647,16 @@ def main() -> None:
                         help='Crop border padding in pixels (default: 50)')
     parser.add_argument('--psm', type=int, default=1,
                         help='Tesseract page segmentation mode (default: 1 = auto with OSD)')
+    parser.add_argument('--validate-only', action='store_true',
+                        help='Skip OCR, validate existing ALTO output files and produce a report')
     args = parser.parse_args()
 
     # Resolve default workers at runtime (NOT at parse-time — avoids hardcoding on import)
     n_workers = args.workers if args.workers is not None else min(os.cpu_count() or 1, 4)
+
+    # Load XSD once at startup — load_xsd() warns and returns None if missing
+    SCHEMA_PATH = Path(__file__).parent / 'schemas' / 'alto-2-1.xsd'
+    xsd = load_xsd(SCHEMA_PATH)
 
     # CLI-05: Startup validation — run BEFORE pool creation
     validate_tesseract(args.lang)
@@ -663,6 +669,38 @@ def main() -> None:
     # CLI-01: Create output directory if it does not exist
     args.output.mkdir(parents=True, exist_ok=True)
 
+    # --validate-only: skip OCR, validate existing ALTO files, write report, exit
+    if args.validate_only:
+        alto_dir = args.output / 'alto'
+        alto_files = sorted(alto_dir.glob('*.xml')) if alto_dir.exists() else []
+        if not alto_files:
+            print("No ALTO files found to validate.", file=sys.stderr)
+            sys.exit(0)
+        # Build skeleton records — duration/word_count unknown in validate-only mode
+        file_records = [
+            {
+                'input_path': None,
+                'output_path': str(p),
+                'duration_seconds': None,
+                'word_count': None,
+                'error_status': 'ok',
+            }
+            for p in alto_files
+        ]
+        file_records, validation_warnings = validate_batch(file_records, xsd)
+        report_path = write_report(
+            output_dir=args.output,
+            file_records=file_records,
+            total_files=len(alto_files),
+            skipped=0,
+            failed_ocr=0,
+            validation_warnings=validation_warnings,
+            total_duration=0.0,
+        )
+        print(f"Validated {len(alto_files)} file(s). {validation_warnings} validation warning(s).")
+        print(f"Report: {report_path}")
+        sys.exit(0)
+
     # Discover TIFFs
     tiff_files = discover_tiffs(args.input)
     if not tiff_files:
@@ -672,15 +710,36 @@ def main() -> None:
     print(f"Found {len(tiff_files)} TIFF(s) in {args.input}")
 
     # Run batch
-    processed, skipped, errors = run_batch(
+    processed, skipped, errors, file_records = run_batch(
         tiff_files, args.output, n_workers, args.lang, args.psm, args.padding, args.force
     )
 
     # BATC-04: Write error log if any failures
     log_path = write_error_log(args.output, errors)
 
+    # Phase 3 validation pass — runs after OCR completes, decoupled from parallel execution
+    import time as _time
+    _batch_start = _time.monotonic()  # NOTE: total_duration is approximate (excludes OCR time)
+    # The XSD was loaded at startup; validate_batch() enriches file_records in-place
+    validation_warnings = 0
+    if file_records:
+        file_records, validation_warnings = validate_batch(file_records, xsd)
+        total_elapsed = _time.monotonic() - _batch_start  # validation-pass-only duration
+
+        # Write report only if at least one file was processed or validated (CONTEXT.md decision)
+        report_path = write_report(
+            output_dir=args.output,
+            file_records=file_records,
+            total_files=len(tiff_files),
+            skipped=skipped,
+            failed_ocr=len(errors),
+            validation_warnings=validation_warnings,
+            total_duration=total_elapsed,
+        )
+        print(f"Report: {report_path}")
+
     # Summary line
-    print(f"Done: {processed} processed, {skipped} skipped, {len(errors)} failed")
+    print(f"Done: {processed} processed, {skipped} skipped, {len(errors)} failed, {validation_warnings} validation warnings")
     if log_path:
         print(f"Error log: {log_path}")
 
