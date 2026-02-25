@@ -24,7 +24,8 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 
 ### Active
 
-(None — v1.1 complete. Next requirements defined when next milestone begins.)
+- [ ] Detect and correct scan rotation (deskew) before OCR — every TIFF preprocessed
+- [ ] Apply adaptive thresholding to improve binarization on scans with uneven illumination
 
 ### Out of Scope
 
@@ -71,5 +72,13 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 
 None. The v1.0 `xsi:schemaLocation` bug was fixed in Plan 02-01 (`root.attrib.pop` after Step 1).
 
+## Current Milestone: v1.2 Image Preprocessing
+
+**Goal:** Improve OCR accuracy on imperfect archival scans by adding deskew correction and adaptive thresholding as preprocessing steps before OCR.
+
+**Target features:**
+- Deskew: detect scan rotation angle and correct before OCR (1–3°, always applied)
+- Adaptive thresholding: replace or supplement fixed Otsu binarization for scans with uneven illumination
+
 ---
-*Last updated: 2026-02-25 after v1.1 milestone*
+*Last updated: 2026-02-25 after v1.1 milestone, v1.2 started*

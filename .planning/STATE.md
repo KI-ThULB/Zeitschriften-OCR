@@ -5,13 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.1 complete — all 3 phases shipped. Planning next milestone.
+**Current focus:** v1.2 Image Preprocessing — defining requirements
 
 ## Current Position
 
-Phase: 03-validation-and-reporting — Plan 02 complete (2/2 plans done)
-Status: Phase 3 complete — 03-01 done (XSD validation layer); 03-02 done (JSON report writer + main() wiring)
-Last activity: 2026-02-25 — Completed 03-02 write_report(), --validate-only mode, and post-OCR validation pass
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v1.2
+Last activity: 2026-02-25 — Milestone v1.2 Image Preprocessing started
 
 Progress: [██████████] 100% (Phase 1 done, Phase 2 done, Phase 3 done)
 
