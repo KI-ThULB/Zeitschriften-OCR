@@ -23,3 +23,25 @@
 **Archive:** `.planning/milestones/v1.0-ROADMAP.md`, `.planning/milestones/v1.0-REQUIREMENTS.md`
 
 ---
+
+## v1.1 Batch Processor (Shipped: 2026-02-25)
+
+**Phases completed:** 2 phases (2–3), 4 plans
+
+**Stats:**
+- Timeline: 2026-02-24 → 2026-02-25 (2 days)
+- LOC: 750 lines Python (pipeline.py), +442 lines from v1.0
+- Git range: `fix(02-01)` (`1b7a273`) → `docs(phase-03)` (`5596e44`)
+
+**Key accomplishments:**
+- Fixed critical ProcessPoolExecutor worker bug (`sys.exit` → `raise`) and v1.0 `xsi:schemaLocation` stripping gap
+- Parallel batch OCR with `ProcessPoolExecutor`, skip-if-exists idempotency, and per-file error isolation via JSONL log
+- Full CLI surface (`--input`, `--output`, `--workers`, `--force`, `--lang`, `--padding`, `--psm`) with Tesseract startup validation
+- Bundled namespace-adapted ALTO 2.1 XSD (`schemas/alto-2-1.xsd`, CCS-GmbH namespace) — no network required at runtime
+- Per-file ALTO coordinate sanity check (HPOS+WIDTH > page_width flagged as `validation_warnings`)
+- JSON per-run summary report (`report_TIMESTAMP.json`) with `--validate-only` flag for operator re-validation
+
+**Archive:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`
+
+---
+

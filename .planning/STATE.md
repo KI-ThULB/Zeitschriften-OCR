@@ -2,10 +2,10 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-24)
+See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** Phase 3 complete — all plans done (XSD validation + JSON reporting wired into pipeline.py)
+**Current focus:** v1.1 complete — all 3 phases shipped. Planning next milestone.
 
 ## Current Position
 
