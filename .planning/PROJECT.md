@@ -27,7 +27,10 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 
 ### Active
 
-None.
+- [ ] `--dry-run` flag: print would-process and would-skip file lists, then exit without running OCR
+- [ ] `--verbose` flag: print Tesseract stdout/stderr and per-stage timing (deskew, crop, OCR) for each processed file
+- [ ] Live progress display during batch: files completed / total / percentage / ETA
+- [ ] `--config PATH` flag: load CLI flag defaults from a JSON file; command-line flags override config values
 
 ### Out of Scope
 
@@ -79,5 +82,15 @@ None.
 
 - `ADAPTIVE_BLOCK_SIZE = 51` and `ADAPTIVE_C = 10` are informed starting points; empirical tuning against real Zeitschriften corpus scans is recommended before batch production with `--adaptive-threshold`.
 
+## Current Milestone: v1.3 Operator Experience
+
+**Goal:** Make long batch runs observable and configurable — progress visibility, dry-run preview, verbose diagnostics, and JSON config file support.
+
+**Target features:**
+- `--dry-run`: preview what would be processed/skipped without running OCR
+- `--verbose`: per-stage timing + Tesseract output per file
+- Live progress: count / percentage / ETA during batch
+- `--config PATH`: JSON config file for persistent flag defaults
+
 ---
-*Last updated: 2026-02-25 after v1.2 milestone*
+*Last updated: 2026-02-25 after v1.2 milestone, v1.3 started*

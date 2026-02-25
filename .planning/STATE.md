@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.2 Image Preprocessing — Phase 5: Adaptive Thresholding (plan 01 complete)
+**Current focus:** v1.3 Operator Experience — defining requirements
 
 ## Current Position
 
-Phase: 5 of 5 (Adaptive Thresholding)
-Plan: 1 of 1 in current phase
-Status: Phase 5 complete
-Last activity: 2026-02-25 — Completed 05-01: adaptive_threshold_image() implemented and wired via --adaptive-threshold flag
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-25 — Milestone v1.3 started
 
-Progress: [████████████████████] 100% (Phases 1–5 done, all plans complete)
+Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (Phases 6+ pending)
 
 ## Performance Metrics
 
