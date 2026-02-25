@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** Phase 3 in progress — plan 03-01 complete (XSD bundle and validation functions)
+**Current focus:** Phase 3 complete — all plans done (XSD validation + JSON reporting wired into pipeline.py)
 
 ## Current Position
 
-Phase: 03-validation-and-reporting — Plan 01 complete (1/2 plans done)
-Status: Phase 3 in progress — 03-01 done; 03-02 next (report writer and main() wiring)
-Last activity: 2026-02-25 — Completed 03-01 ALTO 2.1 XSD bundle and validation layer
+Phase: 03-validation-and-reporting — Plan 02 complete (2/2 plans done)
+Status: Phase 3 complete — 03-01 done (XSD validation layer); 03-02 done (JSON report writer + main() wiring)
+Last activity: 2026-02-25 — Completed 03-02 write_report(), --validate-only mode, and post-OCR validation pass
 
-Progress: [███████░░░] 75% (Phase 1 done, Phase 2 done, Phase 3 partially done)
+Progress: [██████████] 100% (Phase 1 done, Phase 2 done, Phase 3 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 2 min
-- Total execution time: 8 min
+- Total execution time: 10 min
 
 **By Phase:**
 
@@ -28,10 +28,10 @@ Progress: [███████░░░] 75% (Phase 1 done, Phase 2 done, Phas
 |-------|-------|-------|----------|
 | 1. Single-File Pipeline | 2/2 | 4 min | 2 min |
 | 2. Batch Orchestration and CLI | 2/2 | 4 min | 2 min |
-| 3. Validation and Reporting | 1/2 | 4 min | 4 min |
+| 3. Validation and Reporting | 2/2 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (2 min), 02-01 (2 min), 02-02 (2 min), 03-01 (4 min)
+- Last 5 plans: 01-02 (2 min), 02-01 (2 min), 02-02 (2 min), 03-01 (4 min), 03-02 (2 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -62,6 +62,10 @@ Recent decisions affecting current work:
 - no_crop=False passed in run_batch submit() — batch mode always attempts crop detection, same as single-file default (02-02)
 - [Phase 03-01]: load_xsd() returns None when XSD missing — caller warns and skips validation rather than aborting batch
 - [Phase 03-01]: validate_batch() sets schema_valid=None (not False) for non-ok records — None distinguishes skip from pass/fail
+- [Phase 03-02]: write_report() called only when file_records is non-empty — pure skip runs produce no report file
+- [Phase 03-02]: validation_warnings=0 initialised before if-block so summary line always defined even on pure-skip runs
+- [Phase 03-02]: --validate-only globs alto/*.xml from output dir directly, skipping discover_tiffs() entirely
+- [Phase 03-02]: import time as _time inside main() avoids shadowing top-level `import time` used by process_tiff()
 
 ### Pending Todos
 
@@ -77,5 +81,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 03-01 (ALTO 2.1 XSD bundle and four validation functions)
+Stopped at: Completed 03-02 (write_report(), --validate-only mode, post-OCR validation pass in main())
 Resume file: None

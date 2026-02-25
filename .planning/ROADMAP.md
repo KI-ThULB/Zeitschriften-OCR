@@ -19,7 +19,7 @@ See archive: `.planning/milestones/v1.0-ROADMAP.md`
 ### 📋 v1.1 Batch Processor (Planned)
 
 - [x] **Phase 2: Batch Orchestration and CLI** - Process a full folder in parallel with skip logic, error isolation, and full CLI (completed 2026-02-24)
-- [ ] **Phase 3: Validation and Reporting** - Validate all output and produce per-run summary reports
+- [x] **Phase 3: Validation and Reporting** - Validate all output and produce per-run summary reports (completed 2026-02-25)
 
 #### Phase 2: Batch Orchestration and CLI
 **Goal**: The tool processes a full folder of TIFFs in parallel, skips already-processed files on rerun, isolates per-file errors, and exposes a complete CLI surface
@@ -48,8 +48,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Bundle namespace-adapted ALTO 2.1 XSD + add load_xsd(), validate_alto_file(), _check_coordinates(), validate_batch() to pipeline.py
-- [ ] 03-02-PLAN.md — Extend run_batch() to collect per-file records, add write_report(), wire validation pass and --validate-only into main()
+- [x] 03-01-PLAN.md — Bundle namespace-adapted ALTO 2.1 XSD + add load_xsd(), validate_alto_file(), _check_coordinates(), validate_batch() to pipeline.py
+- [x] 03-02-PLAN.md — Extend run_batch() to collect per-file records, add write_report(), wire validation pass and --validate-only into main()
 
 ## Progress
 
@@ -57,4 +57,4 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 1. Single-File Pipeline | v1.0 | 2/2 | Complete | 2026-02-24 |
 | 2. Batch Orchestration and CLI | 2/2 | Complete   | 2026-02-24 | - |
-| 3. Validation and Reporting | 1/2 | In Progress|  | - |
+| 3. Validation and Reporting | 2/2 | Complete | 2026-02-25 | - |
