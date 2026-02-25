@@ -58,7 +58,10 @@ Plans:
   1. Running a batch without `--adaptive-threshold` produces identical output to a pre-v1.2 run — no behavioral change by default
   2. Running with `--adaptive-threshold` applies Gaussian block-based thresholding to each scan before OCR and produces valid ALTO 2.1 output
   3. The `--help` output lists `--adaptive-threshold` with a description, confirming it is a discoverable CLI flag
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 05-01-PLAN.md — Add adaptive_threshold_image() pure function, named constants, and wire --adaptive-threshold through process_tiff() / run_batch() / argparse
 
 ## Progress
 
