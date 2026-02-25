@@ -46,16 +46,16 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PREP-01 | TBD | Pending |
-| PREP-02 | TBD | Pending |
-| PREP-03 | TBD | Pending |
-| PREP-04 | TBD | Pending |
-| PREP-05 | TBD | Pending |
+| PREP-01 | Phase 4 | Pending |
+| PREP-02 | Phase 4 | Pending |
+| PREP-03 | Phase 4 | Pending |
+| PREP-04 | Phase 5 | Pending |
+| PREP-05 | Phase 5 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 5 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 5 ⚠️
+- Mapped to phases: 5
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-25*
