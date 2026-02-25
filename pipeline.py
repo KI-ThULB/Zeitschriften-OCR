@@ -320,6 +320,7 @@ def process_tiff(
     psm: int,
     padding: int,
     no_crop: bool,
+    adaptive_threshold: bool,        # NEW — Phase 5 (PREP-04 / PREP-05)
 ) -> None:
     """Process a single TIFF file through the full OCR pipeline.
 
@@ -333,6 +334,7 @@ def process_tiff(
         psm: Tesseract page segmentation mode
         padding: Padding pixels for crop box detection
         no_crop: If True, bypass border detection and use full image bounds
+        adaptive_threshold: If True, apply adaptive Gaussian thresholding after deskew and before crop
     """
     warnings_list: list[str] = []
     deskew_str = ''
@@ -356,6 +358,10 @@ def process_tiff(
         else:
             # PREP-02: angle annotation appears in result line for every successful correction
             deskew_str = f'[deskew: {deskew_angle:.1f}\u00b0]'
+
+        # Adaptive threshold step (PREP-04 / PREP-05: opt-in only)
+        if adaptive_threshold:
+            img = adaptive_threshold_image(img)
 
         # Determine crop box
         if no_crop:
@@ -649,6 +655,7 @@ def run_batch(
     psm: int,
     padding: int,
     force: bool,
+    adaptive_threshold: bool,   # NEW — Phase 5
 ) -> tuple:
     """Run OCR on all tiff_files in parallel using ProcessPoolExecutor.
 
@@ -688,7 +695,7 @@ def run_batch(
     # NOTE: process_tiff() must NOT call sys.exit() (fixed in Plan 01) — it must raise
     with ProcessPoolExecutor(max_workers=workers) as executor:
         futures = {
-            executor.submit(process_tiff, tiff_path, output_dir, lang, psm, padding, False): tiff_path
+            executor.submit(process_tiff, tiff_path, output_dir, lang, psm, padding, False, adaptive_threshold): tiff_path
             for tiff_path in to_process
         }
         # tqdm wraps the as_completed iterator; total= is required (as_completed has no __len__)
@@ -758,6 +765,12 @@ def main() -> None:
                         help='Tesseract page segmentation mode (default: 1 = auto with OSD)')
     parser.add_argument('--validate-only', action='store_true',
                         help='Skip OCR, validate existing ALTO output files and produce a report')
+    parser.add_argument(
+        '--adaptive-threshold',
+        action='store_true',
+        help='Apply adaptive Gaussian thresholding before OCR (improves results on scans '
+             'with uneven illumination; off by default)',
+    )
     args = parser.parse_args()
 
     # Resolve default workers at runtime (NOT at parse-time — avoids hardcoding on import)
@@ -820,7 +833,8 @@ def main() -> None:
 
     # Run batch
     processed, skipped, errors, file_records = run_batch(
-        tiff_files, args.output, n_workers, args.lang, args.psm, args.padding, args.force
+        tiff_files, args.output, n_workers, args.lang, args.psm, args.padding, args.force,
+        args.adaptive_threshold,
     )
 
     # BATC-04: Write error log if any failures
