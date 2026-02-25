@@ -29,8 +29,8 @@
 
 ### Validation & Reporting
 
-- [ ] **VALD-01**: Tool validates each ALTO XML output against the ALTO 2.1 XSD schema using lxml; logs schema violations per file without aborting the batch
-- [ ] **VALD-02**: Tool checks that all word bounding boxes in each ALTO file fall within the page dimensions; logs coordinate violations per file without aborting
+- [x] **VALD-01**: Tool validates each ALTO XML output against the ALTO 2.1 XSD schema using lxml; logs schema violations per file without aborting the batch
+- [x] **VALD-02**: Tool checks that all word bounding boxes in each ALTO file fall within the page dimensions; logs coordinate violations per file without aborting
 - [ ] **VALD-03**: Tool writes a per-run summary report as JSON containing for each file: input path, output path, processing duration (seconds), word count, and error status
 
 ## v2 Requirements
@@ -82,8 +82,8 @@
 | CLI-03 | Phase 2 | Complete |
 | CLI-04 | Phase 2 | Complete |
 | CLI-05 | Phase 2 | Complete |
-| VALD-01 | Phase 3 | Pending |
-| VALD-02 | Phase 3 | Pending |
+| VALD-01 | Phase 3 | Complete |
+| VALD-02 | Phase 3 | Complete |
 | VALD-03 | Phase 3 | Pending |
 
 **Coverage:**

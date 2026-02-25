@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** Phase 2 complete — both plans done (pipeline bug fixes, batch orchestrator)
+**Current focus:** Phase 3 in progress — plan 03-01 complete (XSD bundle and validation functions)
 
 ## Current Position
 
-Phase: 02-batch-orchestration-and-cli — Plan 02 complete (all Phase 2 plans done)
-Status: Phase 2 complete — ready for Phase 3 (XSD validation and reporting)
-Last activity: 2026-02-24 — Completed 02-02 batch orchestrator and batch CLI
+Phase: 03-validation-and-reporting — Plan 01 complete (1/2 plans done)
+Status: Phase 3 in progress — 03-01 done; 03-02 next (report writer and main() wiring)
+Last activity: 2026-02-25 — Completed 03-01 ALTO 2.1 XSD bundle and validation layer
 
-Progress: [██████░░░░] 66% (2/3 phases)
+Progress: [███████░░░] 75% (Phase 1 done, Phase 2 done, Phase 3 partially done)
 
 ## Performance Metrics
 
@@ -28,9 +28,10 @@ Progress: [██████░░░░] 66% (2/3 phases)
 |-------|-------|-------|----------|
 | 1. Single-File Pipeline | 2/2 | 4 min | 2 min |
 | 2. Batch Orchestration and CLI | 2/2 | 4 min | 2 min |
+| 3. Validation and Reporting | 1/2 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (2 min), 01-02 (2 min), 02-01 (2 min), 02-02 (2 min)
+- Last 5 plans: 01-01 (2 min), 01-02 (2 min), 02-01 (2 min), 02-02 (2 min), 03-01 (4 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -59,6 +60,8 @@ Recent decisions affecting current work:
 - --workers default=None resolved at runtime as min(os.cpu_count() or 1, 4) — not evaluated at import time (02-02)
 - Skip-if-exists check before ProcessPoolExecutor creation — avoids spawning workers when all files already processed (02-02)
 - no_crop=False passed in run_batch submit() — batch mode always attempts crop detection, same as single-file default (02-02)
+- [Phase 03-01]: load_xsd() returns None when XSD missing — caller warns and skips validation rather than aborting batch
+- [Phase 03-01]: validate_batch() sets schema_valid=None (not False) for non-ok records — None distinguishes skip from pass/fail
 
 ### Pending Todos
 
@@ -73,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-24
-Stopped at: Completed 02-02 (batch orchestrator and batch CLI — Phase 2 complete)
+Last session: 2026-02-25
+Stopped at: Completed 03-01 (ALTO 2.1 XSD bundle and four validation functions)
 Resume file: None
