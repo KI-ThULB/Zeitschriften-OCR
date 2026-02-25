@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.3 Operator Experience — defining requirements
+**Current focus:** v1.3 Operator Experience — Phase 6: Diagnostic Flags
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-25 — Milestone v1.3 started
+Phase: 6 of 8 in v1.3 (Diagnostic Flags)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-25 — v1.3 roadmap created (phases 6–8)
 
-Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (Phases 6+ pending)
+Progress: [██████████░░░░░░░░░░] 50% (5/8 phases complete across all milestones)
 
 ## Performance Metrics
 
@@ -46,19 +46,10 @@ Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (Pha
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- THRESH_BINARY (not THRESH_BINARY_INV): archival scans have dark border, light page
 - process_tiff() uses raise (not sys.exit) — safe for ProcessPoolExecutor spawn on macOS
-- executor.submit() + as_completed() chosen over executor.map() — map() aborts on first exception
-- [Phase 03-01]: load_xsd() returns None when XSD missing — caller warns and skips, does not abort
-- [Phase 03-02]: write_report() called only when file_records is non-empty — pure skip runs produce no report
-- [Phase 04-01]: deskew_str initialized to '' at top of process_tiff() — always defined even on exception paths
-- [Phase 04-01]: Deskew inserted before detect_crop_box() — page contour must be axis-aligned for reliable crop detection
-- [Phase 04-01]: DESKEW_MAX_ANGLE = 10.0 as named constant — appropriate plausibility gate for archival periodicals (genuine skew under 5°)
-- [Phase 04-01]: Separate deskew_str from warnings_list — diagnostic angle info appears unconditionally; only fallback goes to [WARN: ...]
-- [Phase 05-01]: cv2.THRESH_BINARY (not THRESH_BINARY_INV) for adaptive threshold — consistent with crop detection decision
-- [Phase 05-01]: ADAPTIVE_BLOCK_SIZE = 51 (odd, required by cv2); ADAPTIVE_C = 10 — both need empirical tuning against real corpus
-- [Phase 05-01]: adaptive_threshold_image() positioned after deskew, before detect_crop_box — binarized image feeds contour detection
-- [Phase 05-01]: adaptive_threshold: bool is last positional arg in process_tiff(); no_crop stays hardcoded False in submit()
+- executor.submit() + as_completed() — chosen for per-file error isolation; progress updates slot into this loop
+- [Phase 04-01]: Deskew before detect_crop_box() — ordering invariant; verbose timing must respect this order
+- [Phase 05-01]: ADAPTIVE_BLOCK_SIZE = 51, ADAPTIVE_C = 10 — need empirical tuning before production
 
 ### Pending Todos
 
@@ -71,5 +62,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 05-01-PLAN.md — adaptive thresholding integration complete, all phases done
+Stopped at: v1.3 roadmap written — Phase 6 (Diagnostic Flags) ready to plan
 Resume file: None

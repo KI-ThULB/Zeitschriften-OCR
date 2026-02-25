@@ -42,16 +42,16 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| OPER-01 | TBD | Pending |
-| OPER-02 | TBD | Pending |
-| OPER-03 | TBD | Pending |
-| OPER-04 | TBD | Pending |
-| OPER-05 | TBD | Pending |
+| OPER-01 | Phase 6 | Pending |
+| OPER-02 | Phase 6 | Pending |
+| OPER-03 | Phase 7 | Pending |
+| OPER-04 | Phase 8 | Pending |
+| OPER-05 | Phase 8 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 5 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 5 ⚠️
+- Mapped to phases: 5
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-25*
