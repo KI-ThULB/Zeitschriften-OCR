@@ -496,6 +496,42 @@ def validate_batch(
     return file_records, warning_count
 
 
+def write_report(
+    output_dir: Path,
+    file_records: list[dict],
+    total_files: int,
+    skipped: int,
+    failed_ocr: int,
+    validation_warnings: int,
+    total_duration: float,
+) -> Path:
+    """Write the per-run JSON summary report to output_dir/report_TIMESTAMP.json.
+
+    VALD-03: Report contains run-level summary and per-file records.
+    Only called when len(file_records) > 0 (pure skip runs produce no report).
+    Returns the report path.
+    """
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    report_path = output_dir / f'report_{timestamp}.json'
+
+    report = {
+        'summary': {
+            'total_files': total_files,
+            'processed': total_files - skipped - failed_ocr,
+            'skipped': skipped,
+            'failed_ocr': failed_ocr,
+            'validation_warnings': validation_warnings,
+            'total_duration_seconds': round(total_duration, 2),
+        },
+        'files': file_records,
+    }
+
+    with report_path.open('w', encoding='utf-8') as f:
+        json.dump(report, f, indent=2, ensure_ascii=False)
+
+    return report_path
+
+
 def run_batch(
     tiff_files: list,
     output_dir: Path,
@@ -514,12 +550,14 @@ def run_batch(
       BATC-04: Error collection returned as list of dicts for write_error_log()
 
     Returns:
-        (processed_count, skipped_count, error_list)
+        (processed_count, skipped_count, error_list, file_records)
         error_list entries: {file, exc_type, exc_message, traceback}
+        file_records entries: {input_path, output_path, duration_seconds, word_count, error_status}
     """
     errors = []
     skipped = 0
     processed = 0
+    file_records: list[dict] = []
 
     # BATC-02: Separate skip check from submission
     to_process = []
@@ -534,7 +572,7 @@ def run_batch(
         print(f"Skipping {skipped} already-processed file(s). Use --force to reprocess.")
 
     if not to_process:
-        return processed, skipped, errors
+        return processed, skipped, errors, file_records
 
     # BATC-01: ProcessPoolExecutor — process-based parallelism bypasses GIL
     # BATC-03: submit() + as_completed() isolates per-file failures
@@ -551,6 +589,20 @@ def run_batch(
                 try:
                     fut.result()
                     processed += 1
+                    out_path = output_dir / 'alto' / (tiff_path.stem + '.xml')
+                    # Count words from the written ALTO file
+                    try:
+                        alto_root = etree.parse(str(out_path)).getroot()
+                        wc = count_words(alto_root, ALTO21_NS)
+                    except Exception:
+                        wc = None
+                    file_records.append({
+                        'input_path': str(tiff_path),
+                        'output_path': str(out_path),
+                        'duration_seconds': None,  # process_tiff() prints timing but does not return it
+                        'word_count': wc,
+                        'error_status': 'ok',
+                    })
                 except Exception as e:
                     # BATC-04: Collect per-file error with full traceback
                     # traceback.format_exc() captures the _RemoteTraceback chain from the worker
@@ -560,10 +612,17 @@ def run_batch(
                         'exc_message': str(e),
                         'traceback': traceback.format_exc(),
                     })
+                    file_records.append({
+                        'input_path': str(tiff_path),
+                        'output_path': None,
+                        'duration_seconds': None,
+                        'word_count': None,
+                        'error_status': 'failed',
+                    })
                 finally:
                     pbar.update(1)
 
-    return processed, skipped, errors
+    return processed, skipped, errors, file_records
 
 
 # ---------------------------------------------------------------------------
