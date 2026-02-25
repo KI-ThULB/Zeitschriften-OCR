@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A batch processing pipeline for digitized journal and magazine scans. It takes several hundred large archival TIFF files (117–240 MB each), automatically crops away scanner borders, runs Tesseract OCR in parallel, validates the output against the ALTO 2.1 XSD schema, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems and display in the DFG Viewer.
+A batch processing pipeline for digitized journal and magazine scans. It takes several hundred large archival TIFF files (117–240 MB each), automatically deskews and crops each scan, runs Tesseract OCR in parallel, validates the output against the ALTO 2.1 XSD schema, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems and display in the DFG Viewer.
 
 ## Core Value
 
@@ -22,10 +22,12 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - ✓ Validate ALTO 2.1 output against bundled XSD schema per file — v1.1
 - ✓ Per-run JSON summary report with coordinate sanity check and `--validate-only` flag — v1.1
 
+- ✓ Detect and correct scan rotation (deskew) before OCR; angle logged per file — v1.2
+- ✓ Apply opt-in adaptive Gaussian thresholding for scans with uneven illumination (`--adaptive-threshold`) — v1.2
+
 ### Active
 
-- [ ] Detect and correct scan rotation (deskew) before OCR — every TIFF preprocessed
-- [ ] Apply adaptive thresholding to improve binarization on scans with uneven illumination
+None.
 
 ### Out of Scope
 
@@ -42,7 +44,7 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - Scan border issue: scanner bed artifacts need algorithmic removal before OCR
 - Target system: DFG Viewer / Goobi / Kitodo — requires ALTO 2.1 XML with word-level coordinates
 - Platform: macOS development (must also run on Linux servers for batch production)
-- Current codebase: 750 lines Python (`pipeline.py`) + `schemas/alto-2-1.xsd`; 5 pinned dependencies
+- Current codebase: 873 lines Python (`pipeline.py`) + `schemas/alto-2-1.xsd`; 6 pinned dependencies (added `deskew>=1.5.0`)
 
 ## Constraints
 
@@ -67,18 +69,15 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 | `executor.submit()` + `as_completed()` | `executor.map()` aborts on first exception; submit/as_completed isolates per-file errors | ✓ Good — BATC-03 requirement |
 | XSD bundled at `schemas/alto-2-1.xsd` | No network dependency at runtime; namespace-adapted to CCS-GmbH namespace (LoC upstream ns would fail validation) | ✓ Good — XSD compiles correctly, live smoke test passed |
 | Validation as separate post-OCR pass | Clean separation from OCR parallelism; `--validate-only` re-validation possible without re-running OCR | ✓ Good — VALD-01/02/03 satisfied |
+| `deskew` library (Hough-line) over projection-profile | More robust on mixed-content archival pages with illustrations and column rules | ✓ Good — clean results, plausibility gate at 10° |
+| Deskew before crop (not after) | Page contour is axis-aligned when OpenCV `findContours` runs — prevents crop fallback on deskewed images | ✓ Good — critical ordering invariant |
+| `DESKEW_MAX_ANGLE = 10.0` named constant | Archival periodical skew is under 5°; 10° gate catches misdetections without being too aggressive | ✓ Good — tunable if corpus changes |
+| `--adaptive-threshold` opt-in (off by default) | Default pipeline behavior preserved; operator enables only for problematic scans | ✓ Good — PREP-05 requirement satisfied |
+| `ADAPTIVE_BLOCK_SIZE = 51`, `ADAPTIVE_C = 10` as named constants | Starting values for corpus tuning; named constants make them adjustable without code search | ○ Pending empirical tuning against real scans |
 
 ## Known Technical Debt
 
-None. The v1.0 `xsi:schemaLocation` bug was fixed in Plan 02-01 (`root.attrib.pop` after Step 1).
-
-## Current Milestone: v1.2 Image Preprocessing
-
-**Goal:** Improve OCR accuracy on imperfect archival scans by adding deskew correction and adaptive thresholding as preprocessing steps before OCR.
-
-**Target features:**
-- Deskew: detect scan rotation angle and correct before OCR (1–3°, always applied)
-- Adaptive thresholding: replace or supplement fixed Otsu binarization for scans with uneven illumination
+- `ADAPTIVE_BLOCK_SIZE = 51` and `ADAPTIVE_C = 10` are informed starting points; empirical tuning against real Zeitschriften corpus scans is recommended before batch production with `--adaptive-threshold`.
 
 ---
-*Last updated: 2026-02-25 after v1.1 milestone, v1.2 started*
+*Last updated: 2026-02-25 after v1.2 milestone*

@@ -45,3 +45,13 @@
 
 ---
 
+
+## v1.2 Image Preprocessing (Shipped: 2026-02-25)
+
+**Phases completed:** 5 phases, 8 plans, 0 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+
