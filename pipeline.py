@@ -38,6 +38,11 @@ POSITIONAL_TAGS = {
 
 DESKEW_MAX_ANGLE = 10.0   # degrees — corrections above this are treated as implausible
 
+ADAPTIVE_BLOCK_SIZE = 51   # odd integer >= 3; at 300 DPI ≈ 4.3mm neighbourhood
+                           # NEEDS empirical tuning against real Zeitschriften corpus scans
+ADAPTIVE_C = 10            # constant subtracted from local Gaussian mean; positive = raise threshold
+                           # NEEDS empirical tuning against real Zeitschriften corpus scans
+
 # ---------------------------------------------------------------------------
 # Foundation functions
 # ---------------------------------------------------------------------------
@@ -118,6 +123,40 @@ def deskew_image(
         resample=Image.Resampling.BICUBIC,
     )
     return corrected, angle, False
+
+
+def adaptive_threshold_image(
+    image: Image.Image,
+    block_size: int = ADAPTIVE_BLOCK_SIZE,
+    c: int = ADAPTIVE_C,
+) -> Image.Image:
+    """Apply adaptive Gaussian thresholding to binarize the image.
+
+    Useful for scans with uneven illumination where global Otsu thresholding
+    produces dark or washed-out regions.
+
+    Args:
+        image: PIL Image (any mode; converted to grayscale internally)
+        block_size: Size of the pixel neighbourhood for computing local threshold.
+                    Must be an odd integer >= 3.
+        c: Constant subtracted from the weighted local mean.
+           Positive values raise the threshold (fewer white pixels).
+
+    Returns:
+        Binary PIL Image (mode 'L', values 0 or 255)
+    """
+    # cv2.adaptiveThreshold requires a uint8 grayscale (single-channel) numpy array
+    gray = np.array(image.convert('L'))
+    binary = cv2.adaptiveThreshold(
+        gray,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY,
+        block_size,
+        c,
+    )
+    # binary is already uint8 shape (H, W) — convert directly to PIL
+    return Image.fromarray(binary, 'L')
 
 
 def detect_crop_box(
