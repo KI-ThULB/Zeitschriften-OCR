@@ -13,8 +13,8 @@
 
 ### Image Preprocessing — Adaptive Thresholding
 
-- [ ] **PREP-04**: Pipeline applies adaptive thresholding (Gaussian block-based) to improve binarization on scans with uneven illumination before OCR
-- [ ] **PREP-05**: Adaptive thresholding is opt-in via `--adaptive-threshold` flag (off by default); deskew is always applied
+- [x] **PREP-04**: Pipeline applies adaptive thresholding (Gaussian block-based) to improve binarization on scans with uneven illumination before OCR
+- [x] **PREP-05**: Adaptive thresholding is opt-in via `--adaptive-threshold` flag (off by default); deskew is always applied
 
 ## Future Requirements
 
@@ -49,8 +49,8 @@
 | PREP-01 | Phase 4 | Complete |
 | PREP-02 | Phase 4 | Complete |
 | PREP-03 | Phase 4 | Complete |
-| PREP-04 | Phase 5 | Pending |
-| PREP-05 | Phase 5 | Pending |
+| PREP-04 | Phase 5 | Complete |
+| PREP-05 | Phase 5 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 5 total

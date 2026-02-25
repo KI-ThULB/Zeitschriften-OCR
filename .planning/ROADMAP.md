@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 Single-File Pipeline** — Phase 1 (shipped 2026-02-24)
 - ✅ **v1.1 Batch Processor** — Phases 2–3 (shipped 2026-02-25)
-- 🚧 **v1.2 Image Preprocessing** — Phases 4–5 (in progress)
+- ✅ **v1.2 Image Preprocessing** — Phases 4–5 (shipped 2026-02-25)
 
 ## Phases
 
@@ -27,12 +27,12 @@ See archive: `.planning/milestones/v1.1-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.2 Image Preprocessing (In Progress)
+### ✅ v1.2 Image Preprocessing (Shipped 2026-02-25)
 
 **Milestone Goal:** Improve OCR accuracy on imperfect archival scans by adding deskew correction and adaptive thresholding as preprocessing steps before OCR.
 
 - [x] **Phase 4: Deskew** — Detect and correct scan rotation before OCR, with per-file angle logging and safe fallback (completed 2026-02-25)
-- [ ] **Phase 5: Adaptive Thresholding** — Add opt-in Gaussian adaptive binarization for scans with uneven illumination
+- [x] **Phase 5: Adaptive Thresholding** — Add opt-in Gaussian adaptive binarization for scans with uneven illumination (completed 2026-02-25)
 
 ## Phase Details
 
@@ -48,7 +48,7 @@ See archive: `.planning/milestones/v1.1-ROADMAP.md`
 **Plans**: 1 plan
 
 Plans:
-- [ ] 04-01-PLAN.md — Add deskew_image() function and wire into process_tiff() with angle reporting
+- [x] 04-01-PLAN.md — Add deskew_image() function and wire into process_tiff() with angle reporting
 
 ### Phase 5: Adaptive Thresholding
 **Goal**: Scans with uneven illumination can be binarized using adaptive Gaussian thresholding when the operator opts in, without affecting the default pipeline behavior
@@ -61,7 +61,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 05-01-PLAN.md — Add adaptive_threshold_image() pure function, named constants, and wire --adaptive-threshold through process_tiff() / run_batch() / argparse
+- [x] 05-01-PLAN.md — Add adaptive_threshold_image() pure function, named constants, and wire --adaptive-threshold through process_tiff() / run_batch() / argparse
 
 ## Progress
 
@@ -70,5 +70,5 @@ Plans:
 | 1. Single-File Pipeline | v1.0 | 2/2 | Complete | 2026-02-24 |
 | 2. Batch Orchestration and CLI | v1.1 | 2/2 | Complete | 2026-02-24 |
 | 3. Validation and Reporting | v1.1 | 2/2 | Complete | 2026-02-25 |
-| 4. Deskew | 1/1 | Complete    | 2026-02-25 | - |
-| 5. Adaptive Thresholding | v1.2 | 0/? | Not started | - |
+| 4. Deskew | v1.2 | 1/1 | Complete | 2026-02-25 |
+| 5. Adaptive Thresholding | v1.2 | 1/1 | Complete | 2026-02-25 |

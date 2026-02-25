@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.2 Image Preprocessing — Phase 4: Deskew (plan 01 complete)
+**Current focus:** v1.2 Image Preprocessing — Phase 5: Adaptive Thresholding (plan 01 complete)
 
 ## Current Position
 
-Phase: 4 of 5 (Deskew)
-Plan: 1 of ? in current phase
-Status: In progress
-Last activity: 2026-02-25 — Completed 04-01: deskew_image() implemented and wired into process_tiff()
+Phase: 5 of 5 (Adaptive Thresholding)
+Plan: 1 of 1 in current phase
+Status: Phase 5 complete
+Last activity: 2026-02-25 — Completed 05-01: adaptive_threshold_image() implemented and wired via --adaptive-threshold flag
 
-Progress: [████████████░░░░░░░░] 60% (Phases 1–3 done, Phase 4 plan 01 done, Phase 5 pending)
+Progress: [████████████████████] 100% (Phases 1–5 done, all plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 2 min
-- Total execution time: 18 min
+- Total execution time: 20 min
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [████████████░░░░░░░░] 60% (Ph
 | 1. Single-File Pipeline | 2/2 | 4 min | 2 min |
 | 2. Batch Orchestration and CLI | 2/2 | 4 min | 2 min |
 | 3. Validation and Reporting | 2/2 | 6 min | 3 min |
-| 4. Deskew | 1/? | 6 min | 6 min |
-| 5. Adaptive Thresholding | 0/? | — | — |
+| 4. Deskew | 1/1 | 6 min | 6 min |
+| 5. Adaptive Thresholding | 1/1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (2 min), 02-02 (2 min), 03-01 (4 min), 03-02 (2 min), 04-01 (6 min)
+- Last 5 plans: 02-02 (2 min), 03-01 (4 min), 03-02 (2 min), 04-01 (6 min), 05-01 (2 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -55,6 +55,10 @@ Recent decisions affecting current work:
 - [Phase 04-01]: Deskew inserted before detect_crop_box() — page contour must be axis-aligned for reliable crop detection
 - [Phase 04-01]: DESKEW_MAX_ANGLE = 10.0 as named constant — appropriate plausibility gate for archival periodicals (genuine skew under 5°)
 - [Phase 04-01]: Separate deskew_str from warnings_list — diagnostic angle info appears unconditionally; only fallback goes to [WARN: ...]
+- [Phase 05-01]: cv2.THRESH_BINARY (not THRESH_BINARY_INV) for adaptive threshold — consistent with crop detection decision
+- [Phase 05-01]: ADAPTIVE_BLOCK_SIZE = 51 (odd, required by cv2); ADAPTIVE_C = 10 — both need empirical tuning against real corpus
+- [Phase 05-01]: adaptive_threshold_image() positioned after deskew, before detect_crop_box — binarized image feeds contour detection
+- [Phase 05-01]: adaptive_threshold: bool is last positional arg in process_tiff(); no_crop stays hardcoded False in submit()
 
 ### Pending Todos
 
@@ -62,10 +66,10 @@ None.
 
 ### Blockers/Concerns
 
-- Adaptive threshold block size and C constant need tuning against real Zeitschriften scans
+- ADAPTIVE_BLOCK_SIZE = 51 and ADAPTIVE_C = 10 need empirical tuning against real Zeitschriften corpus scans before production use of --adaptive-threshold
 
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 04-01-PLAN.md — deskew integration complete, ready for next plan
+Stopped at: Completed 05-01-PLAN.md — adaptive thresholding integration complete, all phases done
 Resume file: None
