@@ -71,4 +71,4 @@ Plans:
 | 2. Batch Orchestration and CLI | v1.1 | 2/2 | Complete | 2026-02-24 |
 | 3. Validation and Reporting | v1.1 | 2/2 | Complete | 2026-02-25 |
 | 4. Deskew | v1.2 | 1/1 | Complete | 2026-02-25 |
-| 5. Adaptive Thresholding | v1.2 | 1/1 | Complete | 2026-02-25 |
+| 5. Adaptive Thresholding | v1.2 | Complete    | 2026-02-25 | 2026-02-25 |
