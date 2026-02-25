@@ -345,6 +345,157 @@ def write_error_log(output_dir: Path, errors: list[dict]) -> 'Path | None':
     return log_path
 
 
+# ---------------------------------------------------------------------------
+# Validation
+# ---------------------------------------------------------------------------
+
+def load_xsd(schema_path: Path) -> 'etree.XMLSchema | None':
+    """Load and compile the ALTO 2.1 XSD.
+
+    Returns the compiled XMLSchema, or None if the file is missing
+    (caller should warn and skip validation, not abort).
+
+    Raises SystemExit if the file exists but is corrupt/invalid XSD.
+    """
+    if not schema_path.exists():
+        print(
+            f"WARNING: {schema_path} not found — XSD validation will be skipped",
+            file=sys.stderr,
+        )
+        return None
+    try:
+        schema_doc = etree.parse(str(schema_path))
+        return etree.XMLSchema(schema_doc)
+    except etree.XMLSchemaParseError as e:
+        print(
+            f"ERROR: ALTO XSD is corrupt or invalid: {schema_path}\n  {e}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
+def validate_alto_file(
+    alto_path: Path,
+    xsd: 'etree.XMLSchema | None',
+) -> tuple[bool, 'str | None', list[str]]:
+    """Validate an ALTO XML file against the XSD and check coordinate bounds.
+
+    Returns:
+        schema_valid: True if XSD validation passed (or XSD not available)
+        schema_error: First XSD error message string, or None
+        coord_violations: List of violation description strings (may be empty)
+    """
+    try:
+        tree = etree.parse(str(alto_path))
+    except etree.XMLSyntaxError as e:
+        return False, f"XML parse error: {e}", []
+
+    root = tree.getroot()
+
+    # --- XSD validation ---
+    schema_valid = True
+    schema_error = None
+    if xsd is not None:
+        if not xsd.validate(tree):
+            schema_valid = False
+            err = xsd.error_log.last_error
+            schema_error = err.message if err else "Unknown schema error"
+
+    # --- Coordinate validation ---
+    coord_violations = _check_coordinates(root)
+
+    return schema_valid, schema_error, coord_violations
+
+
+def _check_coordinates(root: 'etree._Element') -> list[str]:
+    """Check that all word bounding boxes fall within declared page dimensions.
+
+    Uses the ALTO 2.1 CCS-GmbH namespace.
+    Returns a list of violation description strings (empty if all boxes are valid).
+    """
+    ns = 'http://schema.ccs-gmbh.com/ALTO'
+    violations = []
+
+    # Find the Page element for declared dimensions
+    page = root.find(f'.//{{{ns}}}Page')
+    if page is None:
+        return []
+
+    try:
+        page_w = int(page.get('WIDTH', 0))
+        page_h = int(page.get('HEIGHT', 0))
+    except (ValueError, TypeError):
+        return []
+
+    if page_w == 0 or page_h == 0:
+        return ['Page WIDTH or HEIGHT is 0 or missing — coordinate check skipped']
+
+    # Check every String element
+    for elem in root.iter(f'{{{ns}}}String'):
+        try:
+            hpos = int(elem.get('HPOS', 0))
+            vpos = int(elem.get('VPOS', 0))
+            width = int(elem.get('WIDTH', 0))
+            height = int(elem.get('HEIGHT', 0))
+        except (ValueError, TypeError):
+            continue
+
+        content = elem.get('CONTENT', '')[:40]
+
+        if hpos + width > page_w:
+            violations.append(
+                f"HPOS+WIDTH={hpos+width} > page_width={page_w} at String '{content}'"
+            )
+        if vpos + height > page_h:
+            violations.append(
+                f"VPOS+HEIGHT={vpos+height} > page_height={page_h} at String '{content}'"
+            )
+
+    return violations
+
+
+def validate_batch(
+    file_records: list[dict],
+    xsd: 'etree.XMLSchema | None',
+) -> tuple[list[dict], int]:
+    """Run validation pass over all processed file records.
+
+    Args:
+        file_records: List of per-file dicts already containing
+                      input_path, output_path, duration_seconds,
+                      word_count, error_status
+        xsd: Compiled XMLSchema object, or None if XSD unavailable
+
+    Returns:
+        (updated_records, validation_warning_count)
+    """
+    warning_count = 0
+    for record in file_records:
+        # Only validate files that have ALTO output
+        if record.get('error_status') != 'ok':
+            record['schema_valid'] = None
+            record['coord_violations'] = []
+            continue
+
+        alto_path = Path(record['output_path'])
+        if not alto_path.exists():
+            record['schema_valid'] = None
+            record['coord_violations'] = []
+            continue
+
+        schema_valid, schema_error, coord_violations = validate_alto_file(alto_path, xsd)
+        record['schema_valid'] = schema_valid
+        record['schema_error'] = schema_error
+        record['coord_violations'] = coord_violations
+
+        has_warnings = (not schema_valid) or bool(coord_violations)
+        if has_warnings:
+            record['error_status'] = 'ocr_ok, validation_warnings'
+            warning_count += 1
+
+    return file_records, warning_count
+
+
 def run_batch(
     tiff_files: list,
     output_dir: Path,
