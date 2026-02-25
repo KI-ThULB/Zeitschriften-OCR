@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Batch OCR pipeline: archival journal/magazine TIFFs → ALTO 2.1 XML for ingest into Goobi/Kitodo (DFG Viewer). Phase 1 (single-file) and Phase 2 (batch/parallel) are complete. Phase 3 adds XSD validation and reporting.
+Batch OCR pipeline: archival journal/magazine TIFFs → ALTO 2.1 XML for ingest into Goobi/Kitodo (DFG Viewer). All three phases are complete (v1.1 shipped): single-file pipeline, parallel batch processing, and XSD validation with JSON reporting.
 
 ## System Dependencies
 
@@ -21,7 +21,7 @@ apt install tesseract-ocr tesseract-ocr-deu
 ```bash
 pip install -r requirements.txt
 
-# Process a folder of TIFFs (batch mode — Phase 2+)
+# Process a folder of TIFFs (batch mode)
 python pipeline.py --input ./scans/ --output ./output
 
 # Key flags
@@ -30,12 +30,15 @@ python pipeline.py --input ./scans/ --output ./output
 --padding 50        # Crop border padding in pixels (default: 50)
 --workers N         # Parallel workers (default: min(cpu_count, 4))
 --force             # Reprocess TIFFs that already have ALTO XML output
+--validate-only     # Skip OCR; validate existing alto/*.xml and write report
 ```
 
-Output: `<output_dir>/alto/<stem>.xml` per TIFF
-Error log (if failures): `<output_dir>/errors_YYYYMMDD_HHMMSS.jsonl`
+Output per run:
+- `<output_dir>/alto/<stem>.xml` — ALTO 2.1 XML per TIFF
+- `<output_dir>/report_YYYYMMDD_HHMMSS.json` — per-run validation summary (omitted on pure-skip runs)
+- `<output_dir>/errors_YYYYMMDD_HHMMSS.jsonl` — JSONL error log (omitted if no failures)
 
-Stdout on success: `Done: N processed, M skipped, 0 failed`
+Stdout on success: `Done: N processed, M skipped, P failed, Q validation warnings`
 Per-file line (from worker): `scan_001.tif → output/alto/scan_001.xml (11.1s, 46 words)`
 Warnings appear inline: `... [WARN: no DPI tag, using 300]`
 Errors go to stderr with exit code 1.
@@ -54,7 +57,12 @@ process_tiff()        → writes output file, prints result line  [raises on err
 validate_tesseract()  → None (exits with message if Tesseract absent or lang missing)
 discover_tiffs()      → sorted list of Path objects
 write_error_log()     → Path | None (writes JSONL, returns None if no errors)
-run_batch()           → (processed, skipped, error_list)
+load_xsd()            → etree.XMLSchema | None (None if missing; exits if corrupt)
+validate_alto_file()  → (schema_valid bool, schema_error str|None, coord_violations list)
+_check_coordinates()  → list of violation strings (HPOS+WIDTH > page_width, etc.)
+validate_batch()      → (updated file_records, warning_count)
+write_report()        → Path (writes report_TIMESTAMP.json)
+run_batch()           → (processed, skipped, error_list, file_records)
 main()                → argparse wiring
 ```
 
@@ -70,7 +78,7 @@ All three must remain in order:
 
 ### Correct namespace
 
-Tesseract emits `http://www.loc.gov/standards/alto/ns-v3#`. This must be rewritten to `http://schema.ccs-gmbh.com/ALTO` (CCS-GmbH ALTO 2.1) for Goobi/Kitodo ingest.
+Tesseract emits `http://www.loc.gov/standards/alto/ns-v3#`. This must be rewritten to `http://schema.ccs-gmbh.com/ALTO` (CCS-GmbH ALTO 2.1) for Goobi/Kitodo ingest. The bundled `schemas/alto-2-1.xsd` also uses the CCS-GmbH namespace (the upstream LoC namespace was replaced — without this every file fails schema validation).
 
 ### Crop detection
 
@@ -82,8 +90,6 @@ Fallback to original bounds if detected area is outside 40–98% of total image 
 
 `process_tiff()` must `raise` (not `sys.exit`) on error — required for `ProcessPoolExecutor` workers on macOS/spawn. `run_batch()` uses `submit()` + `as_completed()` (not `executor.map()`) to collect per-file exceptions without aborting the batch.
 
-## Roadmap State
+### Validation layer
 
-- **Phase 3 (next):** ALTO 2.1 XSD validation per file, coordinate sanity checks, JSON summary report per run.
-
-See `.planning/ROADMAP.md` for full requirements.
+`load_xsd()` is called once in `main()` before the worker pool. If `schemas/alto-2-1.xsd` is missing it returns `None` and validation is skipped with a warning (batch continues). `validate_batch()` runs as a separate post-OCR pass after `run_batch()` returns — it does not affect OCR parallelism. Files with violations get `error_status = 'ocr_ok, validation_warnings'`; they are not failed.
