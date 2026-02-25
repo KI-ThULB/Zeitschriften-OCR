@@ -1,46 +1,24 @@
 # Requirements: Zeitschriften-OCR
 
-**Defined:** 2026-02-24
+**Defined:** 2026-02-25
 **Core Value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
 
-## v1 Requirements
+## v1.2 Requirements
 
-### Pipeline
+### Image Preprocessing — Deskew
 
-- [x] **PIPE-01**: Tool loads each TIFF using Pillow lazy loading and extracts DPI from TIFF metadata; if DPI is absent, defaults to 300 DPI and logs a warning
-- [x] **PIPE-02**: Tool detects scan border via OpenCV contour analysis and crops to the content area; configurable padding (default 50px); falls back to original bounds if detected area is < 40% or > 98% of original, and logs the fallback
-- [x] **PIPE-03**: Tool runs Tesseract 5.x (LSTM engine) on the cropped image with configurable language (default `deu`) and configurable page segmentation mode (`--psm`)
-- [x] **PIPE-04**: Tool produces a schema-valid ALTO 2.1 XML file per TIFF, with namespace corrected from Tesseract's ALTO 3.x output to `xmlns="http://schema.ccs-gmbh.com/ALTO"` and all word coordinates offset by the crop box (HPOS += crop_x, VPOS += crop_y) so they align with the original (uncropped) TIFF
+- [ ] **PREP-01**: Pipeline detects the rotation angle of each scan and corrects it before OCR; applied to every TIFF automatically
+- [ ] **PREP-02**: Detected rotation angle is logged per file in the result line (e.g. `[deskew: 1.4°]`), so the operator can audit which files were corrected
+- [ ] **PREP-03**: If deskew fails or produces an implausible result, the pipeline falls back to the original orientation and logs a warning; the batch continues
 
-### Batch
+### Image Preprocessing — Adaptive Thresholding
 
-- [x] **BATC-01**: Tool processes all TIFFs in the input folder in parallel using ProcessPoolExecutor; worker count defaults to `min(os.cpu_count(), 4)` and is overridable via CLI
-- [x] **BATC-02**: Tool skips a TIFF if the corresponding ALTO XML already exists in the output directory (idempotent reruns); skipping is bypassed when `--force` is passed
-- [x] **BATC-03**: A single TIFF that raises an error during processing does not abort the batch; remaining files continue processing
-- [x] **BATC-04**: Tool writes a run error log recording each failed file's path, exception type, error message, and stack trace
+- [ ] **PREP-04**: Pipeline applies adaptive thresholding (Gaussian block-based) to improve binarization on scans with uneven illumination before OCR
+- [ ] **PREP-05**: Adaptive thresholding is opt-in via `--adaptive-threshold` flag (off by default); deskew is always applied
 
-### CLI
+## Future Requirements
 
-- [x] **CLI-01**: Tool accepts `--input DIR` (folder containing TIFFs) and `--output DIR` (folder for ALTO output); creates output directory if it does not exist
-- [x] **CLI-02**: Tool accepts `--workers N` to set parallel worker count; defaults to `min(os.cpu_count(), 4)` with documented memory guidance
-- [x] **CLI-03**: Tool accepts `--force` flag to reprocess TIFFs that already have ALTO XML output
-- [x] **CLI-04**: Tool accepts `--lang LANG` (default `deu`), `--padding PX` (default 50), and `--psm N` (default 1) to control OCR language, crop padding, and Tesseract page segmentation mode
-- [x] **CLI-05**: Tool validates at startup that Tesseract is installed and the requested language pack is available; exits with a clear error message if either is missing
-
-### Validation & Reporting
-
-- [x] **VALD-01**: Tool validates each ALTO XML output against the ALTO 2.1 XSD schema using lxml; logs schema violations per file without aborting the batch
-- [x] **VALD-02**: Tool checks that all word bounding boxes in each ALTO file fall within the page dimensions; logs coordinate violations per file without aborting
-- [x] **VALD-03**: Tool writes a per-run summary report as JSON containing for each file: input path, output path, processing duration (seconds), word count, and error status
-
-## v2 Requirements
-
-### Image Preprocessing
-
-- **PREP-01**: Deskew detection — detect and correct slight scan rotation before OCR (OpenCV Hough transform or scikit-image `determine_skew`)
-- **PREP-02**: Adaptive thresholding — improve binarization for uneven scan illumination before OCR
-
-### Operational
+### Operator Experience
 
 - **OPER-01**: Dry run mode (`--dry-run`) — show what would be processed without executing
 - **OPER-02**: Verbose logging (`--verbose`) — per-file Tesseract output and timing details
@@ -57,40 +35,27 @@
 
 | Feature | Reason |
 |---------|--------|
-| GUI or web interface | CLI batch tool only; GUI adds complexity with no batch benefit |
+| GUI or web interface | CLI batch tool only |
 | PDF input | Input is TIFF only per project spec |
-| Database tracking of processed files | Disk-based skip logic (file existence) is sufficient and simpler |
-| Multi-language OCR in a single run | Single language per run; `--lang` flag covers edge cases |
+| Multi-language OCR per run | Single language per run; `--lang` flag covers edge cases |
+| Cloud or distributed processing | Local CLI tool |
+| Saving preprocessed images as deliverables | Preprocessing is intermediate only; originals stay untouched |
 | Image quality scoring | Out of scope; quality judged by downstream Goobi operator review |
-| Cloud or distributed processing | Local CLI tool; hundreds of files is manageable on a single machine |
-| Saving cropped TIFFs as deliverables | Crop is intermediate only; originals stay untouched per project requirement |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PIPE-01 | Phase 1 | Complete |
-| PIPE-02 | Phase 1 | Complete |
-| PIPE-03 | Phase 1 | Complete |
-| PIPE-04 | Phase 1 | Complete |
-| BATC-01 | Phase 2 | Complete |
-| BATC-02 | Phase 2 | Complete |
-| BATC-03 | Phase 2 | Complete |
-| BATC-04 | Phase 2 | Complete |
-| CLI-01 | Phase 2 | Complete |
-| CLI-02 | Phase 2 | Complete |
-| CLI-03 | Phase 2 | Complete |
-| CLI-04 | Phase 2 | Complete |
-| CLI-05 | Phase 2 | Complete |
-| VALD-01 | Phase 3 | Complete |
-| VALD-02 | Phase 3 | Complete |
-| VALD-03 | Phase 3 | Complete |
+| PREP-01 | TBD | Pending |
+| PREP-02 | TBD | Pending |
+| PREP-03 | TBD | Pending |
+| PREP-04 | TBD | Pending |
+| PREP-05 | TBD | Pending |
 
 **Coverage:**
-- v1 requirements: 16 total
-- Mapped to phases: 16
-- Unmapped: 0 ✓
+- v1.2 requirements: 5 total
+- Mapped to phases: 0 (roadmap pending)
+- Unmapped: 5 ⚠️
 
 ---
-*Requirements defined: 2026-02-24*
-*Last updated: 2026-02-24 after 02-01 completion (BATC-03, BATC-04, CLI-05 complete)*
+*Requirements defined: 2026-02-25*
