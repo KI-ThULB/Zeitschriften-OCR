@@ -7,9 +7,9 @@
 
 ### Image Preprocessing — Deskew
 
-- [ ] **PREP-01**: Pipeline detects the rotation angle of each scan and corrects it before OCR; applied to every TIFF automatically
-- [ ] **PREP-02**: Detected rotation angle is logged per file in the result line (e.g. `[deskew: 1.4°]`), so the operator can audit which files were corrected
-- [ ] **PREP-03**: If deskew fails or produces an implausible result, the pipeline falls back to the original orientation and logs a warning; the batch continues
+- [x] **PREP-01**: Pipeline detects the rotation angle of each scan and corrects it before OCR; applied to every TIFF automatically
+- [x] **PREP-02**: Detected rotation angle is logged per file in the result line (e.g. `[deskew: 1.4°]`), so the operator can audit which files were corrected
+- [x] **PREP-03**: If deskew fails or produces an implausible result, the pipeline falls back to the original orientation and logs a warning; the batch continues
 
 ### Image Preprocessing — Adaptive Thresholding
 
@@ -46,9 +46,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PREP-01 | Phase 4 | Pending |
-| PREP-02 | Phase 4 | Pending |
-| PREP-03 | Phase 4 | Pending |
+| PREP-01 | Phase 4 | Complete |
+| PREP-02 | Phase 4 | Complete |
+| PREP-03 | Phase 4 | Complete |
 | PREP-04 | Phase 5 | Pending |
 | PREP-05 | Phase 5 | Pending |
 

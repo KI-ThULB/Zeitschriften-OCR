@@ -31,7 +31,7 @@ See archive: `.planning/milestones/v1.1-ROADMAP.md`
 
 **Milestone Goal:** Improve OCR accuracy on imperfect archival scans by adding deskew correction and adaptive thresholding as preprocessing steps before OCR.
 
-- [ ] **Phase 4: Deskew** — Detect and correct scan rotation before OCR, with per-file angle logging and safe fallback
+- [x] **Phase 4: Deskew** — Detect and correct scan rotation before OCR, with per-file angle logging and safe fallback (completed 2026-02-25)
 - [ ] **Phase 5: Adaptive Thresholding** — Add opt-in Gaussian adaptive binarization for scans with uneven illumination
 
 ## Phase Details
@@ -67,5 +67,5 @@ Plans:
 | 1. Single-File Pipeline | v1.0 | 2/2 | Complete | 2026-02-24 |
 | 2. Batch Orchestration and CLI | v1.1 | 2/2 | Complete | 2026-02-24 |
 | 3. Validation and Reporting | v1.1 | 2/2 | Complete | 2026-02-25 |
-| 4. Deskew | v1.2 | 0/1 | Not started | - |
+| 4. Deskew | 1/1 | Complete   | 2026-02-25 | - |
 | 5. Adaptive Thresholding | v1.2 | 0/? | Not started | - |
