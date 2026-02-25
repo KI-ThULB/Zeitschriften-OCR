@@ -22,6 +22,7 @@ from lxml import etree
 from PIL import Image
 
 import pytesseract
+from deskew import determine_skew
 
 # ---------------------------------------------------------------------------
 # Namespace constants
@@ -34,6 +35,8 @@ POSITIONAL_TAGS = {
     'Page', 'PrintSpace', 'ComposedBlock', 'TextBlock',
     'TextLine', 'String', 'SP', 'Illustration', 'GraphicalElement',
 }
+
+DESKEW_MAX_ANGLE = 10.0   # degrees — corrections above this are treated as implausible
 
 # ---------------------------------------------------------------------------
 # Foundation functions
@@ -64,6 +67,57 @@ def load_tiff(path: Path) -> tuple[Image.Image, tuple[float, float], list[str]]:
         dpi = (float(raw_dpi[0]), float(raw_dpi[1]))
 
     return img, dpi, warnings
+
+
+def deskew_image(
+    image: Image.Image,
+    max_angle: float = DESKEW_MAX_ANGLE,
+) -> tuple[Image.Image, 'float | None', bool]:
+    """Detect and correct scan skew using Hough line transform.
+
+    Args:
+        image: PIL Image of the scan (any mode; converted to grayscale internally)
+        max_angle: Maximum plausible correction angle in degrees (default: DESKEW_MAX_ANGLE).
+                   Angles above this are treated as detection failures.
+
+    Returns:
+        corrected: PIL Image — rotated if angle is plausible, original otherwise
+        angle: Detected angle in degrees (float), or None if detection failed
+        fallback_used: True if original image is returned (detection failed OR
+                       angle exceeded max_angle)
+    """
+    # determine_skew() requires a grayscale numpy array
+    gray = np.array(image.convert('L'))
+
+    try:
+        angle = determine_skew(gray)
+    except Exception:
+        # Library raised unexpectedly — treat as detection failure
+        return image, None, True
+
+    # Case 1: detection returned None (no dominant angle found)
+    if angle is None:
+        return image, None, True
+
+    # Case 2: angle is implausible (likely misdetection on border/illustration)
+    if abs(angle) > max_angle:
+        return image, angle, True
+
+    # Case 3: angle is zero or near-zero — skip rotation to avoid resampling artifact
+    if abs(angle) < 0.05:
+        return image, angle, False
+
+    # Case 4: apply correction
+    # expand=True avoids cropping content; fill color matched to image mode
+    # resample=Image.Resampling.BICUBIC preserves text sharpness better than BILINEAR
+    fill = 255 if image.mode == 'L' else (255, 255, 255) if image.mode == 'RGB' else 255
+    corrected = image.rotate(
+        angle,
+        expand=True,
+        fillcolor=fill,
+        resample=Image.Resampling.BICUBIC,
+    )
+    return corrected, angle, False
 
 
 def detect_crop_box(
