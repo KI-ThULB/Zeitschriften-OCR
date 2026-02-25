@@ -45,7 +45,11 @@ Plans:
   1. Each ALTO output file is validated against the ALTO 2.1 XSD schema; violations are logged per file without aborting the batch
   2. Each ALTO file is checked for word bounding boxes that exceed the page dimensions; violations are logged per file without aborting
   3. After a batch run, a JSON summary report exists containing for each file: input path, output path, processing duration (seconds), word count, and error status
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Bundle namespace-adapted ALTO 2.1 XSD + add load_xsd(), validate_alto_file(), _check_coordinates(), validate_batch() to pipeline.py
+- [ ] 03-02-PLAN.md — Extend run_batch() to collect per-file records, add write_report(), wire validation pass and --validate-only into main()
 
 ## Progress
 
