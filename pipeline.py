@@ -11,11 +11,10 @@ import subprocess
 import sys
 import time
 import traceback
+from collections import deque
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
-
-from tqdm import tqdm
 
 import cv2
 import numpy as np
@@ -712,6 +711,67 @@ def write_report(
     return report_path
 
 
+class ProgressTracker:
+    """In-place progress line on stderr for batch OCR.
+
+    Suppressed when active=False (verbose mode or non-TTY stderr).
+    Caller must not create the tracker when to_process is empty.
+
+    Usage:
+        tracker = ProgressTracker(total=len(to_process), active=active)
+        tracker.start()                   # print initial 0/total line
+        tracker.update(duration_seconds)  # call after each file completes
+        tracker.clear()                   # call before Done summary line
+    """
+
+    _WINDOW = 10  # rolling window size for ETA average
+
+    def __init__(self, total: int, active: bool) -> None:
+        self.total = total
+        self.active = active
+        self.done = 0
+        self._times: deque = deque(maxlen=self._WINDOW)
+        self._last_width = 0
+
+    def start(self) -> None:
+        """Print initial 0/total line so single-file batches show progress."""
+        if not self.active:
+            return
+        self._render()
+
+    def update(self, duration: float) -> None:
+        if not self.active:
+            return
+        self.done += 1
+        self._times.append(duration)
+        self._render()
+
+    def _eta_str(self) -> str:
+        if len(self._times) < 3:
+            return "calculating..."
+        remaining = self.total - self.done
+        avg = sum(self._times) / len(self._times)
+        secs = int(avg * remaining)
+        if secs >= 60:
+            return f"{secs // 60}m {secs % 60}s"
+        return f"{secs}s"
+
+    def _render(self) -> None:
+        pct = int(self.done / self.total * 100)
+        line = f"[{self.done}/{self.total} {pct}%] ETA: {self._eta_str()}"
+        # Pad to previous width to erase leftover characters when line shrinks
+        padded = line.ljust(self._last_width)
+        self._last_width = len(line)
+        sys.stderr.write(f"\r{padded}")
+        sys.stderr.flush()
+
+    def clear(self) -> None:
+        if not self.active:
+            return
+        sys.stderr.write(f"\r{' ' * self._last_width}\r")
+        sys.stderr.flush()
+
+
 def run_batch(
     tiff_files: list,
     output_dir: Path,
@@ -759,9 +819,21 @@ def run_batch(
     # BATC-01: ProcessPoolExecutor — process-based parallelism bypasses GIL
     # BATC-03: submit() + as_completed() isolates per-file failures
     # NOTE: process_tiff() must NOT call sys.exit() (fixed in Plan 01) — it must raise
+
+    # Determine if progress line should be active:
+    #   - suppressed in verbose mode (verbose blocks conflict with \r overwrite)
+    #   - suppressed when stderr is not a TTY (piped — \r in logs is garbage)
+    #   - suppressed when nothing to process (all skipped): avoids ZeroDivisionError
+    #     in _render() and matches user decision "0 files to process → skip to Done"
+    show_progress = (not verbose) and sys.stderr.isatty() and len(to_process) > 0
+    tracker = ProgressTracker(total=len(to_process), active=show_progress)
+    tracker.start()
+
     with ProcessPoolExecutor(max_workers=workers) as executor:
-        futures = {
-            executor.submit(
+        futures: dict = {}
+        submit_times: dict = {}
+        for tiff_path in to_process:
+            fut = executor.submit(
                 process_tiff,
                 tiff_path,
                 output_dir,
@@ -770,50 +842,50 @@ def run_batch(
                 padding,
                 False,              # no_crop — no --no-crop flag exists yet
                 adaptive_threshold,
-                verbose,            # NEW — Phase 6 (OPER-02)
-            ): tiff_path
-            for tiff_path in to_process
-        }
-        # tqdm wraps the as_completed iterator; total= is required (as_completed has no __len__)
-        with tqdm(total=len(futures), unit='file', desc='OCR') as pbar:
-            for fut in as_completed(futures):
-                tiff_path = futures[fut]
-                try:
-                    fut.result()
-                    processed += 1
-                    out_path = output_dir / 'alto' / (tiff_path.stem + '.xml')
-                    # Count words from the written ALTO file
-                    try:
-                        alto_root = etree.parse(str(out_path)).getroot()
-                        wc = count_words(alto_root, ALTO21_NS)
-                    except Exception:
-                        wc = None
-                    file_records.append({
-                        'input_path': str(tiff_path),
-                        'output_path': str(out_path),
-                        'duration_seconds': None,  # process_tiff() prints timing but does not return it
-                        'word_count': wc,
-                        'error_status': 'ok',
-                    })
-                except Exception as e:
-                    # BATC-04: Collect per-file error with full traceback
-                    # traceback.format_exc() captures the _RemoteTraceback chain from the worker
-                    errors.append({
-                        'file': str(tiff_path),
-                        'exc_type': type(e).__name__,
-                        'exc_message': str(e),
-                        'traceback': traceback.format_exc(),
-                    })
-                    file_records.append({
-                        'input_path': str(tiff_path),
-                        'output_path': None,
-                        'duration_seconds': None,
-                        'word_count': None,
-                        'error_status': 'failed',
-                    })
-                finally:
-                    pbar.update(1)
+                verbose,            # Phase 6 (OPER-02)
+            )
+            futures[fut] = tiff_path
+            submit_times[fut] = time.monotonic()
 
+        for fut in as_completed(futures):
+            tiff_path = futures[fut]
+            duration = time.monotonic() - submit_times[fut]
+            try:
+                fut.result()
+                processed += 1
+                out_path = output_dir / 'alto' / (tiff_path.stem + '.xml')
+                # Count words from the written ALTO file
+                try:
+                    alto_root = etree.parse(str(out_path)).getroot()
+                    wc = count_words(alto_root, ALTO21_NS)
+                except Exception:
+                    wc = None
+                file_records.append({
+                    'input_path': str(tiff_path),
+                    'output_path': str(out_path),
+                    'duration_seconds': round(duration, 2),
+                    'word_count': wc,
+                    'error_status': 'ok',
+                })
+            except Exception as e:
+                # BATC-04: Collect per-file error with full traceback
+                # traceback.format_exc() captures the _RemoteTraceback chain from the worker
+                errors.append({
+                    'file': str(tiff_path),
+                    'exc_type': type(e).__name__,
+                    'exc_message': str(e),
+                    'traceback': traceback.format_exc(),
+                })
+                file_records.append({
+                    'input_path': str(tiff_path),
+                    'output_path': None,
+                    'duration_seconds': round(duration, 2),
+                    'word_count': None,
+                    'error_status': 'failed',
+                })
+            tracker.update(duration)
+
+    tracker.clear()
     return processed, skipped, errors, file_records
 
 
