@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A batch processing pipeline for digitized journal and magazine scans. It takes several hundred large archival TIFF files (117–240 MB each), automatically deskews and crops each scan, runs Tesseract OCR in parallel, validates the output against the ALTO 2.1 XSD schema, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems and display in the DFG Viewer.
+A batch processing pipeline for digitized journal and magazine scans. It takes several hundred large archival TIFF files (117–240 MB each), automatically deskews and crops each scan, runs Tesseract OCR in parallel, validates the output against the ALTO 2.1 XSD schema, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems and display in the DFG Viewer. Operators can monitor long runs with a live progress line and ETA, inspect behaviour with dry-run and verbose modes, and persist flag defaults in a JSON config file.
 
 ## Core Value
 
@@ -21,16 +21,17 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - ✓ Full batch CLI (`--input DIR`, `--output DIR`, `--workers`, `--force`, `--lang`, `--padding`, `--psm`) — v1.1
 - ✓ Validate ALTO 2.1 output against bundled XSD schema per file — v1.1
 - ✓ Per-run JSON summary report with coordinate sanity check and `--validate-only` flag — v1.1
-
 - ✓ Detect and correct scan rotation (deskew) before OCR; angle logged per file — v1.2
 - ✓ Apply opt-in adaptive Gaussian thresholding for scans with uneven illumination (`--adaptive-threshold`) — v1.2
+- ✓ `--dry-run` flag lists every TIFF that would be processed and every TIFF that would be skipped, then exits without running OCR — v1.3
+- ✓ `--verbose` flag prints Tesseract stdout/stderr and per-stage wall-clock timing (deskew, crop, OCR, write) for each processed file — v1.3
+- ✓ Live progress line during batch: files completed / total / percentage / ETA (rolling average) — v1.3
+- ✓ `--config PATH` loads CLI flag defaults from a JSON file; CLI flags always override config values — v1.3
+- ✓ Missing or invalid `--config` file exits with a clear error before any TIFF is processed — v1.3
 
 ### Active
 
-- [ ] `--dry-run` flag: print would-process and would-skip file lists, then exit without running OCR
-- [ ] `--verbose` flag: print Tesseract stdout/stderr and per-stage timing (deskew, crop, OCR) for each processed file
-- [ ] Live progress display during batch: files completed / total / percentage / ETA
-- [ ] `--config PATH` flag: load CLI flag defaults from a JSON file; command-line flags override config values
+(No active requirements — define next milestone requirements with `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -47,7 +48,7 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - Scan border issue: scanner bed artifacts need algorithmic removal before OCR
 - Target system: DFG Viewer / Goobi / Kitodo — requires ALTO 2.1 XML with word-level coordinates
 - Platform: macOS development (must also run on Linux servers for batch production)
-- Current codebase: 873 lines Python (`pipeline.py`) + `schemas/alto-2-1.xsd`; 6 pinned dependencies (added `deskew>=1.5.0`)
+- Current codebase: 1,146 lines Python (`pipeline.py`) + `schemas/alto-2-1.xsd`; 5 pinned dependencies (removed `tqdm`, replaced by `ProgressTracker`); 21 tests in `tests/`
 
 ## Constraints
 
@@ -77,20 +78,15 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 | `DESKEW_MAX_ANGLE = 10.0` named constant | Archival periodical skew is under 5°; 10° gate catches misdetections without being too aggressive | ✓ Good — tunable if corpus changes |
 | `--adaptive-threshold` opt-in (off by default) | Default pipeline behavior preserved; operator enables only for problematic scans | ✓ Good — PREP-05 requirement satisfied |
 | `ADAPTIVE_BLOCK_SIZE = 51`, `ADAPTIVE_C = 10` as named constants | Starting values for corpus tuning; named constants make them adjustable without code search | ○ Pending empirical tuning against real scans |
+| `ProgressTracker` class over `tqdm` | Native implementation; avoids external dependency and output corruption with `--verbose` multi-line blocks; `tqdm` removed from requirements | ✓ Good — rolling 10-file ETA, clean `\r` overwrite |
+| `show_progress` guard: `(not verbose) and sys.stderr.isatty() and len(to_process) > 0` | Prevents progress line in verbose mode, piped stderr, and empty batches (avoids ZeroDivisionError in `_render()`) | ✓ Good — all suppression cases handled correctly |
+| Two-pass argparse for `--config` | `parse_known_args()` extracts config path before main parser is built; `set_defaults()` injects values so CLI flags auto-override via argparse precedence | ✓ Good — zero custom merge logic needed |
+| Config key naming matches argparse `dest` names | No translation layer; operators use same names as CLI flag arguments (`lang`, `psm`, `dry_run`) | ✓ Good — minimal cognitive overhead |
+| `Error:` prefix (not `ERROR:`) for config errors | Locked in CONTEXT.md; consistent with operator-facing messages rather than internal debug style | ✓ Good — applied throughout load_config() |
 
 ## Known Technical Debt
 
 - `ADAPTIVE_BLOCK_SIZE = 51` and `ADAPTIVE_C = 10` are informed starting points; empirical tuning against real Zeitschriften corpus scans is recommended before batch production with `--adaptive-threshold`.
 
-## Current Milestone: v1.3 Operator Experience
-
-**Goal:** Make long batch runs observable and configurable — progress visibility, dry-run preview, verbose diagnostics, and JSON config file support.
-
-**Target features:**
-- `--dry-run`: preview what would be processed/skipped without running OCR
-- `--verbose`: per-stage timing + Tesseract output per file
-- Live progress: count / percentage / ETA during batch
-- `--config PATH`: JSON config file for persistent flag defaults
-
 ---
-*Last updated: 2026-02-25 after v1.2 milestone, v1.3 started*
+*Last updated: 2026-02-26 after v1.3 milestone*
