@@ -43,6 +43,18 @@ ADAPTIVE_BLOCK_SIZE = 51   # odd integer >= 3; at 300 DPI ≈ 4.3mm neighbourhoo
 ADAPTIVE_C = 10            # constant subtracted from local Gaussian mean; positive = raise threshold
                            # NEEDS empirical tuning against real Zeitschriften corpus scans
 
+# Type map for JSON config file keys — used by load_config()
+CONFIG_TYPES: dict[str, type] = {
+    'lang':          str,
+    'psm':           int,
+    'padding':       int,
+    'workers':       int,
+    'force':         bool,
+    'verbose':       bool,
+    'dry_run':       bool,
+    'validate_only': bool,
+}
+
 # ---------------------------------------------------------------------------
 # Foundation functions
 # ---------------------------------------------------------------------------
@@ -522,6 +534,51 @@ def write_error_log(output_dir: Path, errors: list[dict]) -> 'Path | None':
         for entry in errors:
             f.write(json.dumps(entry, ensure_ascii=False) + '\n')
     return log_path
+
+
+def load_config(path: Path) -> dict:
+    """Load and validate a JSON config file of flag defaults.
+
+    Returns a dict containing only the known keys from CONFIG_TYPES.
+    Unknown keys emit a warning to stderr but do not abort.
+    Missing file, invalid JSON, or wrong-typed values exit with code 1.
+
+    Args:
+        path: Path to the JSON config file.
+
+    Returns:
+        Validated dict with only known keys and correctly typed values.
+    """
+    if not path.exists():
+        print(f"Error: config file not found: {path}", file=sys.stderr)
+        sys.exit(1)
+    try:
+        raw = json.loads(path.read_text(encoding='utf-8'))
+    except json.JSONDecodeError as e:
+        print(f"Error: config file contains invalid JSON: {e}", file=sys.stderr)
+        sys.exit(1)
+    validated = {}
+    for key, value in raw.items():
+        if key not in CONFIG_TYPES:
+            print(f"[WARN: unknown config key '{key}']", file=sys.stderr)
+            continue
+        expected = CONFIG_TYPES[key]
+        if expected is int:
+            # bool is a subclass of int in Python — reject booleans for int-typed keys
+            if not isinstance(value, int) or isinstance(value, bool):
+                print(
+                    f"Error: config key '{key}' expects int, got {type(value).__name__}",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+        elif not isinstance(value, expected):
+            print(
+                f"Error: config key '{key}' expects {expected.__name__}, got {type(value).__name__}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        validated[key] = value
+    return validated
 
 
 # ---------------------------------------------------------------------------
