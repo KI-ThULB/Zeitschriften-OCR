@@ -7,6 +7,7 @@ Usage:
 import argparse
 import json
 import os
+import subprocess
 import sys
 import time
 import traceback
@@ -220,7 +221,13 @@ def detect_crop_box(
 # OCR and ALTO XML functions
 # ---------------------------------------------------------------------------
 
-def run_ocr(image: Image.Image, lang: str = 'deu', psm: int = 1, dpi: int = 300) -> bytes:
+def run_ocr(
+    image: Image.Image,
+    lang: str = 'deu',
+    psm: int = 1,
+    dpi: int = 300,
+    capture_output: bool = False,
+) -> tuple[bytes, str]:
     """Run Tesseract OCR on a PIL Image and return raw ALTO XML bytes.
 
     Args:
@@ -228,13 +235,41 @@ def run_ocr(image: Image.Image, lang: str = 'deu', psm: int = 1, dpi: int = 300)
         lang: Tesseract language code (default: 'deu')
         psm: Page segmentation mode (default: 1 — auto with OSD)
         dpi: DPI to pass to Tesseract via --dpi config flag
+        capture_output: If True, run Tesseract via subprocess to capture stdout/stderr.
+                        Returns (alto_bytes, tess_stderr_text).
 
     Returns:
-        ALTO XML as bytes (UTF-8)
+        (alto_bytes, tess_text): ALTO XML as bytes (UTF-8) and captured Tesseract
+        stdout/stderr string (empty string when capture_output=False).
     """
-    config = f'--psm {psm} --dpi {dpi}'
-    result = pytesseract.image_to_alto_xml(image, lang=lang, config=config)
-    return result if isinstance(result, bytes) else result.encode('utf-8')
+    if capture_output:
+        import tempfile as _tempfile
+        with _tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            image.save(tmp_path)
+            proc = subprocess.run(
+                ['tesseract', tmp_path, 'stdout',
+                 '-l', lang,
+                 '--psm', str(psm),
+                 '--dpi', str(dpi),
+                 'alto'],
+                capture_output=True,
+            )
+            alto_bytes = proc.stdout if proc.stdout else b''
+            tess_text = proc.stderr.decode('utf-8', errors='replace').strip()
+            if not alto_bytes:
+                # Tesseract reported an error — fall back to pytesseract path
+                config = f'--psm {psm} --dpi {dpi}'
+                result = pytesseract.image_to_alto_xml(image, lang=lang, config=config)
+                alto_bytes = result if isinstance(result, bytes) else result.encode('utf-8')
+        finally:
+            os.unlink(tmp_path)
+        return alto_bytes, tess_text
+    else:
+        config = f'--psm {psm} --dpi {dpi}'
+        result = pytesseract.image_to_alto_xml(image, lang=lang, config=config)
+        return (result if isinstance(result, bytes) else result.encode('utf-8')), ''
 
 
 def build_alto21(alto_bytes: bytes, crop_box: tuple[int, int, int, int]) -> bytes:
@@ -321,11 +356,14 @@ def process_tiff(
     padding: int,
     no_crop: bool,
     adaptive_threshold: bool,        # NEW — Phase 5 (PREP-04 / PREP-05)
+    verbose: bool = False,           # NEW — Phase 6 (OPER-02)
 ) -> None:
     """Process a single TIFF file through the full OCR pipeline.
 
     Loads the TIFF, optionally detects the crop box, runs OCR, converts to
     ALTO 2.1 XML, writes output, and prints a single result line to stdout.
+    With verbose=True, also prints per-stage wall-clock timing and Tesseract
+    stdout/stderr after the result line.
 
     Args:
         tiff_path: Path to the input TIFF file
@@ -335,6 +373,7 @@ def process_tiff(
         padding: Padding pixels for crop box detection
         no_crop: If True, bypass border detection and use full image bounds
         adaptive_threshold: If True, apply adaptive Gaussian thresholding after deskew and before crop
+        verbose: If True, print per-stage timing and Tesseract stdout/stderr after result line
     """
     warnings_list: list[str] = []
     deskew_str = ''
@@ -346,7 +385,10 @@ def process_tiff(
         warnings_list.extend(load_warnings)
 
         # Deskew step (PREP-01: applied to every TIFF automatically)
+        t_deskew_start = time.monotonic()
         img, deskew_angle, deskew_fallback = deskew_image(img)
+        t_deskew = time.monotonic() - t_deskew_start
+
         if deskew_fallback:
             if deskew_angle is None:
                 warnings_list.append('deskew: detection failed, using original orientation')
@@ -358,6 +400,9 @@ def process_tiff(
         else:
             # PREP-02: angle annotation appears in result line for every successful correction
             deskew_str = f'[deskew: {deskew_angle:.1f}\u00b0]'
+
+        # Crop stage: adaptive threshold + crop box detection + image.crop()
+        t_crop_start = time.monotonic()
 
         # Adaptive threshold step (PREP-04 / PREP-05: opt-in only)
         if adaptive_threshold:
@@ -371,17 +416,23 @@ def process_tiff(
             if fallback:
                 warnings_list.append('crop fallback, using full image')
 
-        # Crop and OCR
         cropped = img.crop(crop_box)
-        alto_bytes = run_ocr(cropped, lang=lang, psm=psm, dpi=int(dpi[0]))
+        t_crop = time.monotonic() - t_crop_start
 
-        # Build ALTO 2.1 XML with crop offset applied
+        # OCR stage: run_ocr() + build_alto21()
+        t_ocr_start = time.monotonic()
+        alto_bytes, tess_output = run_ocr(
+            cropped, lang=lang, psm=psm, dpi=int(dpi[0]), capture_output=verbose
+        )
         alto_out = build_alto21(alto_bytes, crop_box)
+        t_ocr = time.monotonic() - t_ocr_start
 
-        # Write output
+        # Write stage: write ALTO XML bytes to disk
+        t_write_start = time.monotonic()
         out_path = output_dir / 'alto' / (tiff_path.stem + '.xml')
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_bytes(alto_out)
+        t_write = time.monotonic() - t_write_start
 
         # Word count
         root = etree.fromstring(alto_out)
@@ -395,6 +446,20 @@ def process_tiff(
 
         deskew_suffix = (' ' + deskew_str) if deskew_str else ''
         print(f"{tiff_path.name} \u2192 {out_path} ({elapsed:.1f}s, {word_count} words){deskew_suffix}{warn_str}")
+
+        # Verbose: per-stage timing + Tesseract stdout/stderr (Phase 6 OPER-02)
+        if verbose:
+            tess_display = tess_output if tess_output.strip() else ''
+            verbose_block = (
+                f"  deskew: {t_deskew:.2f}s\n"
+                f"  crop: {t_crop:.2f}s\n"
+                f"  ocr: {t_ocr:.2f}s\n"
+                f"  write: {t_write:.2f}s\n"
+                f"  tesseract stdout/stderr:\n"
+                f"    {tess_display}"
+            )
+            print(verbose_block)
+            print()  # blank line between file verbose blocks
 
     except Exception as e:
         print(f"ERROR: {tiff_path.name}: {e}", file=sys.stderr)
@@ -656,6 +721,7 @@ def run_batch(
     padding: int,
     force: bool,
     adaptive_threshold: bool,   # NEW — Phase 5
+    verbose: bool = False,      # NEW — Phase 6 (OPER-02)
 ) -> tuple:
     """Run OCR on all tiff_files in parallel using ProcessPoolExecutor.
 
@@ -695,7 +761,17 @@ def run_batch(
     # NOTE: process_tiff() must NOT call sys.exit() (fixed in Plan 01) — it must raise
     with ProcessPoolExecutor(max_workers=workers) as executor:
         futures = {
-            executor.submit(process_tiff, tiff_path, output_dir, lang, psm, padding, False, adaptive_threshold): tiff_path
+            executor.submit(
+                process_tiff,
+                tiff_path,
+                output_dir,
+                lang,
+                psm,
+                padding,
+                False,              # no_crop — no --no-crop flag exists yet
+                adaptive_threshold,
+                verbose,            # NEW — Phase 6 (OPER-02)
+            ): tiff_path
             for tiff_path in to_process
         }
         # tqdm wraps the as_completed iterator; total= is required (as_completed has no __len__)
@@ -776,6 +852,12 @@ def main() -> None:
         action='store_true',
         help='List TIFFs that would be processed and skipped, then exit without running OCR. '
              'Respects --force: with --force, all TIFFs appear in the would-process list.',
+    )
+    parser.add_argument(
+        '--verbose',
+        action='store_true',
+        help='Print per-stage wall-clock timing and Tesseract stdout/stderr for each processed file. '
+             'For clean output in verbose mode, use --workers 1.',
     )
     args = parser.parse_args()
 
@@ -861,6 +943,7 @@ def main() -> None:
     processed, skipped, errors, file_records = run_batch(
         tiff_files, args.output, n_workers, args.lang, args.psm, args.padding, args.force,
         args.adaptive_threshold,
+        args.verbose,           # NEW — Phase 6 (OPER-02)
     )
 
     # BATC-04: Write error log if any failures
