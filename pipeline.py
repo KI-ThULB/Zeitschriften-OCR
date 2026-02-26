@@ -951,6 +951,18 @@ def run_batch(
 # ---------------------------------------------------------------------------
 
 def main() -> None:
+    # Step 0: Pre-parse to extract --config before the full parse.
+    # parse_known_args() silently ignores all other flags — this only captures --config.
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument('--config', type=Path, default=None)
+    pre_args, _ = pre.parse_known_args()
+
+    # Load config and build the validated dict BEFORE constructing the full parser,
+    # so set_defaults() can inject values before parse_args() runs.
+    config_values: dict = {}
+    if pre_args.config is not None:
+        config_values = load_config(pre_args.config)  # exits on error (OPER-05)
+
     parser = argparse.ArgumentParser(
         description='Batch OCR: TIFF folder → ALTO 2.1 XML'
     )
@@ -988,6 +1000,18 @@ def main() -> None:
         help='Print per-stage wall-clock timing and Tesseract stdout/stderr for each processed file. '
              'For clean output in verbose mode, use --workers 1.',
     )
+    parser.add_argument(
+        '--config',
+        type=Path,
+        default=None,
+        metavar='PATH',
+        help='JSON file of flag defaults. CLI flags always override config values. '
+             'Keys must match argparse dest names (e.g. "lang", "dry_run").',
+    )
+    # Inject config values as new defaults — CLI flags (parse_args) take precedence.
+    # Precedence: explicit CLI flag > set_defaults() value > add_argument() default
+    if config_values:
+        parser.set_defaults(**config_values)
     args = parser.parse_args()
 
     # Resolve default workers at runtime (NOT at parse-time — avoids hardcoding on import)
@@ -999,6 +1023,17 @@ def main() -> None:
 
     # CLI-05: Startup validation — run BEFORE pool creation
     validate_tesseract(args.lang)
+
+    # NEW — Phase 8: verbose config summary (OPER-04)
+    if args.verbose and args.config is not None and config_values:
+        parts = []
+        for key, file_val in config_values.items():
+            cli_val = getattr(args, key)
+            if cli_val != file_val:
+                parts.append(f"{key}={file_val} \u2192 {cli_val} (CLI override)")
+            else:
+                parts.append(f"{key}={cli_val}")
+        print(f"Config: {', '.join(parts)} (from {args.config.name})")
 
     # CLI-01: Validate --input is a directory
     if not args.input.is_dir():
