@@ -71,7 +71,10 @@ Plans:
   1. During batch processing a single line is updated in-place each time a file completes, showing files-done / total-files / percentage
   2. The progress line shows an estimated time remaining that updates as each file completes
   3. The final progress line is cleared or resolved cleanly before the Done summary line is printed
-**Plans**: TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 07-01-PLAN.md — Add ProgressTracker class, integrate into run_batch(), remove tqdm (OPER-03)
 
 ### Phase 8: Config File Support
 **Goal**: Operators can persist flag defaults in a JSON file so repeated invocations don't require long command lines
