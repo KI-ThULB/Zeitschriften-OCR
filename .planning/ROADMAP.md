@@ -57,7 +57,11 @@ See archive: `.planning/milestones/v1.2-ROADMAP.md`
   2. Running with `--verbose` prints Tesseract stdout/stderr for each processed file to the terminal
   3. Running with `--verbose` prints four wall-clock timing lines per file: deskew, crop, OCR, and write stage durations
   4. `--dry-run` and `--verbose` can be combined with all existing flags (`--force`, `--lang`, `--workers`, etc.) without error
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Add --dry-run flag with two-section pre-flight output (OPER-01)
+- [ ] 06-02-PLAN.md — Add --verbose flag with per-stage timing and Tesseract output capture (OPER-02)
 
 ### Phase 7: Live Progress Display
 **Goal**: Operators running large batches can see how far along the job is and estimate when it will finish
