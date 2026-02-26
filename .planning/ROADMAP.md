@@ -93,6 +93,6 @@ Plans:
 | 3. Validation and Reporting | v1.1 | 2/2 | Complete | 2026-02-25 |
 | 4. Deskew | v1.2 | 1/1 | Complete | 2026-02-25 |
 | 5. Adaptive Thresholding | v1.2 | 1/1 | Complete | 2026-02-25 |
-| 6. Diagnostic Flags | 2/2 | Complete   | 2026-02-26 | - |
+| 6. Diagnostic Flags | 2/2 | Complete    | 2026-02-26 | - |
 | 7. Live Progress Display | v1.3 | 0/TBD | Not started | - |
 | 8. Config File Support | v1.3 | 0/TBD | Not started | - |
