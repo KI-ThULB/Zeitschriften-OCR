@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.3 Operator Experience — Phase 6: Diagnostic Flags
+**Current focus:** v1.3 Operator Experience — Phase 7: Live Progress Display
 
 ## Current Position
 
-Phase: 6 of 8 in v1.3 (Diagnostic Flags) — COMPLETE
-Plan: 2 of 2 in current phase
-Status: Phase complete — ready for Phase 7
-Last activity: 2026-02-26 — 06-02 (--verbose flag) complete
+Phase: 7 of 8 in v1.3 (Live Progress Display) — COMPLETE
+Plan: 1 of 1 in current phase
+Status: Phase complete — ready for Phase 8
+Last activity: 2026-02-26 — 07-01 (live progress display) complete
 
-Progress: [████████████░░░░░░░░] 56% (6 phases done, 2 plans in current phase)
+Progress: [██████████████░░░░░░] 63% (7 phases done, 1 plan in current phase)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: 2.2 min
-- Total execution time: 26 min
+- Total execution time: 28 min
 
 **By Phase:**
 
@@ -33,9 +33,10 @@ Progress: [████████████░░░░░░░░] 56% (6 
 | 4. Deskew | 1/1 | 6 min | 6 min |
 | 5. Adaptive Thresholding | 1/1 | 2 min | 2 min |
 | 6. Diagnostic Flags | 2/2 | 6 min | 3 min |
+| 7. Live Progress Display | 1/1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (2 min), 04-01 (6 min), 05-01 (2 min), 06-01 (2 min), 06-02 (4 min)
+- Last 5 plans: 04-01 (6 min), 05-01 (2 min), 06-01 (2 min), 06-02 (4 min), 07-01 (2 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -56,6 +57,9 @@ Recent decisions affecting current work:
 - [Phase 06-01]: dry-run skip-check replicates exact run_batch() condition: `if not args.force and out_path.exists()`
 - [Phase 06-diagnostic-flags]: run_ocr() returns tuple[bytes, str] in both modes — capture_output=False returns empty string as second element
 - [Phase 06-diagnostic-flags]: verbose_block built as single string and printed atomically to reduce stdout interleaving when workers > 1
+- [Phase 07-01]: tracker.update(duration) placed after try/except (not in finally) — both success and failure update rolling average
+- [Phase 07-01]: show_progress = (not verbose) and sys.stderr.isatty() and len(to_process) > 0 — three independent suppression conditions
+- [Phase 07-01]: submit_times dict provides accurate per-file duration even with parallel workers (captures queue wait + OCR time)
 
 ### Pending Todos
 
@@ -68,5 +72,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 06-02-PLAN.md (--verbose flag)
+Stopped at: Completed 07-01-PLAN.md (live progress display)
 Resume file: None

@@ -43,7 +43,7 @@ See archive: `.planning/milestones/v1.2-ROADMAP.md`
 **Milestone Goal:** Make long batch runs observable and configurable — progress visibility, dry-run preview, verbose diagnostics, and JSON config file support.
 
 - [x] **Phase 6: Diagnostic Flags** — Dry-run preview and verbose per-file timing without changing pipeline contract (completed 2026-02-26)
-- [ ] **Phase 7: Live Progress Display** — Real-time progress line (count / percentage / ETA) updated as each file completes
+- [x] **Phase 7: Live Progress Display** — Real-time progress line (count / percentage / ETA) updated as each file completes (completed 2026-02-26)
 - [ ] **Phase 8: Config File Support** — JSON config file loading with CLI override and robust error handling
 
 ## Phase Details
@@ -71,7 +71,7 @@ Plans:
   1. During batch processing a single line is updated in-place each time a file completes, showing files-done / total-files / percentage
   2. The progress line shows an estimated time remaining that updates as each file completes
   3. The final progress line is cleared or resolved cleanly before the Done summary line is printed
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 07-01-PLAN.md — Add ProgressTracker class, integrate into run_batch(), remove tqdm (OPER-03)
@@ -97,5 +97,5 @@ Plans:
 | 4. Deskew | v1.2 | 1/1 | Complete | 2026-02-25 |
 | 5. Adaptive Thresholding | v1.2 | 1/1 | Complete | 2026-02-25 |
 | 6. Diagnostic Flags | 2/2 | Complete    | 2026-02-26 | - |
-| 7. Live Progress Display | v1.3 | 0/TBD | Not started | - |
+| 7. Live Progress Display | 1/1 | Complete   | 2026-02-26 | - |
 | 8. Config File Support | v1.3 | 0/TBD | Not started | - |
