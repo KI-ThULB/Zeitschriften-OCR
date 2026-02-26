@@ -7,7 +7,7 @@
 
 ### Operator Experience
 
-- [ ] **OPER-01**: `--dry-run` flag lists every TIFF that would be processed and every TIFF that would be skipped (already has ALTO output), then exits without running OCR
+- [x] **OPER-01**: `--dry-run` flag lists every TIFF that would be processed and every TIFF that would be skipped (already has ALTO output), then exits without running OCR
 - [ ] **OPER-02**: `--verbose` flag prints Tesseract stdout/stderr and per-stage wall-clock timing (deskew, crop, OCR, write) for each processed file
 - [ ] **OPER-03**: During batch processing, a live progress line shows files completed, total count, percentage, and estimated time remaining (updated as each file completes)
 - [ ] **OPER-04**: `--config PATH` loads CLI flag defaults from a JSON file; any flag specified on the command line overrides the config value
@@ -42,7 +42,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| OPER-01 | Phase 6 | Pending |
+| OPER-01 | Phase 6 | Complete |
 | OPER-02 | Phase 6 | Pending |
 | OPER-03 | Phase 7 | Pending |
 | OPER-04 | Phase 8 | Pending |

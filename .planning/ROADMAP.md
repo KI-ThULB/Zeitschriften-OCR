@@ -57,7 +57,7 @@ See archive: `.planning/milestones/v1.2-ROADMAP.md`
   2. Running with `--verbose` prints Tesseract stdout/stderr for each processed file to the terminal
   3. Running with `--verbose` prints four wall-clock timing lines per file: deskew, crop, OCR, and write stage durations
   4. `--dry-run` and `--verbose` can be combined with all existing flags (`--force`, `--lang`, `--workers`, etc.) without error
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 06-01-PLAN.md — Add --dry-run flag with two-section pre-flight output (OPER-01)
@@ -93,6 +93,6 @@ Plans:
 | 3. Validation and Reporting | v1.1 | 2/2 | Complete | 2026-02-25 |
 | 4. Deskew | v1.2 | 1/1 | Complete | 2026-02-25 |
 | 5. Adaptive Thresholding | v1.2 | 1/1 | Complete | 2026-02-25 |
-| 6. Diagnostic Flags | v1.3 | 0/TBD | Not started | - |
+| 6. Diagnostic Flags | 1/2 | In Progress|  | - |
 | 7. Live Progress Display | v1.3 | 0/TBD | Not started | - |
 | 8. Config File Support | v1.3 | 0/TBD | Not started | - |

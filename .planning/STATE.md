@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 ## Current Position
 
 Phase: 6 of 8 in v1.3 (Diagnostic Flags)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-25 — v1.3 roadmap created (phases 6–8)
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-26 — 06-01 (--dry-run) complete
 
 Progress: [██████████░░░░░░░░░░] 50% (5/8 phases complete across all milestones)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 2 min
-- Total execution time: 20 min
+- Total execution time: 22 min
 
 **By Phase:**
 
@@ -32,9 +32,10 @@ Progress: [██████████░░░░░░░░░░] 50% (5/
 | 3. Validation and Reporting | 2/2 | 6 min | 3 min |
 | 4. Deskew | 1/1 | 6 min | 6 min |
 | 5. Adaptive Thresholding | 1/1 | 2 min | 2 min |
+| 6. Diagnostic Flags | 1/TBD | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (2 min), 03-01 (4 min), 03-02 (2 min), 04-01 (6 min), 05-01 (2 min)
+- Last 5 plans: 03-01 (4 min), 03-02 (2 min), 04-01 (6 min), 05-01 (2 min), 06-01 (2 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -50,6 +51,9 @@ Recent decisions affecting current work:
 - executor.submit() + as_completed() — chosen for per-file error isolation; progress updates slot into this loop
 - [Phase 04-01]: Deskew before detect_crop_box() — ordering invariant; verbose timing must respect this order
 - [Phase 05-01]: ADAPTIVE_BLOCK_SIZE = 51, ADAPTIVE_C = 10 — need empirical tuning before production
+- [Phase 06-01]: validate_tesseract() runs before dry-run gate so operators get Tesseract errors even in dry-run mode
+- [Phase 06-01]: --verbose silently ignored in dry-run path (no OCR runs, nothing verbose to report)
+- [Phase 06-01]: dry-run skip-check replicates exact run_batch() condition: `if not args.force and out_path.exists()`
 
 ### Pending Todos
 
@@ -61,6 +65,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-25
-Stopped at: v1.3 roadmap written — Phase 6 (Diagnostic Flags) ready to plan
+Last session: 2026-02-26
+Stopped at: Completed 06-01-PLAN.md (--dry-run flag)
 Resume file: None
