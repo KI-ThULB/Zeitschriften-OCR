@@ -44,7 +44,7 @@ See archive: `.planning/milestones/v1.2-ROADMAP.md`
 
 - [x] **Phase 6: Diagnostic Flags** — Dry-run preview and verbose per-file timing without changing pipeline contract (completed 2026-02-26)
 - [x] **Phase 7: Live Progress Display** — Real-time progress line (count / percentage / ETA) updated as each file completes (completed 2026-02-26)
-- [ ] **Phase 8: Config File Support** — JSON config file loading with CLI override and robust error handling
+- [x] **Phase 8: Config File Support** — JSON config file loading with CLI override and robust error handling (completed 2026-02-26)
 
 ## Phase Details
 
@@ -85,7 +85,7 @@ Plans:
   2. Passing `--config missing.json` (file does not exist) prints a clear error message and exits before any TIFF is read or processed
   3. Passing `--config bad.json` (file exists but contains invalid JSON) prints a clear error message and exits before any TIFF is read or processed
   4. Omitting `--config` entirely leaves all existing default values unchanged; no backward-compatibility break
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 08-01-PLAN.md — Implement CONFIG_TYPES constant and load_config() with full TDD test suite (OPER-04, OPER-05)
@@ -102,4 +102,4 @@ Plans:
 | 5. Adaptive Thresholding | v1.2 | 1/1 | Complete | 2026-02-25 |
 | 6. Diagnostic Flags | 2/2 | Complete    | 2026-02-26 | - |
 | 7. Live Progress Display | 1/1 | Complete    | 2026-02-26 | - |
-| 8. Config File Support | 1/2 | In Progress|  | - |
+| 8. Config File Support | 2/2 | Complete   | 2026-02-26 | - |

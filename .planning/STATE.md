@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-25)
 
 ## Current Position
 
-Phase: 8 of 8 in v1.3 (Config File Support) — IN PROGRESS
-Plan: 1 of 2 complete (08-01 done)
-Status: Plan 08-01 complete — ready for Plan 08-02
-Last activity: 2026-02-26 — 08-01 (load_config() + CONFIG_TYPES) complete
+Phase: 8 of 8 in v1.3 (Config File Support) — COMPLETE
+Plan: 2 of 2 complete (08-01 and 08-02 done)
+Status: Phase 8 complete — v1.3 Operator Experience fully shipped
+Last activity: 2026-02-26 — 08-02 (--config flag wiring + integration tests) complete
 
-Progress: [████████████████░░░░] 75% (7 phases + 1 plan of phase 8 done)
+Progress: [████████████████████] 100% (all 8 phases complete)
 
 ## Performance Metrics
 
@@ -34,10 +34,10 @@ Progress: [████████████████░░░░] 75% (7 
 | 5. Adaptive Thresholding | 1/1 | 2 min | 2 min |
 | 6. Diagnostic Flags | 2/2 | 6 min | 3 min |
 | 7. Live Progress Display | 1/1 | 2 min | 2 min |
-| 8. Config File Support | 1/2 | 5 min | 5 min (1 plan) |
+| 8. Config File Support | 2/2 | 11 min | 5.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 05-01 (2 min), 06-01 (2 min), 06-02 (4 min), 07-01 (2 min), 08-01 (5 min)
+- Last 5 plans: 06-01 (2 min), 06-02 (4 min), 07-01 (2 min), 08-01 (5 min), 08-02 (6 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -64,6 +64,9 @@ Recent decisions affecting current work:
 - [Phase 08-01]: CONFIG_TYPES placed after ADAPTIVE_C block; load_config() placed between write_error_log() and load_xsd()
 - [Phase 08-01]: bool-for-int rejection: `not isinstance(value, int) or isinstance(value, bool)` — bool is subclass of int in Python
 - [Phase 08-01]: Error messages use "Error:" prefix (capital E, lowercase r) — locked decisions take precedence over validate_tesseract() "ERROR:" style
+- [Phase 08-02]: Two-pass pre-parse uses parse_known_args() silently ignoring all other flags — avoids reimplementing argparse logic
+- [Phase 08-02]: set_defaults() called before parse_args() — standard argparse mechanism giving CLI flags automatic precedence
+- [Phase 08-02]: Verbose config summary after validate_tesseract(), before is_dir() — only shows when run will actually proceed
 
 ### Pending Todos
 
@@ -76,5 +79,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 08-01-PLAN.md (load_config() with CONFIG_TYPES)
+Stopped at: Completed 08-02-PLAN.md (--config flag wiring + integration tests) — Phase 8 complete
 Resume file: None
