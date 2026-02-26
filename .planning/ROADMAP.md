@@ -102,4 +102,4 @@ Plans:
 | 5. Adaptive Thresholding | v1.2 | 1/1 | Complete | 2026-02-25 |
 | 6. Diagnostic Flags | 2/2 | Complete    | 2026-02-26 | - |
 | 7. Live Progress Display | 1/1 | Complete    | 2026-02-26 | - |
-| 8. Config File Support | 2/2 | Complete   | 2026-02-26 | - |
+| 8. Config File Support | 2/2 | Complete    | 2026-02-26 | - |
