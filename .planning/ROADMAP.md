@@ -85,7 +85,11 @@ Plans:
   2. Passing `--config missing.json` (file does not exist) prints a clear error message and exits before any TIFF is read or processed
   3. Passing `--config bad.json` (file exists but contains invalid JSON) prints a clear error message and exits before any TIFF is read or processed
   4. Omitting `--config` entirely leaves all existing default values unchanged; no backward-compatibility break
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Implement CONFIG_TYPES constant and load_config() with full TDD test suite (OPER-04, OPER-05)
+- [ ] 08-02-PLAN.md — Wire --config flag into main(): pre-parse, set_defaults, verbose summary, integration tests (OPER-04, OPER-05)
 
 ## Progress
 
