@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-25)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.3 Operator Experience — Phase 7: Live Progress Display
+**Current focus:** v1.3 Operator Experience — Phase 8: Config File Support
 
 ## Current Position
 
-Phase: 7 of 8 in v1.3 (Live Progress Display) — COMPLETE
-Plan: 1 of 1 in current phase
-Status: Phase complete — ready for Phase 8
-Last activity: 2026-02-26 — 07-01 (live progress display) complete
+Phase: 8 of 8 in v1.3 (Config File Support) — IN PROGRESS
+Plan: 1 of 2 complete (08-01 done)
+Status: Plan 08-01 complete — ready for Plan 08-02
+Last activity: 2026-02-26 — 08-01 (load_config() + CONFIG_TYPES) complete
 
-Progress: [██████████████░░░░░░] 63% (7 phases done, 1 plan in current phase)
+Progress: [████████████████░░░░] 75% (7 phases + 1 plan of phase 8 done)
 
 ## Performance Metrics
 
@@ -34,9 +34,10 @@ Progress: [██████████████░░░░░░] 63% (7 
 | 5. Adaptive Thresholding | 1/1 | 2 min | 2 min |
 | 6. Diagnostic Flags | 2/2 | 6 min | 3 min |
 | 7. Live Progress Display | 1/1 | 2 min | 2 min |
+| 8. Config File Support | 1/2 | 5 min | 5 min (1 plan) |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (6 min), 05-01 (2 min), 06-01 (2 min), 06-02 (4 min), 07-01 (2 min)
+- Last 5 plans: 05-01 (2 min), 06-01 (2 min), 06-02 (4 min), 07-01 (2 min), 08-01 (5 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -60,6 +61,9 @@ Recent decisions affecting current work:
 - [Phase 07-01]: tracker.update(duration) placed after try/except (not in finally) — both success and failure update rolling average
 - [Phase 07-01]: show_progress = (not verbose) and sys.stderr.isatty() and len(to_process) > 0 — three independent suppression conditions
 - [Phase 07-01]: submit_times dict provides accurate per-file duration even with parallel workers (captures queue wait + OCR time)
+- [Phase 08-01]: CONFIG_TYPES placed after ADAPTIVE_C block; load_config() placed between write_error_log() and load_xsd()
+- [Phase 08-01]: bool-for-int rejection: `not isinstance(value, int) or isinstance(value, bool)` — bool is subclass of int in Python
+- [Phase 08-01]: Error messages use "Error:" prefix (capital E, lowercase r) — locked decisions take precedence over validate_tesseract() "ERROR:" style
 
 ### Pending Todos
 
@@ -72,5 +76,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 07-01-PLAN.md (live progress display)
+Stopped at: Completed 08-01-PLAN.md (load_config() with CONFIG_TYPES)
 Resume file: None

@@ -85,7 +85,7 @@ Plans:
   2. Passing `--config missing.json` (file does not exist) prints a clear error message and exits before any TIFF is read or processed
   3. Passing `--config bad.json` (file exists but contains invalid JSON) prints a clear error message and exits before any TIFF is read or processed
   4. Omitting `--config` entirely leaves all existing default values unchanged; no backward-compatibility break
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 08-01-PLAN.md — Implement CONFIG_TYPES constant and load_config() with full TDD test suite (OPER-04, OPER-05)
@@ -102,4 +102,4 @@ Plans:
 | 5. Adaptive Thresholding | v1.2 | 1/1 | Complete | 2026-02-25 |
 | 6. Diagnostic Flags | 2/2 | Complete    | 2026-02-26 | - |
 | 7. Live Progress Display | 1/1 | Complete    | 2026-02-26 | - |
-| 8. Config File Support | v1.3 | 0/TBD | Not started | - |
+| 8. Config File Support | 1/2 | In Progress|  | - |
