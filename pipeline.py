@@ -771,6 +771,12 @@ def main() -> None:
         help='Apply adaptive Gaussian thresholding before OCR (improves results on scans '
              'with uneven illumination; off by default)',
     )
+    parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help='List TIFFs that would be processed and skipped, then exit without running OCR. '
+             'Respects --force: with --force, all TIFFs appear in the would-process list.',
+    )
     args = parser.parse_args()
 
     # Resolve default workers at runtime (NOT at parse-time — avoids hardcoding on import)
@@ -830,6 +836,26 @@ def main() -> None:
         sys.exit(0)
 
     print(f"Found {len(tiff_files)} TIFF(s) in {args.input}")
+
+    # --dry-run: pre-flight scan — list would-process / would-skip, then exit
+    if args.dry_run:
+        would_process = []
+        would_skip = []
+        for tiff_path in tiff_files:
+            out_path = args.output / 'alto' / (tiff_path.stem + '.xml')
+            if not args.force and out_path.exists():
+                would_skip.append(tiff_path.name)
+            else:
+                would_process.append(tiff_path.name)
+
+        print(f"Would process ({len(would_process)}):")
+        for name in would_process:
+            print(f"  {name}")
+        print(f"Would skip ({len(would_skip)}):")
+        for name in would_skip:
+            print(f"  {name} (output exists)")
+        print(f"Total: {len(would_process)} would be processed, {len(would_skip)} already done")
+        sys.exit(0)
 
     # Run batch
     processed, skipped, errors, file_records = run_batch(
