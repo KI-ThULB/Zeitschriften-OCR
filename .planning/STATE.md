@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 9 of 13 (Flask Foundation and Job State)
-Plan: 1 of 2 in current phase
-Status: In Progress
-Last activity: 2026-02-27 — Completed 09-01 (RED test suite for PROC-03 and PROC-04)
+Plan: 2 of 2 in current phase
+Status: Phase Complete
+Last activity: 2026-02-27 — Completed 09-02 (Flask server app.py, all 7 tests GREEN)
 
-Progress: [█░░░░░░░░░] 5% (v1.4 Phase 9 in progress, 1/2 plans done)
+Progress: [██░░░░░░░░] 10% (v1.4 Phase 9 complete, 2/2 plans done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 2.5 min
-- Total execution time: 28 min
+- Total plans completed: 12
+- Average duration: 2.4 min
+- Total execution time: 29 min
 
 **By Phase:**
 
@@ -40,7 +40,7 @@ Progress: [█░░░░░░░░░] 5% (v1.4 Phase 9 in progress, 1/2 pla
 - Last 5 plans: 06-01 (2 min), 06-02 (4 min), 07-01 (2 min), 08-01 (5 min), 08-02 (6 min)
 - Trend: stable
 
-| 9. Flask Foundation and Job State | 1/2 | 2 min | 2 min |
+| 9. Flask Foundation and Job State | 2/2 | 3 min | 1.5 min |
 
 *Updated after each plan completion*
 
@@ -59,6 +59,8 @@ Recent decisions affecting current work:
 - [v1.4 research]: secure_filename() stem normalization must be consistent across upload, ALTO path, JPEG path, and viewer routing
 - [Phase 09-flask-foundation-and-job-state]: Use importlib.import_module('app') inside fixture body — defers ImportError to test time, not conftest load time
 - [Phase 09-flask-foundation-and-job-state]: monkeypatch.setattr(app_module.pipeline, 'process_tiff', mock) pattern for OCR worker isolation in tests
+- [Phase 09-02]: threading.Thread (not ProcessPoolExecutor) for _ocr_worker — enables per-file SSE streaming, avoids macOS spawn issues
+- [Phase 09-02]: _run_active.clear() in finally block — PROC-04 contract: active flag clears even if all files fail
 
 ### Pending Todos
 
@@ -72,5 +74,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 09-01-PLAN.md — RED test suite for PROC-03 and PROC-04 (7 failing tests, app.py not yet written)
+Stopped at: Completed 09-02-PLAN.md — Flask server app.py (all 7 tests GREEN, 28/28 total tests pass)
 Resume file: None

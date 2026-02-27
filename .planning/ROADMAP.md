@@ -54,7 +54,7 @@ See archive: `.planning/milestones/v1.3-ROADMAP.md`
 
 **Milestone Goal:** A local Flask web app that wraps the OCR pipeline — drag-and-drop TIFF upload, live progress monitoring, side-by-side TIFF+text viewer with SVG word overlays, and word-level ALTO XML post-correction.
 
-- [ ] **Phase 9: Flask Foundation and Job State** - Bootable app.py with background OCR thread, SSE stream, and per-file skip/error isolation (2 plans)
+- [x] **Phase 9: Flask Foundation and Job State** - Bootable app.py with background OCR thread, SSE stream, and per-file skip/error isolation (2 plans) — completed 2026-02-27
 - [ ] **Phase 10: TIFF and ALTO Data Endpoints** - JPEG proxy endpoint and ALTO coordinate JSON API for viewer
 - [ ] **Phase 11: Side-by-Side Viewer UI** - File browser, two-panel TIFF+text layout, SVG word bounding box overlay with click cross-reference
 - [ ] **Phase 12: Word Correction** - Inline word editing, atomic ALTO XML save with XSD validation gate
@@ -75,8 +75,8 @@ See archive: `.planning/milestones/v1.3-ROADMAP.md`
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — TDD: test scaffold for PROC-03 (skip logic) and PROC-04 (error isolation) — RED tests
-- [ ] 09-02-PLAN.md — Implement app.py Flask server; make tests GREEN
+- [x] 09-01-PLAN.md — TDD: test scaffold for PROC-03 (skip logic) and PROC-04 (error isolation) — RED tests
+- [x] 09-02-PLAN.md — Implement app.py Flask server; make tests GREEN
 
 ### Phase 10: TIFF and ALTO Data Endpoints
 **Goal**: `GET /image/<stem>` serves a scaled JPEG of the TIFF and `GET /alto/<stem>` returns a flat word array with page dimensions and per-word bounding box coordinates — both verified against real 200 MB TIFFs before the viewer is built
@@ -135,7 +135,7 @@ Plans:
 | 6. Diagnostic Flags | v1.3 | 2/2 | Complete | 2026-02-26 |
 | 7. Live Progress Display | v1.3 | 1/1 | Complete | 2026-02-26 |
 | 8. Config File Support | v1.3 | 2/2 | Complete | 2026-02-26 |
-| 9. Flask Foundation and Job State | 1/2 | In Progress|  | - |
+| 9. Flask Foundation and Job State | v1.4 | 2/2 | Complete | 2026-02-27 |
 | 10. TIFF and ALTO Data Endpoints | v1.4 | 0/TBD | Not started | - |
 | 11. Side-by-Side Viewer UI | v1.4 | 0/TBD | Not started | - |
 | 12. Word Correction | v1.4 | 0/TBD | Not started | - |
