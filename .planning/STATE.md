@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.4 Web Viewer — Phase 9 (Flask Foundation and Job State)
+**Current focus:** v1.4 Web Viewer — Phase 10 (TIFF and ALTO Data Endpoints)
 
 ## Current Position
 
-Phase: 9 of 13 (Flask Foundation and Job State)
-Plan: 2 of 2 in current phase
-Status: Phase Complete
-Last activity: 2026-02-27 — Completed 09-02 (Flask server app.py, all 7 tests GREEN)
+Phase: 10 of 13 (TIFF and ALTO Data Endpoints)
+Plan: 1 of 2 in current phase
+Status: In Progress
+Last activity: 2026-02-27 — Completed 10-01 (RED test suite for GET /image and GET /alto, 29 passing, 12 failing)
 
-Progress: [██░░░░░░░░] 10% (v1.4 Phase 9 complete, 2/2 plans done)
+Progress: [███░░░░░░░] 12% (v1.4 Phase 10 plan 1/2 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
+- Total plans completed: 13
 - Average duration: 2.4 min
-- Total execution time: 29 min
+- Total execution time: 31 min
 
 **By Phase:**
 
@@ -41,6 +41,7 @@ Progress: [██░░░░░░░░] 10% (v1.4 Phase 9 complete, 2/2 plans
 - Trend: stable
 
 | 9. Flask Foundation and Job State | 2/2 | 3 min | 1.5 min |
+| 10. TIFF and ALTO Data Endpoints | 1/2 | 2 min | 2 min |
 
 *Updated after each plan completion*
 
@@ -61,6 +62,8 @@ Recent decisions affecting current work:
 - [Phase 09-flask-foundation-and-job-state]: monkeypatch.setattr(app_module.pipeline, 'process_tiff', mock) pattern for OCR worker isolation in tests
 - [Phase 09-02]: threading.Thread (not ProcessPoolExecutor) for _ocr_worker — enables per-file SSE streaming, avoids macOS spawn issues
 - [Phase 09-02]: _run_active.clear() in finally block — PROC-04 contract: active flag clears even if all files fail
+- [Phase 10-01]: test_path_traversal_slash uses lenient assertion (400 or 404) — Flask route matching returns 404 before endpoint logic runs; both confirm no 200 JPEG is returned for slash-containing stems
+- [Phase 10-01]: confidence=None (not 0) for ALTO words missing WC attribute — explicitly asserted with is None to prevent silent coercion bugs in implementation
 
 ### Pending Todos
 
@@ -74,5 +77,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 09-02-PLAN.md — Flask server app.py (all 7 tests GREEN, 28/28 total tests pass)
+Stopped at: Completed 10-01-PLAN.md — RED test suite for GET /image and GET /alto (29 passing, 12 failing)
 Resume file: None
