@@ -333,3 +333,180 @@ class TestImageEndpoint:
         resp = client.get('/image/scan_002')
         assert resp.status_code == 200
         assert 'jpeg' in resp.content_type.lower()
+
+
+# ---------------------------------------------------------------------------
+# Phase 10: GET /alto/<stem>
+# ---------------------------------------------------------------------------
+
+class TestAltoEndpoint:
+    """RED tests for GET /alto/<stem> — all fail until Phase 10 Plan 02 implements the route."""
+
+    def test_path_traversal_rejected(self, client, flask_app):
+        """GET /alto/../etc → 400, JSON body has 'error' key."""
+        resp = client.get('/alto/../etc')
+        assert resp.status_code == 400
+        body = resp.get_json()
+        assert body is not None
+        assert 'error' in body
+
+    def test_missing_alto_returns_404(self, client, flask_app):
+        """GET /alto/nonexistent → 404, JSON = {"error": "not found", "stem": "nonexistent"}."""
+        resp = client.get('/alto/nonexistent')
+        assert resp.status_code == 404
+        body = resp.get_json()
+        assert body is not None
+        assert body.get('error') == 'not found'
+        assert body.get('stem') == 'nonexistent'
+
+    def test_valid_alto_returns_json_shape(self, client, flask_app):
+        """GET /alto/scan_003 → 200 JSON with page_width, page_height, jpeg_width, jpeg_height, words."""
+        from pathlib import Path
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+
+        _write_alto(
+            alto_dir / 'scan_003.xml',
+            page_w=5146,
+            page_h=7548,
+            strings=[
+                {'CONTENT': 'Hallo', 'HPOS': '100', 'VPOS': '200', 'WIDTH': '80', 'HEIGHT': '30', 'WC': '0.95'},
+                {'CONTENT': 'Welt', 'HPOS': '200', 'VPOS': '200', 'WIDTH': '60', 'HEIGHT': '30'},
+            ],
+        )
+
+        resp = client.get('/alto/scan_003')
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert body is not None
+        assert body.get('page_width') == 5146
+        assert body.get('page_height') == 7548
+        assert isinstance(body.get('jpeg_width'), int)
+        assert isinstance(body.get('jpeg_height'), int)
+        assert body.get('jpeg_width') >= 0
+        assert body.get('jpeg_height') >= 0
+        words = body.get('words')
+        assert isinstance(words, list)
+        assert len(words) == 2
+
+    def test_word_fields_correct(self, client, flask_app):
+        """GET /alto/scan_003 → first word has all fields correct; second word has confidence=None."""
+        from pathlib import Path
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+
+        _write_alto(
+            alto_dir / 'scan_003.xml',
+            page_w=5146,
+            page_h=7548,
+            strings=[
+                {'CONTENT': 'Hallo', 'HPOS': '100', 'VPOS': '200', 'WIDTH': '80', 'HEIGHT': '30', 'WC': '0.95'},
+                {'CONTENT': 'Welt', 'HPOS': '200', 'VPOS': '200', 'WIDTH': '60', 'HEIGHT': '30'},
+            ],
+        )
+
+        resp = client.get('/alto/scan_003')
+        assert resp.status_code == 200
+        words = resp.get_json()['words']
+
+        w0 = words[0]
+        assert w0['id'] == 'w0'
+        assert w0['content'] == 'Hallo'
+        assert w0['hpos'] == 100
+        assert w0['vpos'] == 200
+        assert w0['width'] == 80
+        assert w0['height'] == 30
+        assert abs(w0['confidence'] - 0.95) < 1e-6
+
+        w1 = words[1]
+        assert w1['id'] == 'w1'
+        assert w1['content'] == 'Welt'
+        # Words with no WC attribute must have confidence=None (not 0, not absent)
+        assert w1.get('confidence') is None, (
+            f"Expected confidence=None for word without WC, got {w1.get('confidence')!r}"
+        )
+
+    def test_jpeg_dims_from_cache(self, client, flask_app):
+        """GET /alto/scan_003 → jpeg_width=4, jpeg_height=8 when jpegcache/scan_003.jpg is 4x8."""
+        from pathlib import Path
+        from PIL import Image
+        import io as _io
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        jpegcache_dir = output_dir / 'jpegcache'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        jpegcache_dir.mkdir(parents=True, exist_ok=True)
+
+        _write_alto(
+            alto_dir / 'scan_003.xml',
+            page_w=5146,
+            page_h=7548,
+            strings=[
+                {'CONTENT': 'Hallo', 'HPOS': '100', 'VPOS': '200', 'WIDTH': '80', 'HEIGHT': '30', 'WC': '0.95'},
+                {'CONTENT': 'Welt', 'HPOS': '200', 'VPOS': '200', 'WIDTH': '60', 'HEIGHT': '30'},
+            ],
+        )
+
+        # Write a 4x8 JPEG to jpegcache
+        img = Image.new('RGB', (4, 8), color=(200, 100, 50))
+        buf = _io.BytesIO()
+        img.save(buf, format='JPEG')
+        (jpegcache_dir / 'scan_003.jpg').write_bytes(buf.getvalue())
+
+        resp = client.get('/alto/scan_003')
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert body['jpeg_width'] == 4
+        assert body['jpeg_height'] == 8
+
+    def test_jpeg_dims_computed_from_tiff_when_cache_absent(self, client, flask_app):
+        """GET /alto/scan_004 → jpeg_width=4, jpeg_height=8 computed from TIFF when no cache entry.
+
+        TIFF is 4x8 pixels; max(4,8)=8 < 1600, so no scaling is applied.
+        The endpoint reads TIFF dimensions to compute jpeg_width/jpeg_height.
+        """
+        from pathlib import Path
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        uploads_dir = output_dir / 'uploads'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+
+        _write_tiff(uploads_dir / 'scan_004.tif', w=4, h=8)
+        _write_alto(
+            alto_dir / 'scan_004.xml',
+            page_w=800,
+            page_h=1200,
+            strings=[
+                {'CONTENT': 'Test', 'HPOS': '50', 'VPOS': '100', 'WIDTH': '40', 'HEIGHT': '20'},
+            ],
+        )
+
+        # No jpegcache entry for scan_004
+        resp = client.get('/alto/scan_004')
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert body['jpeg_width'] == 4
+        assert body['jpeg_height'] == 8
+
+    def test_malformed_xml_returns_500(self, client, flask_app):
+        """GET /alto/corrupt → 500, JSON body has 'error' key."""
+        from pathlib import Path
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+
+        (alto_dir / 'corrupt.xml').write_bytes(b'not xml at all')
+
+        resp = client.get('/alto/corrupt')
+        assert resp.status_code == 500
+        body = resp.get_json()
+        assert body is not None
+        assert 'error' in body
