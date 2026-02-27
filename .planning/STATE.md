@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 9 of 13 (Flask Foundation and Job State)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-27 — Roadmap created for v1.4, phases 9–13 defined
+Plan: 1 of 2 in current phase
+Status: In Progress
+Last activity: 2026-02-27 — Completed 09-01 (RED test suite for PROC-03 and PROC-04)
 
-Progress: [░░░░░░░░░░] 0% (v1.4 phases not yet started)
+Progress: [█░░░░░░░░░] 5% (v1.4 Phase 9 in progress, 1/2 plans done)
 
 ## Performance Metrics
 
@@ -40,6 +40,8 @@ Progress: [░░░░░░░░░░] 0% (v1.4 phases not yet started)
 - Last 5 plans: 06-01 (2 min), 06-02 (4 min), 07-01 (2 min), 08-01 (5 min), 08-02 (6 min)
 - Trend: stable
 
+| 9. Flask Foundation and Job State | 1/2 | 2 min | 2 min |
+
 *Updated after each plan completion*
 
 ## Accumulated Context
@@ -55,6 +57,8 @@ Recent decisions affecting current work:
 - [v1.4 research]: defaultdict(threading.Lock) keyed on stem — prevents concurrent ALTO read/write corruption on re-trigger
 - [v1.4 research]: lxml serialize with xml_declaration=True, encoding=UTF-8, pretty_print=True + validate_alto_file() gate before every write
 - [v1.4 research]: secure_filename() stem normalization must be consistent across upload, ALTO path, JPEG path, and viewer routing
+- [Phase 09-flask-foundation-and-job-state]: Use importlib.import_module('app') inside fixture body — defers ImportError to test time, not conftest load time
+- [Phase 09-flask-foundation-and-job-state]: monkeypatch.setattr(app_module.pipeline, 'process_tiff', mock) pattern for OCR worker isolation in tests
 
 ### Pending Todos
 
@@ -68,5 +72,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Roadmap created — phases 9–13 defined, requirements mapped, ready to plan Phase 9
+Stopped at: Completed 09-01-PLAN.md — RED test suite for PROC-03 and PROC-04 (7 failing tests, app.py not yet written)
 Resume file: None

@@ -15,8 +15,8 @@
 
 - [ ] **PROC-01**: User can start OCR processing on all queued TIFFs with a single button
 - [ ] **PROC-02**: User sees live progress while OCR runs (files done / total / percentage / ETA)
-- [ ] **PROC-03**: Already-processed TIFFs in the queue are skipped automatically (same skip logic as CLI)
-- [ ] **PROC-04**: Processing errors per file are shown in the UI without stopping the batch
+- [x] **PROC-03**: Already-processed TIFFs in the queue are skipped automatically (same skip logic as CLI)
+- [x] **PROC-04**: Processing errors per file are shown in the UI without stopping the batch
 
 ### Viewer
 
@@ -66,8 +66,8 @@
 | INGEST-03 | Phase 13 | Pending |
 | PROC-01 | Phase 13 | Pending |
 | PROC-02 | Phase 13 | Pending |
-| PROC-03 | Phase 9 | Pending |
-| PROC-04 | Phase 9 | Pending |
+| PROC-03 | Phase 9 | Complete |
+| PROC-04 | Phase 9 | Complete |
 | VIEW-01 | Phase 11 | Pending |
 | VIEW-02 | Phase 10 | Pending |
 | VIEW-03 | Phase 10 | Pending |
