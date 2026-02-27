@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-25)
+See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.3 Operator Experience — Phase 8: Config File Support
+**Current focus:** v1.4 Web Viewer — defining requirements
 
 ## Current Position
 
-Phase: 8 of 8 in v1.3 (Config File Support) — COMPLETE
-Plan: 2 of 2 complete (08-01 and 08-02 done)
-Status: Phase 8 complete — v1.3 Operator Experience fully shipped
-Last activity: 2026-02-26 — 08-02 (--config flag wiring + integration tests) complete
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v1.4 Web Viewer
+Last activity: 2026-02-27 — Milestone v1.4 started
 
-Progress: [████████████████████] 100% (all 8 phases complete)
+Progress: [░░░░░░░░░░] 0% (phases not yet defined)
 
 ## Performance Metrics
 

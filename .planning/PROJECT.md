@@ -2,7 +2,18 @@
 
 ## What This Is
 
-A batch processing pipeline for digitized journal and magazine scans. It takes several hundred large archival TIFF files (117–240 MB each), automatically deskews and crops each scan, runs Tesseract OCR in parallel, validates the output against the ALTO 2.1 XSD schema, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems and display in the DFG Viewer. Operators can monitor long runs with a live progress line and ETA, inspect behaviour with dry-run and verbose modes, and persist flag defaults in a JSON config file.
+A tool for digitizing archival journal and magazine scans. It takes large TIFF files (117–240 MB each), automatically deskews and crops each scan, runs Tesseract OCR in parallel, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems. A local Flask web application wraps the pipeline with a drag-and-drop interface and a side-by-side TIFF/text viewer with word-level post-correction.
+
+## Current Milestone: v1.4 Web Viewer
+
+**Goal:** A local Flask web app that wraps the OCR pipeline and lets operators drag-and-drop TIFFs, monitor processing, then browse and correct results in a TIFF + text viewer.
+
+**Target features:**
+- Drag-and-drop individual TIFFs to queue for OCR processing
+- Run OCR from the UI with live progress display
+- Browse all processed files and view TIFF image + extracted text side by side
+- Click a word in the text panel to highlight its bounding box on the TIFF image
+- Edit words in the text panel and save corrections back to the ALTO XML (word-level, overwrite in place)
 
 ## Core Value
 
@@ -31,12 +42,17 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 
 ### Active
 
-(No active requirements — define next milestone requirements with `/gsd:new-milestone`)
+- [ ] Drag individual TIFF files onto the web app to queue them for OCR processing — v1.4
+- [ ] Start OCR processing from the UI; see live progress (files done / total / percentage / ETA) — v1.4
+- [ ] Browse all previously processed files from the output folder — v1.4
+- [ ] View TIFF image (left) and extracted OCR text (right) side by side for any processed file — v1.4
+- [ ] Click a word in the text panel to highlight its bounding box on the TIFF image — v1.4
+- [ ] Edit a word in the text panel and save the correction back to the ALTO XML (word-level, overwrite in place) — v1.4
 
 ### Out of Scope
 
 - Saving cropped TIFFs as permanent deliverables — only needed as intermediate for OCR
-- GUI or web interface — command-line tool only
+- GUI or web interface for headless server batch runs — web app targets local operator workstation use; server batch runs remain CLI-only
 - ALTO 3.x / 4.x output — target is ALTO 2.1 for Goobi/Kitodo compatibility
 - Languages other than German — pipeline optimized for modern German text
 - Direct Goobi/Kitodo plugin integration — standalone tool, ingest handled separately
@@ -88,5 +104,8 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 
 - `ADAPTIVE_BLOCK_SIZE = 51` and `ADAPTIVE_C = 10` are informed starting points; empirical tuning against real Zeitschriften corpus scans is recommended before batch production with `--adaptive-threshold`.
 
+| Flask web app over desktop GUI | Browser as UI — no Electron/Qt dependency; same Python stack; works on macOS and Linux; TIFF→JPEG conversion on the fly | — Pending |
+| Web app is local-only | No authentication, no multi-user, no remote deployment — operator runs `python app.py` and opens localhost | — Pending |
+
 ---
-*Last updated: 2026-02-26 after v1.3 milestone*
+*Last updated: 2026-02-27 after v1.4 milestone start*
