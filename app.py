@@ -374,6 +374,101 @@ def serve_image(stem):
     return send_file(cache_path, mimetype='image/jpeg')
 
 
+@app.get('/alto/<stem>')
+def serve_alto(stem):
+    """Return flat word array and page/JPEG dimensions from ALTO XML.
+
+    Parses ALTO XML on every request (no disk cache — Phase 12 edits XML directly).
+    Returns 400 for path traversal, 404 if ALTO absent, 500 on parse/structure failure.
+
+    Response shape:
+      {
+        page_width: int, page_height: int,
+        jpeg_width: int, jpeg_height: int,
+        words: [{id, content, hpos, vpos, width, height, confidence}, ...]
+      }
+    confidence is float or null (null when WC attribute absent, NOT coerced to 0).
+    """
+    if '/' in stem or '..' in stem:
+        return jsonify({'error': 'invalid stem'}), 400
+
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    alto_path = output_dir / 'alto' / (stem + '.xml')
+    if not alto_path.exists():
+        return jsonify({'error': 'not found', 'stem': stem}), 404
+
+    try:
+        from lxml import etree
+        root = etree.parse(str(alto_path)).getroot()
+    except Exception as exc:
+        return jsonify({'error': 'parse failed', 'detail': str(exc)}), 500
+
+    ns = pipeline.ALTO21_NS  # 'http://schema.ccs-gmbh.com/ALTO'
+
+    # Page dimensions
+    page = root.find(f'.//{{{ns}}}Page')
+    if page is None:
+        return jsonify({'error': 'no Page element in ALTO XML', 'stem': stem}), 500
+    page_width = int(page.get('WIDTH', 0))
+    page_height = int(page.get('HEIGHT', 0))
+    if page_width == 0 or page_height == 0:
+        return jsonify({'error': 'Page WIDTH/HEIGHT missing or zero', 'stem': stem}), 500
+
+    # JPEG dimensions — from cache if available, else compute from TIFF
+    cache_path = output_dir / 'jpegcache' / (stem + '.jpg')
+    if cache_path.exists():
+        try:
+            with Image.open(str(cache_path)) as _img:
+                jpeg_width, jpeg_height = _img.size
+        except Exception:
+            jpeg_width, jpeg_height = 0, 0
+    else:
+        # Compute from TIFF (avoids ordering dependency between /image/ and /alto/)
+        upload_dir = output_dir / UPLOAD_SUBDIR
+        tiff_path = None
+        with _job_lock:
+            job = _jobs.get(stem)
+        if job:
+            candidate = upload_dir / job['filename']
+            if candidate.exists():
+                tiff_path = candidate
+        if tiff_path is None and upload_dir.exists():
+            for candidate in upload_dir.iterdir():
+                if candidate.suffix.lower() in ('.tif', '.tiff'):
+                    if candidate.stem.lower() == stem.lower():
+                        tiff_path = candidate
+                        break
+        if tiff_path is not None:
+            try:
+                jpeg_width, jpeg_height = _compute_jpeg_dims(tiff_path)
+            except Exception:
+                jpeg_width, jpeg_height = 0, 0
+        else:
+            jpeg_width, jpeg_height = 0, 0
+
+    # Flat word array — all String elements in document order
+    words = []
+    for i, elem in enumerate(root.iter(f'{{{ns}}}String')):
+        wc_raw = elem.get('WC')
+        words.append({
+            'id': f'w{i}',
+            'content': elem.get('CONTENT', ''),
+            'hpos': int(elem.get('HPOS', 0)),
+            'vpos': int(elem.get('VPOS', 0)),
+            'width': int(elem.get('WIDTH', 0)),
+            'height': int(elem.get('HEIGHT', 0)),
+            'confidence': float(wc_raw) if wc_raw is not None else None,
+        })
+
+    return jsonify({
+        'page_width': page_width,
+        'page_height': page_height,
+        'jpeg_width': jpeg_width,
+        'jpeg_height': jpeg_height,
+        'words': words,
+    })
+
+
 # ---------------------------------------------------------------------------
 # CLI entrypoint
 # ---------------------------------------------------------------------------
