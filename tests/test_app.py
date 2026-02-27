@@ -191,3 +191,145 @@ class TestErrorIsolation:
         resp = client.post('/run')
         assert resp.status_code == 409
         assert 'in progress' in resp.get_json().get('error', '').lower()
+
+
+# ---------------------------------------------------------------------------
+# Helpers shared by Phase 10 tests
+# ---------------------------------------------------------------------------
+
+def _write_tiff(path, w=4, h=4, mode='RGB'):
+    """Write a minimal synthetic TIFF to path using Pillow."""
+    from PIL import Image
+    img = Image.new(mode, (w, h), color=(128, 128, 128))
+    img.save(str(path), format='TIFF')
+
+
+ALTO_NS = 'http://schema.ccs-gmbh.com/ALTO'
+
+
+def _write_alto(path, page_w, page_h, strings):
+    """Write minimal ALTO 2.1 XML.
+
+    strings = list of dicts with CONTENT/HPOS/VPOS/WIDTH/HEIGHT and optional WC.
+    """
+    from lxml import etree
+    ns = ALTO_NS
+    root = etree.Element(f'{{{ns}}}alto')
+    layout = etree.SubElement(root, f'{{{ns}}}Layout')
+    page = etree.SubElement(layout, f'{{{ns}}}Page')
+    page.set('WIDTH', str(page_w))
+    page.set('HEIGHT', str(page_h))
+    block = etree.SubElement(page, f'{{{ns}}}PrintSpace')
+    tb = etree.SubElement(block, f'{{{ns}}}TextBlock')
+    line = etree.SubElement(tb, f'{{{ns}}}TextLine')
+    for s in strings:
+        elem = etree.SubElement(line, f'{{{ns}}}String')
+        for k, v in s.items():
+            elem.set(k, str(v))
+    path.write_bytes(etree.tostring(root, xml_declaration=True, encoding='UTF-8', pretty_print=True))
+
+
+# ---------------------------------------------------------------------------
+# Phase 10: GET /image/<stem>
+# ---------------------------------------------------------------------------
+
+class TestImageEndpoint:
+    """RED tests for GET /image/<stem> — all fail until Phase 10 Plan 02 implements the route."""
+
+    def test_path_traversal_dot_dot(self, client, flask_app):
+        """GET /image/../etc/passwd → 400, JSON body has 'error' key.
+
+        Flask may normalize '/../' in URLs. If Flask normalises the path and
+        returns a redirect (301/302), that is also accepted as a non-200
+        non-JPEG response, because the endpoint does not exist yet and the
+        route would not match anyway.
+        """
+        resp = client.get('/image/../etc/passwd')
+        # Accept 400 (traversal rejected) or any non-200/non-jpeg status
+        # The endpoint MUST NOT return 200 with image/jpeg content.
+        assert resp.status_code == 400
+        body = resp.get_json()
+        assert body is not None
+        assert 'error' in body
+
+    def test_path_traversal_slash(self, client, flask_app):
+        """GET /image/folder/scan → 400, no 200 JPEG returned.
+
+        A stem containing a slash would escape the uploads/ directory.
+        Flask routing: '/image/folder/scan' matches a two-segment path which
+        will not match the <stem> variable-rule unless the rule uses path converter.
+        Either 400 (explicit rejection) or 404 (route mismatch) is acceptable as
+        long as we do NOT get 200 image/jpeg.
+        """
+        resp = client.get('/image/folder/scan')
+        assert resp.status_code in (400, 404)
+        # If 400, verify JSON error body
+        if resp.status_code == 400:
+            body = resp.get_json()
+            assert body is not None
+            assert 'error' in body
+
+    def test_missing_tiff_returns_404(self, client, flask_app):
+        """GET /image/nonexistent → 404, JSON body = {"error": "not found", "stem": "nonexistent"}."""
+        resp = client.get('/image/nonexistent')
+        assert resp.status_code == 404
+        body = resp.get_json()
+        assert body is not None
+        assert body.get('error') == 'not found'
+        assert body.get('stem') == 'nonexistent'
+
+    def test_cache_hit_serves_jpeg(self, client, flask_app):
+        """GET /image/scan_001 → 200 image/jpeg when jpegcache/scan_001.jpg exists."""
+        from pathlib import Path
+        from PIL import Image
+        import io as _io
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        jpegcache_dir = output_dir / 'jpegcache'
+        jpegcache_dir.mkdir(parents=True, exist_ok=True)
+
+        # Write a small valid 1x1 JPEG to the cache
+        img = Image.new('RGB', (1, 1), color=(200, 100, 50))
+        buf = _io.BytesIO()
+        img.save(buf, format='JPEG')
+        (jpegcache_dir / 'scan_001.jpg').write_bytes(buf.getvalue())
+
+        resp = client.get('/image/scan_001')
+        assert resp.status_code == 200
+        assert 'jpeg' in resp.content_type.lower()
+
+    def test_tiff_render_writes_cache(self, client, flask_app):
+        """GET /image/scan_001 → 200 JPEG rendered from TIFF; jpegcache/scan_001.jpg created."""
+        from pathlib import Path
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        uploads_dir = output_dir / 'uploads'
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+
+        _write_tiff(uploads_dir / 'scan_001.tif', w=4, h=4)
+
+        resp = client.get('/image/scan_001')
+        assert resp.status_code == 200
+        assert 'jpeg' in resp.content_type.lower()
+
+        # Cache file must have been written
+        cache_file = output_dir / 'jpegcache' / 'scan_001.jpg'
+        assert cache_file.exists(), f'jpegcache/scan_001.jpg not created after request'
+
+    def test_filename_case_mismatch(self, client, flask_app):
+        """GET /image/scan_002 → 200 even when TIFF is stored as Scan_002.tif (different case).
+
+        The endpoint must scan uploads/ to find the file regardless of original filename case.
+        """
+        from pathlib import Path
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        uploads_dir = output_dir / 'uploads'
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+
+        # Original upload has mixed case
+        _write_tiff(uploads_dir / 'Scan_002.tif', w=4, h=4)
+
+        resp = client.get('/image/scan_002')
+        assert resp.status_code == 200
+        assert 'jpeg' in resp.content_type.lower()
