@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 10 of 13 (TIFF and ALTO Data Endpoints)
-Plan: 1 of 2 in current phase
-Status: In Progress
-Last activity: 2026-02-27 — Completed 10-01 (RED test suite for GET /image and GET /alto, 29 passing, 12 failing)
+Plan: 2 of 2 in current phase (phase complete)
+Status: Phase Complete
+Last activity: 2026-02-27 — Completed 10-02 (GET /image and GET /alto endpoints, 41 tests passing)
 
-Progress: [███░░░░░░░] 12% (v1.4 Phase 10 plan 1/2 done)
+Progress: [████░░░░░░] 25% (v1.4 Phase 10 plan 2/2 done)
 
 ## Performance Metrics
 
@@ -41,9 +41,10 @@ Progress: [███░░░░░░░] 12% (v1.4 Phase 10 plan 1/2 done)
 - Trend: stable
 
 | 9. Flask Foundation and Job State | 2/2 | 3 min | 1.5 min |
-| 10. TIFF and ALTO Data Endpoints | 1/2 | 2 min | 2 min |
+| 10. TIFF and ALTO Data Endpoints | 2/2 | 7 min | 3.5 min |
 
 *Updated after each plan completion*
+| Phase 10 P02 | 5 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,8 @@ Recent decisions affecting current work:
 - [Phase 09-02]: _run_active.clear() in finally block — PROC-04 contract: active flag clears even if all files fail
 - [Phase 10-01]: test_path_traversal_slash uses lenient assertion (400 or 404) — Flask route matching returns 404 before endpoint logic runs; both confirm no 200 JPEG is returned for slash-containing stems
 - [Phase 10-01]: confidence=None (not 0) for ALTO words missing WC attribute — explicitly asserted with is None to prevent silent coercion bugs in implementation
+- [Phase 10-02]: before_request path traversal guard added — Flask/Werkzeug normalizes /../ URLs before route dispatch; route-level stem check unreachable; before_request fires on raw request.path
+- [Phase 10-02]: No disk cache for ALTO JSON — parse XML on every request to stay consistent with Phase 12 XML edits
 
 ### Pending Todos
 
@@ -77,5 +80,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 10-01-PLAN.md — RED test suite for GET /image and GET /alto (29 passing, 12 failing)
+Stopped at: Completed 10-02-PLAN.md — GET /image and GET /alto endpoints (41 passing, 0 failing)
 Resume file: None
