@@ -13,7 +13,8 @@ import threading
 import time
 from pathlib import Path
 
-from flask import Flask, Response, jsonify, request, stream_with_context
+from flask import Flask, Response, jsonify, request, send_file, stream_with_context
+from PIL import Image
 from werkzeug.utils import secure_filename
 
 import pipeline
@@ -45,6 +46,25 @@ app.config['OUTPUT_DIR'] = OUTPUT_DIR_DEFAULT   # default; overridden by --outpu
 def _format_sse(event: str, data: dict) -> str:
     """Format a Server-Sent Event message."""
     return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+def _compute_jpeg_dims(tiff_path: Path) -> tuple[int, int]:
+    """Compute the JPEG dimensions that Pillow would produce for this TIFF.
+
+    Uses the same MAX_PX=1600 longest-side scale logic as serve_image().
+    Called by serve_alto() so it can return jpeg_width/jpeg_height without
+    requiring the JPEG cache to exist first.
+
+    Returns (jpeg_width, jpeg_height) as integers.
+    """
+    MAX_PX = 1600
+    with Image.open(str(tiff_path)) as img:
+        w, h = img.size
+    longest = max(w, h)
+    if longest > MAX_PX:
+        scale = MAX_PX / longest
+        return round(w * scale), round(h * scale)
+    return w, h
 
 
 def _ocr_worker(tiff_paths: list, output_dir: Path, lang: str, psm: int, padding: int) -> None:
@@ -156,6 +176,21 @@ def _ocr_worker(tiff_paths: list, output_dir: Path, lang: str, psm: int, padding
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
+
+@app.before_request
+def reject_path_traversal():
+    """Return 400 JSON for any request path that contains '..' sequences.
+
+    Flask's routing won't match <stem> variables containing slashes, so a URL
+    like /image/../etc/passwd gets a 404 from the router before reaching the
+    route handler.  Checking the raw path here ensures we return 400 (not 404)
+    for traversal attempts on /image/ and /alto/ endpoints, satisfying the
+    security contract tested in test_path_traversal_dot_dot.
+    """
+    from flask import request as _req
+    if '..' in _req.path:
+        return jsonify({'error': 'invalid path'}), 400
 
 
 @app.post('/upload')
@@ -278,6 +313,67 @@ def stream():
     )
 
 
+@app.get('/image/<stem>')
+def serve_image(stem):
+    """Serve a scaled JPEG for the requested TIFF stem.
+
+    Caches the rendered JPEG at output_dir/jpegcache/<stem>.jpg.
+    Returns 400 for path traversal, 404 if TIFF absent, 500 on render failure.
+    """
+    if '/' in stem or '..' in stem:
+        return jsonify({'error': 'invalid stem'}), 400
+
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    cache_dir = output_dir / 'jpegcache'
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_path = cache_dir / (stem + '.jpg')
+
+    # Serve from cache if available
+    if cache_path.exists():
+        return send_file(cache_path, mimetype='image/jpeg')
+
+    # Locate the source TIFF — try _jobs dict first (populated by /upload),
+    # then scan uploads/ for case-insensitive match (handles server restart).
+    upload_dir = output_dir / UPLOAD_SUBDIR
+    tiff_path = None
+    with _job_lock:
+        job = _jobs.get(stem)
+    if job:
+        candidate = upload_dir / job['filename']
+        if candidate.exists():
+            tiff_path = candidate
+    if tiff_path is None:
+        # Fallback: scan uploads/ for <stem>.tif or <stem>.tiff (case-insensitive)
+        if upload_dir.exists():
+            for candidate in upload_dir.iterdir():
+                if candidate.suffix.lower() in ('.tif', '.tiff'):
+                    if candidate.stem.lower() == stem.lower():
+                        tiff_path = candidate
+                        break
+    if tiff_path is None:
+        return jsonify({'error': 'not found', 'stem': stem}), 404
+
+    # Render JPEG from TIFF
+    MAX_PX = 1600
+    try:
+        img = Image.open(str(tiff_path))
+        if img.mode not in ('RGB', 'L'):
+            img = img.convert('RGB')
+        w, h = img.size
+        longest = max(w, h)
+        if longest > MAX_PX:
+            scale = MAX_PX / longest
+            img = img.resize(
+                (round(w * scale), round(h * scale)),
+                Image.Resampling.LANCZOS,
+            )
+        img.save(str(cache_path), format='JPEG', quality=85)
+    except Exception as exc:
+        return jsonify({'error': 'render failed', 'detail': str(exc)}), 500
+
+    return send_file(cache_path, mimetype='image/jpeg')
+
+
 # ---------------------------------------------------------------------------
 # CLI entrypoint
 # ---------------------------------------------------------------------------
@@ -295,6 +391,7 @@ if __name__ == '__main__':
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / 'uploads').mkdir(exist_ok=True)
     (output_dir / 'alto').mkdir(exist_ok=True)
+    (output_dir / 'jpegcache').mkdir(exist_ok=True)
 
     app.config['OUTPUT_DIR'] = str(output_dir)
     app.config['LANG'] = args.lang
