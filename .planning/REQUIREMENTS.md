@@ -61,29 +61,29 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INGEST-01 | — | Pending |
-| INGEST-02 | — | Pending |
-| INGEST-03 | — | Pending |
-| PROC-01 | — | Pending |
-| PROC-02 | — | Pending |
-| PROC-03 | — | Pending |
-| PROC-04 | — | Pending |
-| VIEW-01 | — | Pending |
-| VIEW-02 | — | Pending |
-| VIEW-03 | — | Pending |
-| VIEW-04 | — | Pending |
-| OVLY-01 | — | Pending |
-| OVLY-02 | — | Pending |
-| EDIT-01 | — | Pending |
-| EDIT-02 | — | Pending |
-| EDIT-03 | — | Pending |
-| EDIT-04 | — | Pending |
+| INGEST-01 | Phase 13 | Pending |
+| INGEST-02 | Phase 13 | Pending |
+| INGEST-03 | Phase 13 | Pending |
+| PROC-01 | Phase 13 | Pending |
+| PROC-02 | Phase 13 | Pending |
+| PROC-03 | Phase 9 | Pending |
+| PROC-04 | Phase 9 | Pending |
+| VIEW-01 | Phase 11 | Pending |
+| VIEW-02 | Phase 10 | Pending |
+| VIEW-03 | Phase 10 | Pending |
+| VIEW-04 | Phase 11 | Pending |
+| OVLY-01 | Phase 11 | Pending |
+| OVLY-02 | Phase 11 | Pending |
+| EDIT-01 | Phase 12 | Pending |
+| EDIT-02 | Phase 12 | Pending |
+| EDIT-03 | Phase 12 | Pending |
+| EDIT-04 | Phase 12 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 17 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 17 ⚠️
+- Mapped to phases: 17 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-27*
-*Last updated: 2026-02-27 after initial definition*
+*Last updated: 2026-02-27 after roadmap creation (phases 9–13)*

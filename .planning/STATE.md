@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.4 Web Viewer — defining requirements
+**Current focus:** v1.4 Web Viewer — Phase 9 (Flask Foundation and Job State)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements for v1.4 Web Viewer
-Last activity: 2026-02-27 — Milestone v1.4 started
+Phase: 9 of 13 (Flask Foundation and Job State)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-27 — Roadmap created for v1.4, phases 9–13 defined
 
-Progress: [░░░░░░░░░░] 0% (phases not yet defined)
+Progress: [░░░░░░░░░░] 0% (v1.4 phases not yet started)
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 11
-- Average duration: 2.2 min
+- Average duration: 2.5 min
 - Total execution time: 28 min
 
 **By Phase:**
@@ -49,24 +49,12 @@ Progress: [░░░░░░░░░░] 0% (phases not yet defined)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- process_tiff() uses raise (not sys.exit) — safe for ProcessPoolExecutor spawn on macOS
-- executor.submit() + as_completed() — chosen for per-file error isolation; progress updates slot into this loop
-- [Phase 04-01]: Deskew before detect_crop_box() — ordering invariant; verbose timing must respect this order
-- [Phase 05-01]: ADAPTIVE_BLOCK_SIZE = 51, ADAPTIVE_C = 10 — need empirical tuning before production
-- [Phase 06-01]: validate_tesseract() runs before dry-run gate so operators get Tesseract errors even in dry-run mode
-- [Phase 06-01]: --verbose silently ignored in dry-run path (no OCR runs, nothing verbose to report)
-- [Phase 06-01]: dry-run skip-check replicates exact run_batch() condition: `if not args.force and out_path.exists()`
-- [Phase 06-diagnostic-flags]: run_ocr() returns tuple[bytes, str] in both modes — capture_output=False returns empty string as second element
-- [Phase 06-diagnostic-flags]: verbose_block built as single string and printed atomically to reduce stdout interleaving when workers > 1
-- [Phase 07-01]: tracker.update(duration) placed after try/except (not in finally) — both success and failure update rolling average
-- [Phase 07-01]: show_progress = (not verbose) and sys.stderr.isatty() and len(to_process) > 0 — three independent suppression conditions
-- [Phase 07-01]: submit_times dict provides accurate per-file duration even with parallel workers (captures queue wait + OCR time)
-- [Phase 08-01]: CONFIG_TYPES placed after ADAPTIVE_C block; load_config() placed between write_error_log() and load_xsd()
-- [Phase 08-01]: bool-for-int rejection: `not isinstance(value, int) or isinstance(value, bool)` — bool is subclass of int in Python
-- [Phase 08-01]: Error messages use "Error:" prefix (capital E, lowercase r) — locked decisions take precedence over validate_tesseract() "ERROR:" style
-- [Phase 08-02]: Two-pass pre-parse uses parse_known_args() silently ignoring all other flags — avoids reimplementing argparse logic
-- [Phase 08-02]: set_defaults() called before parse_args() — standard argparse mechanism giving CLI flags automatic precedence
-- [Phase 08-02]: Verbose config summary after validate_tesseract(), before is_dir() — only shows when run will actually proceed
+- [v1.4 research]: OCR must run in threading.Thread (not ProcessPoolExecutor) — ProcessPoolExecutor cannot yield per-file progress to SSE stream and causes OSError on macOS spawn from Flask thread
+- [v1.4 research]: SSE via queue.Queue with 30s timeout keepalive — prevents proxy/browser connection drops during long OCR runs
+- [v1.4 research]: Use image.resize() (not thumbnail()) — explicit computed dimensions needed; record jpeg_width/jpeg_height in ALTO API response
+- [v1.4 research]: defaultdict(threading.Lock) keyed on stem — prevents concurrent ALTO read/write corruption on re-trigger
+- [v1.4 research]: lxml serialize with xml_declaration=True, encoding=UTF-8, pretty_print=True + validate_alto_file() gate before every write
+- [v1.4 research]: secure_filename() stem normalization must be consistent across upload, ALTO path, JPEG path, and viewer routing
 
 ### Pending Todos
 
@@ -74,10 +62,11 @@ None.
 
 ### Blockers/Concerns
 
-- ADAPTIVE_BLOCK_SIZE = 51 and ADAPTIVE_C = 10 need empirical tuning against real Zeitschriften corpus scans before production use of --adaptive-threshold
+- SVG overlay performance ceiling: if any production page exceeds ~2,000 words, Canvas fallback path should be planned from Phase 11 start — sample real ALTO files for word count before building overlay
+- lxml namespace round-trip: spike-test etree.tostring(xml_declaration=True, encoding='UTF-8', pretty_print=True) against a real project ALTO file as first task of Phase 12
 
 ## Session Continuity
 
-Last session: 2026-02-26
-Stopped at: Completed 08-02-PLAN.md (--config flag wiring + integration tests) — Phase 8 complete
+Last session: 2026-02-27
+Stopped at: Roadmap created — phases 9–13 defined, requirements mapped, ready to plan Phase 9
 Resume file: None
