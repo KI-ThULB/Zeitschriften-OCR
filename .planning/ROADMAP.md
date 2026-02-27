@@ -135,7 +135,7 @@ Plans:
 | 6. Diagnostic Flags | v1.3 | 2/2 | Complete | 2026-02-26 |
 | 7. Live Progress Display | v1.3 | 1/1 | Complete | 2026-02-26 |
 | 8. Config File Support | v1.3 | 2/2 | Complete | 2026-02-26 |
-| 9. Flask Foundation and Job State | v1.4 | 2/2 | Complete | 2026-02-27 |
+| 9. Flask Foundation and Job State | v1.4 | Complete    | 2026-02-27 | 2026-02-27 |
 | 10. TIFF and ALTO Data Endpoints | v1.4 | 0/TBD | Not started | - |
 | 11. Side-by-Side Viewer UI | v1.4 | 0/TBD | Not started | - |
 | 12. Word Correction | v1.4 | 0/TBD | Not started | - |
