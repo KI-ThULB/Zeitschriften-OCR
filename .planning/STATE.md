@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.5 Web Viewer Complete — defining requirements and roadmap
+**Current focus:** v1.5 Web Viewer Complete — Phase 12 (Word Correction) up next
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements for v1.5
-Last activity: 2026-02-28 — Milestone v1.5 started (Word Correction + Upload UI)
+Phase: 12 — Word Correction
+Plan: 12-01 (not started)
+Status: Roadmap defined; ready to plan Phase 12
+Last activity: 2026-02-28 — v1.5 roadmap created (Phases 12–17)
 
-Progress: [█████░░░░░] 33% (v1.4 Phase 11 complete — 2/2 plans done)
+Progress: [█████░░░░░░░░░░░░] 11/17 phases complete (v1.4 done, v1.5 not started)
 
 ## Performance Metrics
 
@@ -35,19 +35,11 @@ Progress: [█████░░░░░] 33% (v1.4 Phase 11 complete — 2/2 p
 | 6. Diagnostic Flags | 2/2 | 6 min | 3 min |
 | 7. Live Progress Display | 1/1 | 2 min | 2 min |
 | 8. Config File Support | 2/2 | 11 min | 5.5 min |
-
-**Recent Trend:**
-- Last 5 plans: 06-01 (2 min), 06-02 (4 min), 07-01 (2 min), 08-01 (5 min), 08-02 (6 min)
-- Trend: stable
-
 | 9. Flask Foundation and Job State | 2/2 | 3 min | 1.5 min |
 | 10. TIFF and ALTO Data Endpoints | 2/2 | 7 min | 3.5 min |
 | 11. Side-by-Side Viewer UI | 2/2 | ~62 min | ~31 min |
 
 *Updated after each plan completion*
-| Phase 10 P02 | 5 | 2 tasks | 1 files |
-| Phase 11 P01 | 2 | 1 task | 3 files |
-| Phase 11 P02 | ~60 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -84,9 +76,11 @@ None.
 
 - SVG overlay performance ceiling: if any production page exceeds ~2,000 words, Canvas fallback path should be planned from Phase 11 start — sample real ALTO files for word count before building overlay
 - lxml namespace round-trip: spike-test etree.tostring(xml_declaration=True, encoding='UTF-8', pretty_print=True) against a real project ALTO file as first task of Phase 12
+- Phase 15 VLM provider selection: need to evaluate Claude Vision, GPT-4o, and Gemini Vision API response format differences for structured region output before committing to the provider abstraction interface
+- Phase 16 METS/MODS: DFG Viewer newspaper profile XSD must be sourced and bundled before implementation begins; confirm which profile version Goobi-Kitodo targets
 
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 11-02-PLAN.md — complete side-by-side viewer UI, SVG overlay, ResizeObserver, INPUT_DIR fix (47 passing, 0 failing)
-Resume file: None
+Stopped at: v1.5 roadmap created — Phases 12–17 defined, all 17 requirements mapped
+Resume at: Plan Phase 12 (Word Correction) — run `/gsd:plan-phase 12`

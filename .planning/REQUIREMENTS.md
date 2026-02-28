@@ -71,20 +71,20 @@
 | INGEST-03 | Phase 13 | Pending |
 | PROC-01 | Phase 13 | Pending |
 | PROC-02 | Phase 13 | Pending |
-| VIEW-05 | TBD | Pending |
-| VIEW-06 | TBD | Pending |
-| STRUCT-01 | TBD | Pending |
-| STRUCT-02 | TBD | Pending |
-| STRUCT-03 | TBD | Pending |
-| STRUCT-04 | TBD | Pending |
-| STRUCT-05 | TBD | Pending |
-| STRUCT-06 | TBD | Pending |
+| VIEW-05 | Phase 14 | Pending |
+| VIEW-06 | Phase 14 | Pending |
+| STRUCT-01 | Phase 15 | Pending |
+| STRUCT-02 | Phase 15 | Pending |
+| STRUCT-03 | Phase 15 | Pending |
+| STRUCT-04 | Phase 16 | Pending |
+| STRUCT-05 | Phase 17 | Pending |
+| STRUCT-06 | Phase 17 | Pending |
 
 **Coverage:**
 - v1.5 requirements: 17 total
-- Mapped to phases: 9
-- Unmapped: 8 (TBD — roadmapper will assign)
+- Mapped to phases: 17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after v1.5 milestone start*
+*Last updated: 2026-02-28 after v1.5 roadmap creation*

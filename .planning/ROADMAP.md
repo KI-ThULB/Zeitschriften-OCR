@@ -7,7 +7,7 @@
 - ✅ **v1.2 Image Preprocessing** — Phases 4–5 (shipped 2026-02-25)
 - ✅ **v1.3 Operator Experience** — Phases 6–8 (shipped 2026-02-26)
 - ✅ **v1.4 Web Viewer** — Phases 9–11 (shipped 2026-02-28)
-- 🚧 **v1.5 Web Viewer Complete** — Phases 12–13 (planned)
+- 🚧 **v1.5 Web Viewer Complete** — Phases 12–17 (planned)
 
 ---
 
@@ -66,10 +66,14 @@ See archive: `.planning/milestones/v1.4-ROADMAP.md`
 
 ### 🚧 v1.5 Web Viewer Complete (Planned)
 
-**Milestone Goal:** Complete the web operator workflow — inline word correction with ALTO XML save, drag-and-drop TIFF upload, and live SSE progress display.
+**Milestone Goal:** Complete the full web operator workflow — inline word correction with atomic ALTO XML save, drag-and-drop TIFF upload, live SSE progress display, viewer zoom/pan, VLM-powered article segmentation with METS/MODS output, and full-text article search.
 
 - [ ] **Phase 12: Word Correction** — Inline word editing, atomic ALTO XML save with XSD validation gate
 - [ ] **Phase 13: Upload UI and Live Progress** — Drag-and-drop upload zone, queue management, SSE-driven progress display, end-to-end integration
+- [ ] **Phase 14: Viewer Zoom and Pan** — Mouse-wheel zoom with aligned SVG overlay, click-and-drag pan
+- [ ] **Phase 15: VLM Article Segmentation** — Configurable VLM/LLM provider, region detection, article metadata extraction
+- [ ] **Phase 16: METS/MODS Output** — Logical structure document per DFG Viewer / Goobi-Kitodo newspaper ingest profile
+- [ ] **Phase 17: Article Browser and Full-Text Search** — Viewer sidebar with article list and region highlight, SQLite FTS5 search
 
 ## Phase Details
 
@@ -79,9 +83,9 @@ See archive: `.planning/milestones/v1.4-ROADMAP.md`
 **Requirements**: EDIT-01, EDIT-02, EDIT-03, EDIT-04
 **Success Criteria** (what must be TRUE):
   1. Clicking a word in the text panel replaces it with an editable input field pre-filled with the current OCR text
-  2. Pressing Enter or clicking Save writes the corrected word to the ALTO XML file on disk and the text panel reflects the new value
-  3. The ALTO XML file is not overwritten if post-edit XSD validation fails; the browser receives an error message instead
-  4. A visible confirmation indicator appears after a successful save (input returns to text, no page reload required)
+  2. Pressing Enter or clicking Save writes the corrected word to the ALTO XML file on disk and the text panel reflects the new value without a page reload
+  3. The ALTO XML file is not overwritten if post-edit XSD validation fails; the browser receives a visible error message instead
+  4. A visible confirmation indicator appears after a successful save (input returns to static text)
 **Plans**: TBD
 
 ### Phase 13: Upload UI and Live Progress
@@ -93,7 +97,52 @@ See archive: `.planning/milestones/v1.4-ROADMAP.md`
   2. Individual files can be removed from the queue before processing starts
   3. Clicking the Start button triggers OCR on all queued files; the button is disabled while processing is running
   4. A progress bar and status line update in real time showing files completed / total / percentage / ETA as OCR runs
-  5. Completed files appear as links in the results list and clicking one opens the side-by-side viewer for that file
+  5. Completed files appear as clickable links in the results list and clicking one opens the side-by-side viewer for that file
+**Plans**: TBD
+
+### Phase 14: Viewer Zoom and Pan
+**Goal**: Operators can zoom into any area of the TIFF image using the mouse wheel and pan by dragging — with the word bounding-box overlay staying pixel-accurate at all zoom levels
+**Depends on**: Phase 11
+**Requirements**: VIEW-05, VIEW-06
+**Success Criteria** (what must be TRUE):
+  1. Scrolling the mouse wheel over the TIFF image panel zooms in and out centered on the cursor position
+  2. Word bounding-box overlays remain aligned with the correct word positions at every zoom level
+  3. Clicking and dragging the zoomed image pans it within the panel without deselecting or triggering word clicks
+  4. Zooming and panning survive a window resize without overlay misalignment (ResizeObserver continues to work)
+**Plans**: TBD
+
+### Phase 15: VLM Article Segmentation
+**Goal**: Operators can trigger automatic article segmentation for any page using a configurable VLM provider; the system identifies article regions with bounding boxes, types, titles, and section metadata stored per page
+**Depends on**: Phase 12 (ALTO XML stability), Phase 10 (TIFF image endpoint)
+**Requirements**: STRUCT-01, STRUCT-02, STRUCT-03
+**Success Criteria** (what must be TRUE):
+  1. Running segmentation with `--vlm-provider` / `--vlm-model` (or config-file equivalents) sends the page image to the configured provider and returns a response without error
+  2. Detected article regions each have a bounding box, a type label (headline / article / advertisement / illustration / caption), and a title string stored in a per-page JSON file
+  3. Changing the provider from one VLM (e.g., Claude Vision) to another (e.g., GPT-4o) requires only a config change with no code modification
+  4. Pages with no detectable article regions produce an empty region list rather than an error
+**Plans**: TBD
+
+### Phase 16: METS/MODS Output
+**Goal**: For each processed issue, the system writes a METS/MODS logical structure document with article-level div elements linked to ALTO word coordinates, conforming to the DFG Viewer / Goobi-Kitodo newspaper ingest profile
+**Depends on**: Phase 15 (article metadata), Phase 12 (stable ALTO XML)
+**Requirements**: STRUCT-04
+**Success Criteria** (what must be TRUE):
+  1. Running the METS/MODS export produces a valid XML file that passes the DFG Viewer newspaper METS profile XSD without errors
+  2. Each identified article appears as a logical `<div>` element in the METS file with a type attribute and a title drawn from STRUCT-03 metadata
+  3. Each article div contains `<area>` elements that reference the correct ALTO file and word-level `BEGIN`/`END` IDs from the corresponding ALTO XML
+  4. Re-running the export after adding new articles to a page overwrites the METS file with updated content without corrupting existing article entries
+**Plans**: TBD
+
+### Phase 17: Article Browser and Full-Text Search
+**Goal**: Operators can browse identified articles for any page in a viewer sidebar and search across all articles by title or content from the web interface
+**Depends on**: Phase 15 (article metadata), Phase 16 (METS/MODS output), Phase 14 (stable viewer)
+**Requirements**: STRUCT-05, STRUCT-06
+**Success Criteria** (what must be TRUE):
+  1. Opening a file in the viewer shows a sidebar listing all identified articles for that page with their type and title
+  2. Clicking an article in the sidebar highlights its bounding region on the TIFF image
+  3. Typing a query into the search field returns a ranked list of matching articles with the file stem and article title visible in each result
+  4. Clicking a search result opens the correct file in the viewer with the matched article's region highlighted
+  5. The search index updates automatically when new segmentation results are saved so new articles appear in subsequent queries without a manual rebuild step
 **Plans**: TBD
 
 ## Progress
@@ -113,3 +162,7 @@ See archive: `.planning/milestones/v1.4-ROADMAP.md`
 | 11. Side-by-Side Viewer UI | v1.4 | 2/2 | Complete | 2026-02-28 |
 | 12. Word Correction | v1.5 | 0/TBD | Not started | - |
 | 13. Upload UI and Live Progress | v1.5 | 0/TBD | Not started | - |
+| 14. Viewer Zoom and Pan | v1.5 | 0/TBD | Not started | - |
+| 15. VLM Article Segmentation | v1.5 | 0/TBD | Not started | - |
+| 16. METS/MODS Output | v1.5 | 0/TBD | Not started | - |
+| 17. Article Browser and Full-Text Search | v1.5 | 0/TBD | Not started | - |
