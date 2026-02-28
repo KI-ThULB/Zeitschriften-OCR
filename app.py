@@ -351,6 +351,17 @@ def serve_image(stem):
                         tiff_path = candidate
                         break
     if tiff_path is None:
+        # Final fallback: scan INPUT_DIR (CLI-processed TIFFs not uploaded via web UI)
+        input_dir_str = app.config.get('INPUT_DIR')
+        if input_dir_str:
+            input_dir = Path(input_dir_str)
+            if input_dir.exists():
+                for candidate in input_dir.iterdir():
+                    if candidate.suffix.lower() in ('.tif', '.tiff'):
+                        if candidate.stem.lower() == stem.lower():
+                            tiff_path = candidate
+                            break
+    if tiff_path is None:
         return jsonify({'error': 'not found', 'stem': stem}), 404
 
     # Render JPEG from TIFF
@@ -497,6 +508,7 @@ if __name__ == '__main__':
     parser.add_argument('--psm', type=int, default=1, help='Page segmentation mode (default: 1)')
     parser.add_argument('--padding', type=int, default=50, help='Crop padding in pixels (default: 50)')
     parser.add_argument('--port', type=int, default=5000, help='Port (default: 5000)')
+    parser.add_argument('--input', default=None, help='Input TIFF directory (for CLI-processed files)')
     args = parser.parse_args()
 
     output_dir = Path(args.output)
@@ -506,6 +518,8 @@ if __name__ == '__main__':
     (output_dir / 'jpegcache').mkdir(exist_ok=True)
 
     app.config['OUTPUT_DIR'] = str(output_dir)
+    if args.input:
+        app.config['INPUT_DIR'] = str(Path(args.input).resolve())
     app.config['LANG'] = args.lang
     app.config['PSM'] = args.psm
     app.config['PADDING'] = args.padding
