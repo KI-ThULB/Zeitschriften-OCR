@@ -121,6 +121,15 @@ None - no external service configuration required.
   - Confirm ALTO 2.1 MeasurementUnit expected by target Goobi instance (mm10 vs pixel)
   - Validate crop detection fallback thresholds (40%/98%) against representative samples
 
+## Self-Check: PASSED
+
+- pipeline.py: FOUND (308 lines, above 160-line minimum)
+- output/alto/144528908_0019.xml: FOUND
+- 01-02-SUMMARY.md: FOUND
+- f5962c7 (Task 1 commit): FOUND
+- fedd094 (Task 2 commit): FOUND
+- 7e8e458 (docs/metadata commit): FOUND
+
 ---
 *Phase: 01-single-file-pipeline*
 *Completed: 2026-02-24*
