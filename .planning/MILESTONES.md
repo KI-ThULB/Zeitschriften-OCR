@@ -65,3 +65,27 @@
 
 ---
 
+
+## v1.4 Web Viewer (Shipped: 2026-02-28)
+
+**Phases completed:** 3 phases (9–11), 6 plans
+**Known Gaps:** Phases 12 (Word Correction) and 13 (Upload UI) deferred to v1.5
+
+**Stats:**
+- Timeline: 2026-02-27 → 2026-02-28 (2 days)
+- LOC: 527 (app.py) + 211 (templates/viewer.html) + 584 (tests/test_app.py) added this milestone
+- Tests: 47 passing (41 server + 6 viewer routes)
+- Git commits: 14
+
+**Key accomplishments:**
+- Flask web server with background OCR worker, SSE stream, and per-file skip/error isolation (Phase 9)
+- TDD test suite — 47 passing tests covering all endpoints via pytest-flask (Phases 9–11)
+- `GET /image/<stem>` — TIFF→JPEG scaling (longest side 1600px) with jpegcache persistence (Phase 10)
+- `GET /alto/<stem>` — flat word array JSON with page/JPEG dimensions and per-word bounding boxes (Phase 10)
+- Two-panel side-by-side viewer: file browser sidebar, TIFF image + SVG overlay, flowing OCR text, bidirectional click cross-reference (Phase 11)
+- `--input` flag for app.py — serves CLI-processed TIFFs not in uploads/ via INPUT_DIR fallback in serve_image() (Phase 11)
+
+**Archive:** `.planning/milestones/v1.4-ROADMAP.md`, `.planning/milestones/v1.4-REQUIREMENTS.md`
+
+---
+

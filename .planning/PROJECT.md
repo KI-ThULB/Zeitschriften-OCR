@@ -4,16 +4,14 @@
 
 A tool for digitizing archival journal and magazine scans. It takes large TIFF files (117–240 MB each), automatically deskews and crops each scan, runs Tesseract OCR in parallel, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems. A local Flask web application wraps the pipeline with a drag-and-drop interface and a side-by-side TIFF/text viewer with word-level post-correction.
 
-## Current Milestone: v1.4 Web Viewer
+## Current Milestone: v1.5 Web Viewer Complete
 
-**Goal:** A local Flask web app that wraps the OCR pipeline and lets operators drag-and-drop TIFFs, monitor processing, then browse and correct results in a TIFF + text viewer.
+**Goal:** Complete the web operator workflow — inline word correction with ALTO XML save, drag-and-drop TIFF upload, and live SSE progress display.
 
 **Target features:**
 - Drag-and-drop individual TIFFs to queue for OCR processing
-- Run OCR from the UI with live progress display
-- Browse all processed files and view TIFF image + extracted text side by side
-- Click a word in the text panel to highlight its bounding box on the TIFF image
-- Edit words in the text panel and save corrections back to the ALTO XML (word-level, overwrite in place)
+- Run OCR from the UI with live progress display (SSE-fed)
+- Edit words in the text panel and save corrections back to the ALTO XML (atomic write + XSD validation gate)
 
 ## Core Value
 
@@ -39,15 +37,18 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - ✓ Live progress line during batch: files completed / total / percentage / ETA (rolling average) — v1.3
 - ✓ `--config PATH` loads CLI flag defaults from a JSON file; CLI flags always override config values — v1.3
 - ✓ Missing or invalid `--config` file exits with a clear error before any TIFF is processed — v1.3
+- ✓ Flask web server with background OCR worker, SSE stream, skip/error isolation — v1.4
+- ✓ TIFF→JPEG endpoint with jpegcache; ALTO word array JSON endpoint — v1.4
+- ✓ Browse all processed files and view TIFF + extracted OCR text side by side — v1.4
+- ✓ Click a word in the text panel to highlight its bounding box on the TIFF image — v1.4
+- ✓ Bounding box overlay scales correctly on window resize (ResizeObserver) — v1.4
+- ✓ Prev/Next navigation with keyboard shortcuts — v1.4
 
 ### Active
 
-- [ ] Drag individual TIFF files onto the web app to queue them for OCR processing — v1.4
-- [ ] Start OCR processing from the UI; see live progress (files done / total / percentage / ETA) — v1.4
-- [ ] Browse all previously processed files from the output folder — v1.4
-- [ ] View TIFF image (left) and extracted OCR text (right) side by side for any processed file — v1.4
-- [ ] Click a word in the text panel to highlight its bounding box on the TIFF image — v1.4
-- [ ] Edit a word in the text panel and save the correction back to the ALTO XML (word-level, overwrite in place) — v1.4
+- [ ] Drag individual TIFF files onto the web app to queue them for OCR processing — v1.5
+- [ ] Start OCR processing from the UI; see live progress (files done / total / percentage / ETA) — v1.5
+- [ ] Edit a word in the text panel and save the correction back to the ALTO XML (word-level, overwrite in place) — v1.5
 
 ### Out of Scope
 
@@ -100,12 +101,24 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 | Config key naming matches argparse `dest` names | No translation layer; operators use same names as CLI flag arguments (`lang`, `psm`, `dry_run`) | ✓ Good — minimal cognitive overhead |
 | `Error:` prefix (not `ERROR:`) for config errors | Locked in CONTEXT.md; consistent with operator-facing messages rather than internal debug style | ✓ Good — applied throughout load_config() |
 
+| Flask web app over desktop GUI | Browser as UI — no Electron/Qt dependency; same Python stack; works on macOS and Linux | ✓ Good — viewer ships in one HTML file, zero build step |
+| Web app is local-only | No authentication, no multi-user, no remote deployment | ✓ Good — matches target use case |
+| Vanilla JS, no bundler | Entire viewer in templates/viewer.html (~211 lines); no npm, no build step | ✓ Good — deployable with one Python command |
+| SVG overlay click-only | Single persistent `<rect>` in-place; 0–1 SVG elements regardless of word count | ✓ Good — no canvas fallback needed |
+| `--input` flag for serve_image() | Fallback scan for CLI-processed TIFFs not in uploads/ | ○ Workaround — Phase 13 upload UI will make all TIFFs accessible via uploads/ |
+
 ## Known Technical Debt
 
-- `ADAPTIVE_BLOCK_SIZE = 51` and `ADAPTIVE_C = 10` are informed starting points; empirical tuning against real Zeitschriften corpus scans is recommended before batch production with `--adaptive-threshold`.
+- `ADAPTIVE_BLOCK_SIZE = 51` and `ADAPTIVE_C = 10` are informed starting points; empirical tuning against the real Zeitschriften corpus is recommended before batch production with `--adaptive-threshold`.
+- `--input` flag is a workaround for CLI-processed TIFFs; superseded when Phase 13 upload UI ships.
 
-| Flask web app over desktop GUI | Browser as UI — no Electron/Qt dependency; same Python stack; works on macOS and Linux; TIFF→JPEG conversion on the fly | — Pending |
-| Web app is local-only | No authentication, no multi-user, no remote deployment — operator runs `python app.py` and opens localhost | — Pending |
+## Context
+
+- Input: several hundred TIFF files, 117–240 MB each (archival resolution, likely 400–600 DPI)
+- Content type: digitized German-language journals and magazines (modern typeface)
+- Current codebase: `pipeline.py` (1,146 lines) + `app.py` (527 lines) + `templates/viewer.html` (211 lines) + `tests/test_app.py` (584 lines); 47 tests passing
+- Tech stack: Python, Flask 3.1, Tesseract, Pillow, OpenCV, lxml, vanilla JS + ResizeObserver
+- Shipped through v1.4: single-file OCR pipeline → parallel batch → XSD validation → Flask web server → TIFF/ALTO endpoints → two-panel viewer
 
 ---
-*Last updated: 2026-02-27 after v1.4 milestone start*
+*Last updated: 2026-02-28 after v1.4 milestone completion*
