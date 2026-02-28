@@ -21,6 +21,35 @@
     #text-panel { width: 380px; overflow-y: auto; padding: 12px; flex-shrink: 0; border-left: 1px solid #ccc; line-height: 1.8; }
     .word { cursor: pointer; }
     .word.selected { font-weight: bold; background: rgba(255,220,0,0.5); }
+    /* Word edit input — inline-block so it sits in flowing text */
+    .word-input {
+      display: inline-block;
+      font: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      border: 1px solid #666;
+      border-radius: 2px;
+      padding: 0 2px;
+      min-width: 60px;
+      outline: none;
+      vertical-align: baseline;
+      box-sizing: content-box;
+    }
+    /* Inline error message below the input */
+    .word-error {
+      display: block;
+      font-size: 0.78rem;
+      color: #c00;
+      margin-top: 2px;
+    }
+    /* Green flash on successful save — applied to .word span after edit closes */
+    @keyframes flash-green {
+      0%   { background-color: rgba(0, 180, 0, 0.45); }
+      100% { background-color: transparent; }
+    }
+    .word-saved {
+      animation: flash-green 1s ease-out forwards;
+    }
   </style>
 </head>
 <body>
@@ -48,6 +77,7 @@
     let wordById = {};
     let activeWord = null;
     let loadGen = 0;
+    let editingSpan = null;   // the .word span currently in edit mode
 
     document.addEventListener('DOMContentLoaded', async () => {
       setupResizeObserver();
@@ -89,6 +119,8 @@
     async function loadFile(index) {
       if (index < 0 || index >= stems.length) return;
       currentIndex = index;
+      if (editingSpan) cancelEdit();
+      editingSpan = null;
       const gen = ++loadGen;
       const stem = stems[index];
 
@@ -131,11 +163,16 @@
         `<span class="word" data-id="${escapeHtml(w.id)}">${escapeHtml(w.content)}</span> `
       ).join('');
       panel.onclick = (e) => {
+        // Ignore clicks that land inside an open input or error span
+        if (e.target.tagName === 'INPUT' || e.target.classList.contains('word-error')) return;
         const span = e.target.closest('.word');
         if (!span) return;
+        // Cancel any in-progress edit before opening a new one
+        if (editingSpan && editingSpan !== span) cancelEdit();
+        if (editingSpan === span) return; // already editing this word — ignore re-click
         const word = wordById[span.dataset.id];
         if (!word) return;
-        selectWord(word, span);
+        editWord(word, span);
       };
     }
 
@@ -197,6 +234,118 @@
         if (e.key === 'ArrowLeft') navigateTo(currentIndex - 1);
         if (e.key === 'ArrowRight') navigateTo(currentIndex + 1);
       });
+    }
+
+    function editWord(word, span) {
+      // Hide SVG overlay for this word while editing
+      clearHighlight();
+
+      editingSpan = span;
+
+      // Measure span's current rendered width for input sizing
+      const spanWidth = Math.max(60, span.offsetWidth);
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'word-input';
+      input.value = word.content;
+      input.style.width = spanWidth + 'px';
+      input.dataset.wordId = word.id;
+
+      const errorSpan = document.createElement('span');
+      errorSpan.className = 'word-error';
+      errorSpan.style.display = 'none';
+
+      // Replace span content with input (keep span in DOM for cancel restore)
+      span.textContent = '';
+      span.appendChild(input);
+      span.appendChild(errorSpan);
+
+      input.focus();
+      input.select();
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveWord(word, span, input, errorSpan);
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          cancelEdit();
+        }
+      });
+
+      // Blur = cancel (silently restore)
+      input.addEventListener('blur', () => {
+        // Use setTimeout to let click on another word fire first,
+        // so cancelEdit() from the onclick handler runs before blur
+        setTimeout(() => {
+          if (editingSpan === span) cancelEdit();
+        }, 0);
+      });
+    }
+
+    function cancelEdit() {
+      if (!editingSpan) return;
+      const span = editingSpan;
+      const word = wordById[span.dataset.id];
+      editingSpan = null;
+      // Restore original text
+      span.textContent = '';
+      span.appendChild(document.createTextNode(word ? word.content : ''));
+      // Restore SVG overlay for the word whose edit was cancelled
+      if (word) {
+        activeWord = word;
+        showHighlight(word);
+      }
+    }
+
+    async function saveWord(word, span, input, errorSpan) {
+      const raw = input.value;
+      if (!raw.trim()) {
+        errorSpan.textContent = 'Word cannot be empty';
+        errorSpan.style.display = '';
+        return;
+      }
+      errorSpan.style.display = 'none';
+
+      const stem = stems[currentIndex];
+      let resp;
+      try {
+        resp = await fetch(`/save/${encodeURIComponent(stem)}`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({word_id: word.id, content: raw}),
+        });
+      } catch (err) {
+        errorSpan.textContent = 'Save failed — network error';
+        errorSpan.style.display = '';
+        return;
+      }
+
+      if (!resp.ok) {
+        errorSpan.textContent = 'Save failed — invalid content';
+        errorSpan.style.display = '';
+        return;
+      }
+
+      // Success: update in-memory word, restore span with new text, flash green
+      word.content = raw;
+      editingSpan = null;
+      span.textContent = '';
+      span.appendChild(document.createTextNode(raw));
+      // Trigger green flash — remove class first to allow re-animation if saved twice
+      span.classList.remove('word-saved');
+      void span.offsetWidth; // force reflow
+      span.classList.add('word-saved');
+      span.addEventListener('animationend', () => span.classList.remove('word-saved'), {once: true});
+
+      // Restore SVG overlay on the now-corrected word span
+      activeWord = word;
+      showHighlight(word);
+
+      // Return focus to text panel
+      document.getElementById('text-panel').focus();
     }
 
     function escapeHtml(str) {
