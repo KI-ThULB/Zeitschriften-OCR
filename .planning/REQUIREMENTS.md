@@ -1,0 +1,90 @@
+# Requirements: Zeitschriften-OCR
+
+**Defined:** 2026-02-28
+**Core Value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
+
+## v1.5 Requirements
+
+### Post-Correction
+
+- [ ] **EDIT-01**: User can click a word in the text panel to select it for editing
+- [ ] **EDIT-02**: User can type a corrected word and confirm the edit
+- [ ] **EDIT-03**: Saving a correction overwrites the ALTO XML Word element and validates the file before writing
+- [ ] **EDIT-04**: User sees visual confirmation when a correction is saved
+
+### File Ingestion
+
+- [ ] **INGEST-01**: User can drag individual TIFF files onto the app to queue them for OCR processing
+- [ ] **INGEST-02**: User can see the list of queued TIFFs before starting processing
+- [ ] **INGEST-03**: User can remove a file from the queue before processing starts
+
+### OCR Processing
+
+- [ ] **PROC-01**: User can start OCR processing on all queued TIFFs with a single button
+- [ ] **PROC-02**: User sees live progress while OCR runs (files done / total / percentage / ETA)
+
+### Viewer Zoom
+
+- [ ] **VIEW-05**: User can zoom in/out on the TIFF image using mouse wheel; SVG word overlay stays aligned at all zoom levels
+- [ ] **VIEW-06**: User can pan the zoomed image by clicking and dragging
+
+### Article Structuring
+
+- [ ] **STRUCT-01**: User can trigger automatic article segmentation for any page via a configurable VLM/LLM provider (provider and model set via config file or `--vlm-provider` / `--vlm-model` CLI flags)
+- [ ] **STRUCT-02**: The system identifies article regions on each page (bounding box, type: headline / article / advertisement / illustration / caption) and stores results per page
+- [ ] **STRUCT-03**: Each identified article gets a title and section type extracted and made accessible as structured metadata
+- [ ] **STRUCT-04**: Structured output is written as a METS/MODS logical structure document with article-level `<div>` elements linked to ALTO word coordinates (DFG Viewer / Goobi-Kitodo newspaper ingest profile)
+- [ ] **STRUCT-05**: User can browse identified articles for a page in the viewer sidebar — clicking an article highlights its region on the TIFF image
+- [ ] **STRUCT-06**: User can perform full-text search across all structured articles by title or content from the web interface
+
+## Future Requirements
+
+### Usability Enhancements
+
+- **UX-01**: Word confidence coloring — shade words by ALTO @WC value (red/yellow/green)
+- **UX-02**: Keyboard navigation through words for sequential correction
+- **UX-03**: Resizable left/right panels
+- **UX-04**: Undo last correction
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Multi-user / authentication | Local single-operator tool |
+| ALTO structural editing (merge/split words) | Different problem class; extreme complexity |
+| Coordinate editing | Coordinates come from Tesseract; re-run OCR |
+| Re-OCR on selected regions | High complexity, low gain |
+| Remote deployment / hosting | Local workstation tool only |
+| Mobile / responsive layout | Desktop operator tool |
+| Automatic OCR quality scoring | Out of scope for this milestone |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| EDIT-01 | Phase 12 | Pending |
+| EDIT-02 | Phase 12 | Pending |
+| EDIT-03 | Phase 12 | Pending |
+| EDIT-04 | Phase 12 | Pending |
+| INGEST-01 | Phase 13 | Pending |
+| INGEST-02 | Phase 13 | Pending |
+| INGEST-03 | Phase 13 | Pending |
+| PROC-01 | Phase 13 | Pending |
+| PROC-02 | Phase 13 | Pending |
+| VIEW-05 | TBD | Pending |
+| VIEW-06 | TBD | Pending |
+| STRUCT-01 | TBD | Pending |
+| STRUCT-02 | TBD | Pending |
+| STRUCT-03 | TBD | Pending |
+| STRUCT-04 | TBD | Pending |
+| STRUCT-05 | TBD | Pending |
+| STRUCT-06 | TBD | Pending |
+
+**Coverage:**
+- v1.5 requirements: 17 total
+- Mapped to phases: 9
+- Unmapped: 8 (TBD — roadmapper will assign)
+
+---
+*Requirements defined: 2026-02-28*
+*Last updated: 2026-02-28 after v1.5 milestone start*
