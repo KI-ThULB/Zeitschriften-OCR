@@ -98,7 +98,11 @@ Plans:
   3. Clicking a word in the text panel draws a highlight rectangle over the corresponding bounding box on the TIFF image
   4. Bounding box positions remain correct after the browser window is resized (overlay recomputes from live rendered image dimensions)
   5. Previous/next buttons and keyboard arrow keys navigate to the adjacent file in the list
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Add GET /files and GET / routes to app.py, tests, and templates/viewer.html stub
+- [ ] 11-02-PLAN.md — Implement complete viewer.html (layout, file loading, SVG overlay, navigation)
 
 ### Phase 12: Word Correction
 **Goal**: Operators can click any word in the text panel, type a correction, and save it — with the ALTO XML overwritten atomically only after XSD validation passes
