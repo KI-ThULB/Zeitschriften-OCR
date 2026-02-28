@@ -23,12 +23,12 @@
 - [x] **VIEW-01**: User can browse all previously processed files in a file list panel
 - [x] **VIEW-02**: Clicking a file shows the TIFF rendered as an image in the left panel
 - [x] **VIEW-03**: Clicking a file shows the OCR text in the right panel, extracted word-by-word from the ALTO XML
-- [ ] **VIEW-04**: User can navigate to the previous/next file with keyboard or buttons
+- [x] **VIEW-04**: User can navigate to the previous/next file with keyboard or buttons
 
 ### Word Overlay
 
-- [ ] **OVLY-01**: Clicking a word in the text panel highlights its bounding box on the TIFF image
-- [ ] **OVLY-02**: Bounding box coordinates scale correctly as the image is resized
+- [x] **OVLY-01**: Clicking a word in the text panel highlights its bounding box on the TIFF image
+- [x] **OVLY-02**: Bounding box coordinates scale correctly as the image is resized
 
 ### Post-Correction
 
@@ -71,9 +71,9 @@
 | VIEW-01 | Phase 11 | Complete |
 | VIEW-02 | Phase 10 | Complete |
 | VIEW-03 | Phase 10 | Complete |
-| VIEW-04 | Phase 11 | Pending |
-| OVLY-01 | Phase 11 | Pending |
-| OVLY-02 | Phase 11 | Pending |
+| VIEW-04 | Phase 11 | Complete |
+| OVLY-01 | Phase 11 | Complete |
+| OVLY-02 | Phase 11 | Complete |
 | EDIT-01 | Phase 12 | Pending |
 | EDIT-02 | Phase 12 | Pending |
 | EDIT-03 | Phase 12 | Pending |

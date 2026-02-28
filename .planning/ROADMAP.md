@@ -56,7 +56,7 @@ See archive: `.planning/milestones/v1.3-ROADMAP.md`
 
 - [x] **Phase 9: Flask Foundation and Job State** - Bootable app.py with background OCR thread, SSE stream, and per-file skip/error isolation (2 plans) — completed 2026-02-27
 - [x] **Phase 10: TIFF and ALTO Data Endpoints** - JPEG proxy endpoint and ALTO coordinate JSON API for viewer (completed 2026-02-27)
-- [ ] **Phase 11: Side-by-Side Viewer UI** - File browser, two-panel TIFF+text layout, SVG word bounding box overlay with click cross-reference
+- [x] **Phase 11: Side-by-Side Viewer UI** - File browser, two-panel TIFF+text layout, SVG word bounding box overlay with click cross-reference (completed 2026-02-28)
 - [ ] **Phase 12: Word Correction** - Inline word editing, atomic ALTO XML save with XSD validation gate
 - [ ] **Phase 13: Upload UI and Live Progress** - Drag-and-drop upload zone, queue management, SSE-driven progress display, end-to-end integration
 
@@ -141,6 +141,6 @@ Plans:
 | 8. Config File Support | v1.3 | 2/2 | Complete | 2026-02-26 |
 | 9. Flask Foundation and Job State | v1.4 | Complete    | 2026-02-27 | 2026-02-27 |
 | 10. TIFF and ALTO Data Endpoints | 2/2 | Complete    | 2026-02-27 | - |
-| 11. Side-by-Side Viewer UI | 1/2 | In Progress|  | - |
+| 11. Side-by-Side Viewer UI | 2/2 | Complete   | 2026-02-28 | - |
 | 12. Word Correction | v1.4 | 0/TBD | Not started | - |
 | 13. Upload UI and Live Progress | v1.4 | 0/TBD | Not started | - |

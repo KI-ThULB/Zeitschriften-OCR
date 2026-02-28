@@ -99,6 +99,15 @@ None - no external service configuration required.
 - GET /files and GET / routes are live and tested; ready for plan 02 to replace viewer.html stub with full implementation
 - All 47 tests passing (41 pre-existing + 6 new)
 
+## Self-Check: PASSED
+
+- FOUND: templates/viewer.html
+- FOUND: app.py (modified)
+- FOUND: tests/test_app.py (modified)
+- FOUND: 11-01-SUMMARY.md
+- FOUND commit: e525066 (task feat commit)
+- FOUND commit: 0e83b41 (docs metadata commit)
+
 ---
 *Phase: 11-side-by-side-viewer-ui*
 *Completed: 2026-02-28*

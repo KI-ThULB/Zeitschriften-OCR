@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.4 Web Viewer — Phase 11 (Side-by-Side Viewer UI)
+**Current focus:** v1.4 Web Viewer — Phase 11 complete; ready for Phase 12 (ALTO XML Editor)
 
 ## Current Position
 
 Phase: 11 of 13 (Side-by-Side Viewer UI)
-Plan: 1 of 2 in current phase (plan 01 complete)
-Status: In Progress
-Last activity: 2026-02-28 — Completed 11-01 (GET /files + GET / viewer routes, templates/viewer.html stub, 47 tests passing)
+Plan: 2 of 2 in current phase (plan 02 complete — phase done)
+Status: Phase 11 Complete
+Last activity: 2026-02-28 — Completed 11-02 (complete side-by-side viewer, SVG overlay, ResizeObserver, INPUT_DIR fix, 47 tests passing)
 
-Progress: [█████░░░░░] 31% (v1.4 Phase 11 plan 1/2 in progress)
+Progress: [█████░░░░░] 33% (v1.4 Phase 11 complete — 2/2 plans done)
 
 ## Performance Metrics
 
@@ -42,11 +42,12 @@ Progress: [█████░░░░░] 31% (v1.4 Phase 11 plan 1/2 in progre
 
 | 9. Flask Foundation and Job State | 2/2 | 3 min | 1.5 min |
 | 10. TIFF and ALTO Data Endpoints | 2/2 | 7 min | 3.5 min |
-| 11. Side-by-Side Viewer UI | 1/2 | 2 min | 2 min |
+| 11. Side-by-Side Viewer UI | 2/2 | ~62 min | ~31 min |
 
 *Updated after each plan completion*
 | Phase 10 P02 | 5 | 2 tasks | 1 files |
 | Phase 11 P01 | 2 | 1 task | 3 files |
+| Phase 11 P02 | ~60 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Recent decisions affecting current work:
 - [Phase 10-02]: No disk cache for ALTO JSON — parse XML on every request to stay consistent with Phase 12 XML edits
 - [Phase 11-01]: GET /files returns empty stems list when alto/ directory does not exist (graceful no-dir handling)
 - [Phase 11-01]: templates/viewer.html is a stub in plan 01; full implementation delivered in plan 02
+- [Phase 11-02]: Generation counter (loadGen++) in loadFile() prevents stale async fetch results on rapid file switching
+- [Phase 11-02]: img.clientWidth (not naturalWidth) used for SVG scale factors — clientWidth reflects CSS display size matching ALTO coordinate space
+- [Phase 11-02]: --input CLI flag + INPUT_DIR fallback added to serve_image() — enables viewer JPEG display for CLI-processed TIFFs not in uploads/
 
 ### Pending Todos
 
@@ -84,5 +88,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 11-01-PLAN.md — GET /files + GET / viewer routes, templates/viewer.html stub (47 passing, 0 failing)
+Stopped at: Completed 11-02-PLAN.md — complete side-by-side viewer UI, SVG overlay, ResizeObserver, INPUT_DIR fix (47 passing, 0 failing)
 Resume file: None
