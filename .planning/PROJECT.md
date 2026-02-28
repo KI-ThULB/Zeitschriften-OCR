@@ -6,12 +6,13 @@ A tool for digitizing archival journal and magazine scans. It takes large TIFF f
 
 ## Current Milestone: v1.5 Web Viewer Complete
 
-**Goal:** Complete the web operator workflow — inline word correction with ALTO XML save, drag-and-drop TIFF upload, and live SSE progress display.
+**Goal:** Complete the full web operator workflow — inline word correction with atomic ALTO XML save, drag-and-drop TIFF upload, live SSE progress display, and end-to-end integration.
 
 **Target features:**
-- Drag-and-drop individual TIFFs to queue for OCR processing
-- Run OCR from the UI with live progress display (SSE-fed)
-- Edit words in the text panel and save corrections back to the ALTO XML (atomic write + XSD validation gate)
+- Click a word in the viewer to edit it inline; save correction back to ALTO XML (atomic write + XSD validation gate)
+- Drag-and-drop individual TIFFs onto upload zone to queue them for OCR processing
+- Start OCR from the UI; watch live progress (files done / total / percentage / ETA via SSE)
+- Completed files appear as links opening directly in the side-by-side viewer
 
 ## Core Value
 

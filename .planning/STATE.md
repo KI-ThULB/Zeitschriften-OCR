@@ -2,17 +2,17 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-27)
+See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.4 Web Viewer — Phase 11 complete; ready for Phase 12 (ALTO XML Editor)
+**Current focus:** v1.5 Web Viewer Complete — defining requirements and roadmap
 
 ## Current Position
 
-Phase: 11 of 13 (Side-by-Side Viewer UI)
-Plan: 2 of 2 in current phase (plan 02 complete — phase done)
-Status: Phase 11 Complete
-Last activity: 2026-02-28 — Completed 11-02 (complete side-by-side viewer, SVG overlay, ResizeObserver, INPUT_DIR fix, 47 tests passing)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v1.5
+Last activity: 2026-02-28 — Milestone v1.5 started (Word Correction + Upload UI)
 
 Progress: [█████░░░░░] 33% (v1.4 Phase 11 complete — 2/2 plans done)
 
