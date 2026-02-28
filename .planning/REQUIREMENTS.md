@@ -8,8 +8,8 @@
 ### Post-Correction
 
 - [ ] **EDIT-01**: User can click a word in the text panel to select it for editing
-- [ ] **EDIT-02**: User can type a corrected word and confirm the edit
-- [ ] **EDIT-03**: Saving a correction overwrites the ALTO XML Word element and validates the file before writing
+- [x] **EDIT-02**: User can type a corrected word and confirm the edit
+- [x] **EDIT-03**: Saving a correction overwrites the ALTO XML Word element and validates the file before writing
 - [ ] **EDIT-04**: User sees visual confirmation when a correction is saved
 
 ### File Ingestion
@@ -63,8 +63,8 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | EDIT-01 | Phase 12 | Pending |
-| EDIT-02 | Phase 12 | Pending |
-| EDIT-03 | Phase 12 | Pending |
+| EDIT-02 | Phase 12 | Complete |
+| EDIT-03 | Phase 12 | Complete |
 | EDIT-04 | Phase 12 | Pending |
 | INGEST-01 | Phase 13 | Pending |
 | INGEST-02 | Phase 13 | Pending |

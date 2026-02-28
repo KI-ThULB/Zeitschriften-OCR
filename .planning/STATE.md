@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 12 — Word Correction
-Plan: 12-01 (not started)
-Status: Roadmap defined; ready to plan Phase 12
-Last activity: 2026-02-28 — v1.5 roadmap created (Phases 12–17)
+Plan: 12-02 (not started)
+Status: Plan 12-01 complete — POST /save/<stem> endpoint implemented with TDD
+Last activity: 2026-02-28 — Plan 12-01 complete (save endpoint + XSD gate)
 
 Progress: [█████░░░░░░░░░░░░] 11/17 phases complete (v1.4 done, v1.5 not started)
 
@@ -38,6 +38,7 @@ Progress: [█████░░░░░░░░░░░░] 11/17 phases com
 | 9. Flask Foundation and Job State | 2/2 | 3 min | 1.5 min |
 | 10. TIFF and ALTO Data Endpoints | 2/2 | 7 min | 3.5 min |
 | 11. Side-by-Side Viewer UI | 2/2 | ~62 min | ~31 min |
+| 12. Word Correction | 1/? | 2 min | 2 min |
 
 *Updated after each plan completion*
 
@@ -67,6 +68,9 @@ Recent decisions affecting current work:
 - [Phase 11-02]: Generation counter (loadGen++) in loadFile() prevents stale async fetch results on rapid file switching
 - [Phase 11-02]: img.clientWidth (not naturalWidth) used for SVG scale factors — clientWidth reflects CSS display size matching ALTO coordinate space
 - [Phase 11-02]: --input CLI flag + INPUT_DIR fallback added to serve_image() — enables viewer JPEG display for CLI-processed TIFFs not in uploads/
+- [Phase 12-01]: pipeline.SCHEMA_PATH promoted to module-level Path constant — was local variable in main(), needed as module attribute for app.py access
+- [Phase 12-01]: XSD-valid test fixture requires Page ID+PHYSICAL_IMG_NR and element dimension attributes — minimal ALTO fixture fails XSD gate correctly
+- [Phase 12-01]: Atomic write via tempfile.mkstemp+os.replace in same directory — prevents partial-write corruption on ALTO XML edits
 
 ### Pending Todos
 
@@ -82,5 +86,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: v1.5 roadmap created — Phases 12–17 defined, all 17 requirements mapped
-Resume at: Plan Phase 12 (Word Correction) — run `/gsd:plan-phase 12`
+Stopped at: Plan 12-01 complete — POST /save/<stem> with atomic write + XSD gate
+Resume at: Plan 12-02 (Word Correction UI)
