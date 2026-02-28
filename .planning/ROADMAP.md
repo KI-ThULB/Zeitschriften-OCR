@@ -141,6 +141,6 @@ Plans:
 | 8. Config File Support | v1.3 | 2/2 | Complete | 2026-02-26 |
 | 9. Flask Foundation and Job State | v1.4 | Complete    | 2026-02-27 | 2026-02-27 |
 | 10. TIFF and ALTO Data Endpoints | 2/2 | Complete    | 2026-02-27 | - |
-| 11. Side-by-Side Viewer UI | v1.4 | 0/TBD | Not started | - |
+| 11. Side-by-Side Viewer UI | 1/2 | In Progress|  | - |
 | 12. Word Correction | v1.4 | 0/TBD | Not started | - |
 | 13. Upload UI and Live Progress | v1.4 | 0/TBD | Not started | - |

@@ -20,7 +20,7 @@
 
 ### Viewer
 
-- [ ] **VIEW-01**: User can browse all previously processed files in a file list panel
+- [x] **VIEW-01**: User can browse all previously processed files in a file list panel
 - [x] **VIEW-02**: Clicking a file shows the TIFF rendered as an image in the left panel
 - [x] **VIEW-03**: Clicking a file shows the OCR text in the right panel, extracted word-by-word from the ALTO XML
 - [ ] **VIEW-04**: User can navigate to the previous/next file with keyboard or buttons
@@ -68,7 +68,7 @@
 | PROC-02 | Phase 13 | Pending |
 | PROC-03 | Phase 9 | Complete |
 | PROC-04 | Phase 9 | Complete |
-| VIEW-01 | Phase 11 | Pending |
+| VIEW-01 | Phase 11 | Complete |
 | VIEW-02 | Phase 10 | Complete |
 | VIEW-03 | Phase 10 | Complete |
 | VIEW-04 | Phase 11 | Pending |

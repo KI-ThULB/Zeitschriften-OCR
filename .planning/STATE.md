@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.4 Web Viewer — Phase 10 (TIFF and ALTO Data Endpoints)
+**Current focus:** v1.4 Web Viewer — Phase 11 (Side-by-Side Viewer UI)
 
 ## Current Position
 
-Phase: 10 of 13 (TIFF and ALTO Data Endpoints)
-Plan: 2 of 2 in current phase (phase complete)
-Status: Phase Complete
-Last activity: 2026-02-27 — Completed 10-02 (GET /image and GET /alto endpoints, 41 tests passing)
+Phase: 11 of 13 (Side-by-Side Viewer UI)
+Plan: 1 of 2 in current phase (plan 01 complete)
+Status: In Progress
+Last activity: 2026-02-28 — Completed 11-01 (GET /files + GET / viewer routes, templates/viewer.html stub, 47 tests passing)
 
-Progress: [████░░░░░░] 25% (v1.4 Phase 10 plan 2/2 done)
+Progress: [█████░░░░░] 31% (v1.4 Phase 11 plan 1/2 in progress)
 
 ## Performance Metrics
 
@@ -42,9 +42,11 @@ Progress: [████░░░░░░] 25% (v1.4 Phase 10 plan 2/2 done)
 
 | 9. Flask Foundation and Job State | 2/2 | 3 min | 1.5 min |
 | 10. TIFF and ALTO Data Endpoints | 2/2 | 7 min | 3.5 min |
+| 11. Side-by-Side Viewer UI | 1/2 | 2 min | 2 min |
 
 *Updated after each plan completion*
 | Phase 10 P02 | 5 | 2 tasks | 1 files |
+| Phase 11 P01 | 2 | 1 task | 3 files |
 
 ## Accumulated Context
 
@@ -67,6 +69,8 @@ Recent decisions affecting current work:
 - [Phase 10-01]: confidence=None (not 0) for ALTO words missing WC attribute — explicitly asserted with is None to prevent silent coercion bugs in implementation
 - [Phase 10-02]: before_request path traversal guard added — Flask/Werkzeug normalizes /../ URLs before route dispatch; route-level stem check unreachable; before_request fires on raw request.path
 - [Phase 10-02]: No disk cache for ALTO JSON — parse XML on every request to stay consistent with Phase 12 XML edits
+- [Phase 11-01]: GET /files returns empty stems list when alto/ directory does not exist (graceful no-dir handling)
+- [Phase 11-01]: templates/viewer.html is a stub in plan 01; full implementation delivered in plan 02
 
 ### Pending Todos
 
@@ -79,6 +83,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-27
-Stopped at: Completed 10-02-PLAN.md — GET /image and GET /alto endpoints (41 passing, 0 failing)
+Last session: 2026-02-28
+Stopped at: Completed 11-01-PLAN.md — GET /files + GET / viewer routes, templates/viewer.html stub (47 passing, 0 failing)
 Resume file: None
