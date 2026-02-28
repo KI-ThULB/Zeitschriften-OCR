@@ -582,3 +582,190 @@ class TestViewerRoute:
         """GET /: response body is not empty (template loaded successfully)."""
         resp = client.get('/')
         assert len(resp.data) > 0
+
+
+# ---------------------------------------------------------------------------
+# Phase 12: POST /save/<stem> — word correction endpoint (EDIT-02, EDIT-03)
+# ---------------------------------------------------------------------------
+
+class TestSaveEndpoint:
+    """Tests for POST /save/<stem> endpoint (Plan 12-01)."""
+
+    def _write_alto_fixture(self, path, page_w=5146, page_h=7548, strings=None):
+        """Write a minimal ALTO 2.1 XML fixture using lxml etree."""
+        from lxml import etree
+        ns = ALTO_NS
+        if strings is None:
+            strings = [
+                {'CONTENT': 'Zeitschrift', 'HPOS': '100', 'VPOS': '200', 'WIDTH': '80', 'HEIGHT': '30', 'WC': '0.95'},
+                {'CONTENT': 'Berichtigung', 'HPOS': '200', 'VPOS': '200', 'WIDTH': '100', 'HEIGHT': '30'},
+            ]
+        root = etree.Element(f'{{{ns}}}alto')
+        layout = etree.SubElement(root, f'{{{ns}}}Layout')
+        page = etree.SubElement(layout, f'{{{ns}}}Page')
+        page.set('WIDTH', str(page_w))
+        page.set('HEIGHT', str(page_h))
+        block = etree.SubElement(page, f'{{{ns}}}PrintSpace')
+        tb = etree.SubElement(block, f'{{{ns}}}TextBlock')
+        line = etree.SubElement(tb, f'{{{ns}}}TextLine')
+        for s in strings:
+            elem = etree.SubElement(line, f'{{{ns}}}String')
+            for k, v in s.items():
+                elem.set(k, str(v))
+        path.write_bytes(etree.tostring(root, xml_declaration=True, encoding='UTF-8', pretty_print=True))
+
+    def test_save_updates_alto_on_disk(self, client, flask_app, tmp_path):
+        """POST /save/scan_001 with valid word_id and content updates CONTENT on disk."""
+        from lxml import etree
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        self._write_alto_fixture(alto_dir / 'scan_001.xml')
+
+        resp = client.post(
+            '/save/scan_001',
+            json={'word_id': 'w0', 'content': 'Berichtigung'},
+        )
+        assert resp.status_code == 200
+
+        # Parse the updated file and verify CONTENT changed
+        ns = ALTO_NS
+        root = etree.parse(str(alto_dir / 'scan_001.xml')).getroot()
+        strings = list(root.iter(f'{{{ns}}}String'))
+        assert strings[0].get('CONTENT') == 'Berichtigung', (
+            f"Expected 'Berichtigung', got {strings[0].get('CONTENT')!r}"
+        )
+
+    def test_save_returns_ok_status(self, client, flask_app, tmp_path):
+        """POST /save/scan_001 with valid word_id and content returns {"status": "ok"}."""
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        self._write_alto_fixture(alto_dir / 'scan_001.xml')
+
+        resp = client.post(
+            '/save/scan_001',
+            json={'word_id': 'w0', 'content': 'Berichtigung'},
+        )
+        assert resp.status_code == 200
+        assert resp.get_json() == {'status': 'ok'}
+
+    def test_save_empty_content_returns_422(self, client, flask_app, tmp_path):
+        """POST /save/scan_001 with empty content returns 422 without modifying the ALTO file."""
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        self._write_alto_fixture(alto_dir / 'scan_001.xml')
+
+        original_content = (alto_dir / 'scan_001.xml').read_bytes()
+
+        resp = client.post(
+            '/save/scan_001',
+            json={'word_id': 'w0', 'content': ''},
+        )
+        assert resp.status_code == 422
+        # File must be unchanged
+        assert (alto_dir / 'scan_001.xml').read_bytes() == original_content
+
+    def test_save_whitespace_only_content_returns_422(self, client, flask_app, tmp_path):
+        """POST /save/scan_001 with whitespace-only content returns 422."""
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        self._write_alto_fixture(alto_dir / 'scan_001.xml')
+
+        original_content = (alto_dir / 'scan_001.xml').read_bytes()
+
+        resp = client.post(
+            '/save/scan_001',
+            json={'word_id': 'w0', 'content': '   '},
+        )
+        assert resp.status_code == 422
+        assert (alto_dir / 'scan_001.xml').read_bytes() == original_content
+
+    def test_save_missing_word_id_returns_400(self, client, flask_app, tmp_path):
+        """POST /save/scan_001 without word_id returns 400."""
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        self._write_alto_fixture(alto_dir / 'scan_001.xml')
+
+        resp = client.post(
+            '/save/scan_001',
+            json={'content': 'Berichtigung'},
+        )
+        assert resp.status_code == 400
+        body = resp.get_json()
+        assert body is not None
+        assert 'word_id' in body.get('error', '')
+
+    def test_save_missing_content_returns_400(self, client, flask_app, tmp_path):
+        """POST /save/scan_001 without content returns 400."""
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        self._write_alto_fixture(alto_dir / 'scan_001.xml')
+
+        resp = client.post(
+            '/save/scan_001',
+            json={'word_id': 'w0'},
+        )
+        assert resp.status_code == 400
+        body = resp.get_json()
+        assert body is not None
+        assert 'content' in body.get('error', '')
+
+    def test_save_stem_not_found_returns_404(self, client, flask_app, tmp_path):
+        """POST /save/nosuchfile returns 404 when no ALTO file exists for stem."""
+        resp = client.post(
+            '/save/nosuchfile',
+            json={'word_id': 'w0', 'content': 'x'},
+        )
+        assert resp.status_code == 404
+        body = resp.get_json()
+        assert body is not None
+        assert body.get('error') == 'not found'
+        assert body.get('stem') == 'nosuchfile'
+
+    def test_save_word_id_out_of_range_returns_404(self, client, flask_app, tmp_path):
+        """POST /save/scan_001 with out-of-range word_id returns 404."""
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        self._write_alto_fixture(alto_dir / 'scan_001.xml')
+
+        resp = client.post(
+            '/save/scan_001',
+            json={'word_id': 'w9999', 'content': 'x'},
+        )
+        assert resp.status_code == 404
+        body = resp.get_json()
+        assert body is not None
+        assert body.get('error') == 'word not found'
+
+    def test_save_atomic_write_on_xsd_failure(self, client, flask_app, tmp_path, monkeypatch):
+        """POST /save with content that fails XSD: returns 422, original file unchanged."""
+        import app as app_module
+        from lxml import etree as _etree
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        self._write_alto_fixture(alto_dir / 'scan_001.xml')
+
+        original_content = (alto_dir / 'scan_001.xml').read_bytes()
+
+        # Build a fake XSD object whose validate() always returns False
+        class _FailingSchema:
+            def validate(self, doc):
+                return False
+
+        monkeypatch.setattr(app_module.pipeline, 'load_xsd', lambda path: _FailingSchema())
+
+        resp = client.post(
+            '/save/scan_001',
+            json={'word_id': 'w0', 'content': 'ValidContent'},
+        )
+        assert resp.status_code == 422
+        assert (alto_dir / 'scan_001.xml').read_bytes() == original_content
