@@ -13,7 +13,7 @@ import threading
 import time
 from pathlib import Path
 
-from flask import Flask, Response, jsonify, request, send_file, stream_with_context
+from flask import Flask, Response, jsonify, render_template, request, send_file, stream_with_context
 from PIL import Image
 from werkzeug.utils import secure_filename
 
@@ -467,6 +467,23 @@ def serve_alto(stem):
         'jpeg_height': jpeg_height,
         'words': words,
     })
+
+
+@app.get('/files')
+def list_files():
+    """Return alphabetically sorted list of ALTO stems in output/alto/."""
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    alto_dir = output_dir / 'alto'
+    if not alto_dir.exists():
+        return jsonify({'stems': []})
+    stems = sorted(p.stem for p in alto_dir.glob('*.xml'))
+    return jsonify({'stems': stems})
+
+
+@app.get('/')
+def viewer():
+    """Serve the side-by-side viewer page."""
+    return render_template('viewer.html')
 
 
 # ---------------------------------------------------------------------------

@@ -6,6 +6,7 @@ PROC-04: Per-file OCR errors are reported without stopping the batch.
 import json
 import queue
 import io
+from pathlib import Path
 import pytest
 
 
@@ -510,3 +511,74 @@ class TestAltoEndpoint:
         body = resp.get_json()
         assert body is not None
         assert 'error' in body
+
+
+# ---------------------------------------------------------------------------
+# Phase 11: GET /files endpoint (VIEW-01)
+# ---------------------------------------------------------------------------
+
+class TestFilesEndpoint:
+
+    def test_returns_sorted_stems(self, client, flask_app):
+        """GET /files: returns stems in alphabetical order."""
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        (alto_dir / 'scan_002.xml').write_text('<ALTO/>')
+        (alto_dir / 'scan_001.xml').write_text('<ALTO/>')
+        (alto_dir / 'scan_003.xml').write_text('<ALTO/>')
+
+        resp = client.get('/files')
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert body is not None
+        assert body['stems'] == ['scan_001', 'scan_002', 'scan_003']
+
+    def test_returns_empty_when_no_alto_dir(self, client, flask_app):
+        """GET /files: returns {'stems': []} when alto/ does not exist."""
+        resp = client.get('/files')
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert body is not None
+        assert body['stems'] == []
+
+    def test_returns_empty_when_alto_dir_empty(self, client, flask_app):
+        """GET /files: returns {'stems': []} when alto/ directory has no .xml files."""
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+
+        resp = client.get('/files')
+        assert resp.status_code == 200
+        assert resp.get_json()['stems'] == []
+
+    def test_ignores_non_xml_files(self, client, flask_app):
+        """GET /files: non-.xml files in alto/ are excluded from the stem list."""
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        (alto_dir / 'scan_001.xml').write_text('<ALTO/>')
+        (alto_dir / 'README.txt').write_text('not xml')
+        (alto_dir / 'scan_002.json').write_text('{}')
+
+        resp = client.get('/files')
+        assert resp.status_code == 200
+        assert resp.get_json()['stems'] == ['scan_001']
+
+
+# ---------------------------------------------------------------------------
+# Phase 11: GET / viewer route (VIEW-01 entry point)
+# ---------------------------------------------------------------------------
+
+class TestViewerRoute:
+
+    def test_viewer_returns_200_html(self, client, flask_app):
+        """GET /: returns 200 with content-type text/html."""
+        resp = client.get('/')
+        assert resp.status_code == 200
+        assert 'text/html' in resp.content_type
+
+    def test_viewer_response_not_empty(self, client, flask_app):
+        """GET /: response body is not empty (template loaded successfully)."""
+        resp = client.get('/')
+        assert len(resp.data) > 0
