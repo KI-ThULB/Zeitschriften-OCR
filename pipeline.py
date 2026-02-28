@@ -36,6 +36,8 @@ POSITIONAL_TAGS = {
     'TextLine', 'String', 'SP', 'Illustration', 'GraphicalElement',
 }
 
+SCHEMA_PATH = Path(__file__).parent / 'schemas' / 'alto-2-1.xsd'
+
 DESKEW_MAX_ANGLE = 10.0   # degrees — corrections above this are treated as implausible
 
 ADAPTIVE_BLOCK_SIZE = 51   # odd integer >= 3; at 300 DPI ≈ 4.3mm neighbourhood

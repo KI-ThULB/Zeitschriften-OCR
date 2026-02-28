@@ -592,7 +592,11 @@ class TestSaveEndpoint:
     """Tests for POST /save/<stem> endpoint (Plan 12-01)."""
 
     def _write_alto_fixture(self, path, page_w=5146, page_h=7548, strings=None):
-        """Write a minimal ALTO 2.1 XML fixture using lxml etree."""
+        """Write an XSD-valid ALTO 2.1 XML fixture using lxml etree.
+
+        Includes all attributes required by schemas/alto-2-1.xsd (ID, PHYSICAL_IMG_NR
+        on Page; HEIGHT/WIDTH/HPOS/VPOS on PrintSpace/TextBlock/TextLine).
+        """
         from lxml import etree
         ns = ALTO_NS
         if strings is None:
@@ -603,11 +607,26 @@ class TestSaveEndpoint:
         root = etree.Element(f'{{{ns}}}alto')
         layout = etree.SubElement(root, f'{{{ns}}}Layout')
         page = etree.SubElement(layout, f'{{{ns}}}Page')
+        page.set('ID', 'P1')
+        page.set('PHYSICAL_IMG_NR', '1')
         page.set('WIDTH', str(page_w))
         page.set('HEIGHT', str(page_h))
         block = etree.SubElement(page, f'{{{ns}}}PrintSpace')
+        block.set('HEIGHT', str(page_h))
+        block.set('WIDTH', str(page_w))
+        block.set('HPOS', '0')
+        block.set('VPOS', '0')
         tb = etree.SubElement(block, f'{{{ns}}}TextBlock')
+        tb.set('ID', 'TB1')
+        tb.set('HEIGHT', '200')
+        tb.set('WIDTH', str(page_w))
+        tb.set('HPOS', '0')
+        tb.set('VPOS', '200')
         line = etree.SubElement(tb, f'{{{ns}}}TextLine')
+        line.set('HEIGHT', '50')
+        line.set('WIDTH', str(page_w))
+        line.set('HPOS', '0')
+        line.set('VPOS', '200')
         for s in strings:
             elem = etree.SubElement(line, f'{{{ns}}}String')
             for k, v in s.items():

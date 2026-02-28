@@ -8,7 +8,9 @@ for progressive SSE delivery.
 import argparse
 import importlib
 import json
+import os
 import queue
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -478,6 +480,93 @@ def serve_alto(stem):
         'jpeg_height': jpeg_height,
         'words': words,
     })
+
+
+@app.post('/save/<stem>')
+def save_word(stem):
+    """Persist a corrected word CONTENT attribute back to the ALTO XML file on disk.
+
+    Request body (JSON): {"word_id": "w3", "content": "corrected text"}
+    word_id is the positional index string ("w0", "w1", ...) matching GET /alto/<stem> response.
+
+    Atomic write: writes to a tempfile in the same directory, then os.replace() over original.
+    XSD gate: serialized bytes are validated before write; 422 if invalid (no disk write).
+
+    Returns:
+        200 {"status": "ok"} on success
+        400 {"error": "word_id required"} / {"error": "content required"} on missing fields
+        422 {"error": "Save failed — invalid content"} on empty/whitespace content or XSD failure
+        404 {"error": "not found", "stem": "..."} when ALTO file absent
+        404 {"error": "word not found", "word_id": "..."} when word_id index out of range
+        500 {"error": "parse failed", "detail": "..."} on XML parse error
+        500 {"error": "write failed", "detail": "..."} on I/O failure
+    """
+    if '/' in stem or '..' in stem:
+        return jsonify({'error': 'invalid stem'}), 400
+
+    body = request.get_json(silent=True) or {}
+    word_id = body.get('word_id')
+    content = body.get('content')
+
+    if word_id is None:
+        return jsonify({'error': 'word_id required'}), 400
+    if content is None:
+        return jsonify({'error': 'content required'}), 400
+    if not str(content).strip():
+        return jsonify({'error': 'Save failed \u2014 invalid content'}), 422
+
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    alto_path = output_dir / 'alto' / (stem + '.xml')
+    if not alto_path.exists():
+        return jsonify({'error': 'not found', 'stem': stem}), 404
+
+    try:
+        from lxml import etree
+        root = etree.parse(str(alto_path)).getroot()
+    except Exception as exc:
+        return jsonify({'error': 'parse failed', 'detail': str(exc)}), 500
+
+    ns = pipeline.ALTO21_NS
+    strings = list(root.iter(f'{{{ns}}}String'))
+
+    # Parse word_id: expect "w{N}" format
+    try:
+        idx = int(word_id.lstrip('w'))
+    except (ValueError, AttributeError):
+        return jsonify({'error': 'word not found', 'word_id': word_id}), 404
+    if idx < 0 or idx >= len(strings):
+        return jsonify({'error': 'word not found', 'word_id': word_id}), 404
+
+    strings[idx].set('CONTENT', str(content))
+
+    # XSD validation gate — serialize to bytes, validate, then write atomically
+    out_bytes = etree.tostring(root, xml_declaration=True, encoding='UTF-8', pretty_print=True)
+
+    xsd = pipeline.load_xsd(pipeline.SCHEMA_PATH)
+    if xsd is not None:
+        try:
+            doc = etree.fromstring(out_bytes)
+            if not xsd.validate(doc):
+                return jsonify({'error': 'Save failed \u2014 invalid content'}), 422
+        except Exception:
+            return jsonify({'error': 'Save failed \u2014 invalid content'}), 422
+
+    # Atomic write: temp file in same directory, then os.replace
+    tmp_fd, tmp_path_str = tempfile.mkstemp(
+        dir=str(alto_path.parent), suffix='.tmp'
+    )
+    try:
+        with os.fdopen(tmp_fd, 'wb') as fh:
+            fh.write(out_bytes)
+        os.replace(tmp_path_str, str(alto_path))
+    except Exception as exc:
+        try:
+            os.unlink(tmp_path_str)
+        except OSError:
+            pass
+        return jsonify({'error': 'write failed', 'detail': str(exc)}), 500
+
+    return jsonify({'status': 'ok'}), 200
 
 
 @app.get('/files')
