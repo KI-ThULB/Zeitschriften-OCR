@@ -86,7 +86,11 @@ See archive: `.planning/milestones/v1.4-ROADMAP.md`
   2. Pressing Enter or clicking Save writes the corrected word to the ALTO XML file on disk and the text panel reflects the new value without a page reload
   3. The ALTO XML file is not overwritten if post-edit XSD validation fails; the browser receives a visible error message instead
   4. A visible confirmation indicator appears after a successful save (input returns to static text)
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — POST /save/<stem> endpoint with atomic ALTO write and XSD validation gate (TDD)
+- [ ] 12-02-PLAN.md — Inline word edit UX in viewer.html (single-click, Enter-to-save, green flash, error display)
 
 ### Phase 13: Upload UI and Live Progress
 **Goal**: A drag-and-drop upload interface with a visible file queue, a Start button that triggers OCR, and a live progress bar fed by the SSE stream — completing the full operator workflow end-to-end
@@ -160,7 +164,7 @@ See archive: `.planning/milestones/v1.4-ROADMAP.md`
 | 9. Flask Foundation and Job State | v1.4 | 2/2 | Complete | 2026-02-27 |
 | 10. TIFF and ALTO Data Endpoints | v1.4 | 2/2 | Complete | 2026-02-27 |
 | 11. Side-by-Side Viewer UI | v1.4 | 2/2 | Complete | 2026-02-28 |
-| 12. Word Correction | v1.5 | 0/TBD | Not started | - |
+| 12. Word Correction | v1.5 | 0/2 | Not started | - |
 | 13. Upload UI and Live Progress | v1.5 | 0/TBD | Not started | - |
 | 14. Viewer Zoom and Pan | v1.5 | 0/TBD | Not started | - |
 | 15. VLM Article Segmentation | v1.5 | 0/TBD | Not started | - |
