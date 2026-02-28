@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 12 — Word Correction
-Plan: 12-02 (not started)
-Status: Plan 12-01 complete — POST /save/<stem> endpoint implemented with TDD
-Last activity: 2026-02-28 — Plan 12-01 complete (save endpoint + XSD gate)
+Phase: 12 — Word Correction (complete)
+Plan: 12-02 complete — inline word edit UX shipped and verified
+Status: Phase 12 complete — ready for Phase 13
+Last activity: 2026-02-28 — Plan 12-02 complete (inline edit UX: editWord/cancelEdit/saveWord + human verified)
 
-Progress: [█████░░░░░░░░░░░░] 11/17 phases complete (v1.4 done, v1.5 not started)
+Progress: [█████░░░░░░░░░░░░] 12/17 phases complete (v1.4 done, Phase 12 done)
 
 ## Performance Metrics
 
@@ -38,7 +38,7 @@ Progress: [█████░░░░░░░░░░░░] 11/17 phases com
 | 9. Flask Foundation and Job State | 2/2 | 3 min | 1.5 min |
 | 10. TIFF and ALTO Data Endpoints | 2/2 | 7 min | 3.5 min |
 | 11. Side-by-Side Viewer UI | 2/2 | ~62 min | ~31 min |
-| 12. Word Correction | 1/? | 2 min | 2 min |
+| 12. Word Correction | 2/2 | ~7 min | ~3.5 min |
 
 *Updated after each plan completion*
 
@@ -71,6 +71,10 @@ Recent decisions affecting current work:
 - [Phase 12-01]: pipeline.SCHEMA_PATH promoted to module-level Path constant — was local variable in main(), needed as module attribute for app.py access
 - [Phase 12-01]: XSD-valid test fixture requires Page ID+PHYSICAL_IMG_NR and element dimension attributes — minimal ALTO fixture fails XSD gate correctly
 - [Phase 12-01]: Atomic write via tempfile.mkstemp+os.replace in same directory — prevents partial-write corruption on ALTO XML edits
+- [Phase 12-02]: editingSpan module-level variable enforces single-edit-at-a-time — one null check in onclick covers all cases
+- [Phase 12-02]: setTimeout(0) in blur handler defers cancel to let onclick fire first on word-to-word transitions
+- [Phase 12-02]: void span.offsetWidth reflow trick required to restart CSS animation on re-edit of same word
+- [Phase 12-02]: loadFile() guard (if editingSpan) cancelEdit() handles file-switch-while-editing cleanly
 
 ### Pending Todos
 
@@ -86,5 +90,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Plan 12-01 complete — POST /save/<stem> with atomic write + XSD gate
-Resume at: Plan 12-02 (Word Correction UI)
+Stopped at: Plan 12-02 complete — Phase 12 Word Correction fully shipped and verified
+Resume at: Phase 13 (next milestone v1.5 phase)
