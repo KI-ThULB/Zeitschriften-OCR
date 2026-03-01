@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.5 Web Viewer Complete — Phase 14 (Viewer Zoom and Pan) complete
+**Current focus:** v1.5 Web Viewer Complete — Phase 15 (VLM Article Segmentation) planned
 
 ## Current Position
 
-Phase: 14 — Viewer Zoom and Pan (complete)
-Plan: 14-01 complete — shared-container zoom/pan, reset button, keyboard shortcuts, VIEW-05/VIEW-06 satisfied
-Status: Phase 14 complete — ready for Phase 15
-Last activity: 2026-03-01 — Phase 14 complete (zoom/pan verified in browser, all 12 checks passed)
+Phase: 15 — VLM Article Segmentation (in progress)
+Plan: 15-01 complete — vlm.py, POST/GET /segment endpoints, CLI flags (TDD — 79 tests pass)
+Status: 15-01 complete — ready to execute 15-02 (region overlay UI)
+Last activity: 2026-03-01 — 15-01 executed (3 tasks, 3m 27s)
 
-Progress: [███████░░░░░░░░░░] 14/17 phases complete (v1.4 done, Phases 12–14 done)
+Progress: [███████░░░░░░░░░░] 14/17 phases complete (v1.4 done, Phases 12–14 done, Phase 15 in progress — 1/2 plans done)
 
 ## Performance Metrics
 
@@ -41,6 +41,7 @@ Progress: [███████░░░░░░░░░░] 14/17 phases com
 | 12. Word Correction | 2/2 | ~7 min | ~3.5 min |
 | 13. Upload UI and Live Progress | 2/2 | ~10 min | ~5 min |
 | 14. Viewer Zoom and Pan | 1/1 | ~25 min | ~25 min |
+| 15. VLM Article Segmentation | 1/2 | ~3 min | ~3 min |
 
 *Updated after each plan completion*
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 - [Phase 14-01]: translate before scale in applyTransform() — panX/panY remain pre-scale screen pixels for natural 1:1 drag feel
 - [Phase 14-01]: overflow: hidden on #image-panel required — overflow: auto creates scrollbars that conflict with transform-based pan
 - [Phase 14-01]: Shared-container transform (single div wrapping img + svg) eliminates all per-word coordinate recalculation for zoom/pan
+- [Phase 15-01]: Lazy SDK imports inside segment() methods — vlm.py loads without anthropic/openai installed; error surfaces only at call time if SDK absent
+- [Phase 15-01]: _parse_regions uses re.search(r'\{[\s\S]*\}') for JSON extraction — handles VLM preamble/postamble text without requiring clean output
+- [Phase 15-01]: Any Exception from provider.segment() returns 502 (not 500) — distinguishes upstream API errors from internal server errors
 
 ### Pending Todos
 
@@ -102,5 +106,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 14-01-PLAN.md — viewer zoom/pan verified, VIEW-05/VIEW-06 satisfied
-Resume at: Phase 15 — VLM Region Detection (plan next)
+Stopped at: Completed 15-01-PLAN.md — vlm.py, segment endpoints, CLI flags
+Resume at: Execute 15-02-PLAN.md (region overlay UI in viewer)
