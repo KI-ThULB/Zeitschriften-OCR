@@ -380,6 +380,23 @@
         return;
       }
 
+      // Parse upload response to identify already-processed files
+      let uploadData = { files: [] };
+      try { uploadData = await uploadResp.json(); } catch (_) {}
+
+      // Build set of queue keys whose ALTO XML already exists on server
+      const alreadyProcessed = new Set();
+      for (const result of uploadData.files) {
+        if (result.already_processed) {
+          for (const qKey of queue.keys()) {
+            if (qKey.toLowerCase() === result.filename.toLowerCase()) {
+              alreadyProcessed.add(qKey);
+              break;
+            }
+          }
+        }
+      }
+
       // POST /run to kick off OCR
       let runResp;
       try {
@@ -405,17 +422,20 @@
       // Run accepted (202) — activate run state
       runActive = true;
       doneCount = 0;
-      totalInRun = queue.size;
+      totalInRun = queue.size - alreadyProcessed.size;
       runStartTime = Date.now();
       updateStartButton();
 
-      // Mark all queued rows as processing and remove their x buttons
+      // Mark rows: already-processed → done immediately; pending → processing
       for (const [filename] of queue) {
         const row = document.getElementById('row-' + CSS.escape(filename));
-        if (row) {
+        if (!row) continue;
+        const removeBtn = row.querySelector('.remove');
+        if (removeBtn) removeBtn.remove();
+        if (alreadyProcessed.has(filename)) {
+          updateRowState(filename, 'done', { wordCount: null });
+        } else {
           row.className = 'file-row state-processing';
-          const removeBtn = row.querySelector('.remove');
-          if (removeBtn) removeBtn.remove();
         }
       }
 
