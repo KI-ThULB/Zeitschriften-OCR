@@ -25,8 +25,8 @@
 
 ### Viewer Zoom
 
-- [ ] **VIEW-05**: User can zoom in/out on the TIFF image using mouse wheel; SVG word overlay stays aligned at all zoom levels
-- [ ] **VIEW-06**: User can pan the zoomed image by clicking and dragging
+- [x] **VIEW-05**: User can zoom in/out on the TIFF image using mouse wheel; SVG word overlay stays aligned at all zoom levels
+- [x] **VIEW-06**: User can pan the zoomed image by clicking and dragging
 
 ### Article Structuring
 
@@ -71,8 +71,8 @@
 | INGEST-03 | Phase 13 | Complete |
 | PROC-01 | Phase 13 | Complete |
 | PROC-02 | Phase 13 | Complete |
-| VIEW-05 | Phase 14 | Pending |
-| VIEW-06 | Phase 14 | Pending |
+| VIEW-05 | Phase 14 | Complete |
+| VIEW-06 | Phase 14 | Complete |
 | STRUCT-01 | Phase 15 | Pending |
 | STRUCT-02 | Phase 15 | Pending |
 | STRUCT-03 | Phase 15 | Pending |
