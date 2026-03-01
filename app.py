@@ -20,6 +20,7 @@ from PIL import Image
 from werkzeug.utils import secure_filename
 
 import pipeline
+import vlm
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -580,6 +581,89 @@ def list_files():
     return jsonify({'stems': stems})
 
 
+@app.post('/segment/<stem>')
+def segment_page(stem):
+    """Trigger VLM article segmentation for the given TIFF stem.
+
+    Reads JPEG from jpegcache, calls the configured VLM provider,
+    parses regions, writes output/segments/<stem>.json, returns result.
+
+    Status codes:
+        200: success — {"stem", "provider", "model", "segmented_at", "regions"}
+        400: path traversal in stem
+        404: JPEG not in jpegcache (open the viewer for this file first)
+        503: VLM provider not configured (start app with --vlm-provider)
+        502: VLM API call failed
+    """
+    if '/' in stem or '..' in stem:
+        return jsonify({'error': 'invalid stem'}), 400
+
+    provider_name = app.config.get('VLM_PROVIDER')
+    if not provider_name:
+        return jsonify({
+            'error': 'VLM provider not configured — start with --vlm-provider'
+        }), 503
+
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    jpeg_path = output_dir / 'jpegcache' / (stem + '.jpg')
+    if not jpeg_path.exists():
+        return jsonify({
+            'error': 'image not found — open the viewer for this file first',
+            'stem': stem,
+        }), 404
+
+    model = app.config.get('VLM_MODEL', 'claude-opus-4-6')
+    api_key = (
+        app.config.get('VLM_API_KEY')
+        or os.environ.get('ANTHROPIC_API_KEY')
+        or os.environ.get('OPENAI_API_KEY', '')
+    )
+
+    try:
+        provider = vlm.get_provider(provider_name, model, api_key)
+        regions = provider.segment(jpeg_path)
+    except Exception as exc:
+        return jsonify({'error': 'VLM API call failed', 'detail': str(exc)}), 502
+
+    from datetime import datetime, timezone
+    segmented_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+    result = {
+        'stem': stem,
+        'provider': provider_name,
+        'model': model,
+        'segmented_at': segmented_at,
+        'regions': regions,
+    }
+
+    seg_dir = output_dir / 'segments'
+    seg_dir.mkdir(parents=True, exist_ok=True)
+    seg_path = seg_dir / (stem + '.json')
+    seg_path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
+
+    return jsonify(result), 200
+
+
+@app.get('/segment/<stem>')
+def get_segment(stem):
+    """Return stored segmentation result for the given stem.
+
+    Returns 404 if segmentation has not been run for this stem.
+    """
+    if '/' in stem or '..' in stem:
+        return jsonify({'error': 'invalid stem'}), 400
+
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    seg_path = output_dir / 'segments' / (stem + '.json')
+    if not seg_path.exists():
+        return jsonify({'error': 'not found', 'stem': stem}), 404
+
+    try:
+        return jsonify(json.loads(seg_path.read_text()))
+    except Exception as exc:
+        return jsonify({'error': 'parse failed', 'detail': str(exc)}), 500
+
+
 @app.get('/')
 def index():
     """Serve the upload and progress dashboard."""
@@ -606,6 +690,12 @@ if __name__ == '__main__':
     parser.add_argument('--padding', type=int, default=50, help='Crop padding in pixels (default: 50)')
     parser.add_argument('--port', type=int, default=5000, help='Port (default: 5000)')
     parser.add_argument('--input', default=None, help='Input TIFF directory (for CLI-processed files)')
+    parser.add_argument('--vlm-provider', default=None,
+                        help='VLM provider for article segmentation: claude or openai')
+    parser.add_argument('--vlm-model', default=None,
+                        help='VLM model name (default: claude-opus-4-6 for claude, gpt-4o for openai)')
+    parser.add_argument('--vlm-api-key', default=None,
+                        help='API key (fallback: ANTHROPIC_API_KEY or OPENAI_API_KEY env vars)')
     args = parser.parse_args()
 
     output_dir = Path(args.output)
@@ -620,5 +710,16 @@ if __name__ == '__main__':
     app.config['LANG'] = args.lang
     app.config['PSM'] = args.psm
     app.config['PADDING'] = args.padding
+
+    if args.vlm_provider:
+        app.config['VLM_PROVIDER'] = args.vlm_provider
+    if args.vlm_model:
+        app.config['VLM_MODEL'] = args.vlm_model
+    elif args.vlm_provider == 'openai':
+        app.config['VLM_MODEL'] = 'gpt-4o'
+    else:
+        app.config['VLM_MODEL'] = 'claude-opus-4-6'
+    if args.vlm_api_key:
+        app.config['VLM_API_KEY'] = args.vlm_api_key
 
     app.run(host='0.0.0.0', port=args.port, threaded=True, use_reloader=False)
