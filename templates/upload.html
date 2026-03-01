@@ -117,6 +117,24 @@
       opacity: 0.5;
       cursor: default;
     }
+    #btn-mets {
+      padding: 6px 14px;
+      background: #2e7d32;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    #btn-mets:hover { background: #1b5e20; }
+    #mets-toast {
+      font-size: 0.82rem;
+      color: #c00;
+      margin-top: 6px;
+      display: none;
+    }
+    #mets-toast.visible { display: block; }
   </style>
 </head>
 <body>
@@ -138,6 +156,11 @@
       <ul id="file-list"></ul>
       <button id="btn-start" disabled>Start OCR</button>
     </section>
+
+    <div id="mets-export" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #ddd;">
+      <button id="btn-mets" onclick="downloadMets()">Download METS</button>
+      <div id="mets-toast"></div>
+    </div>
   </main>
 
   <script>
@@ -493,6 +516,41 @@
         runActive = false;
         updateStartButton();
       });
+    }
+
+    // ---------------------------------------------------------------------------
+    // METS export
+    // ---------------------------------------------------------------------------
+
+    async function downloadMets() {
+      const toast = document.getElementById('mets-toast');
+      toast.classList.remove('visible');
+      toast.textContent = '';
+
+      const resp = await fetch('/mets');
+
+      if (resp.status === 204) {
+        toast.textContent = 'No processed files yet — run OCR first.';
+        toast.classList.add('visible');
+        return;
+      }
+
+      if (!resp.ok) {
+        toast.textContent = `Export failed (${resp.status}).`;
+        toast.classList.add('visible');
+        return;
+      }
+
+      // Trigger browser download
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'mets.xml';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     // ---------------------------------------------------------------------------
