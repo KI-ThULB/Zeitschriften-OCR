@@ -78,6 +78,7 @@ Recent decisions affecting current work:
 - [Phase 13-01]: GET / renamed from viewer() to index() — semantically correct for upload dashboard entry point
 - [Phase 13-01]: GET /viewer/<stem> path traversal guard uses same if '/' in stem or '..' in stem pattern as /image/<stem> and /alto/<stem>
 - [Phase 13-01]: TestViewerRoute tests left red (TemplateNotFound: upload.html) until Plan 02 creates the template — expected, not a regression
+- [Phase 13-02]: File objects stored in queue Map entries so FormData can be built at startRun() time — required because browser File objects cannot be reconstructed from filenames
 
 ### Pending Todos
 
@@ -93,5 +94,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Plan 13-01 complete — routing prerequisite for Phase 13 upload dashboard shipped
-Resume at: Phase 13 Plan 02 (create upload.html upload dashboard UI)
+Stopped at: Phase 13 Plan 02 Task 1 complete — upload.html created; paused at human-verify checkpoint (Task 2)
+Resume at: Phase 13 Plan 02 — human verify upload dashboard end-to-end workflow, then phase complete

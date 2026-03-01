@@ -69,7 +69,7 @@ See archive: `.planning/milestones/v1.4-ROADMAP.md`
 **Milestone Goal:** Complete the full web operator workflow — inline word correction with atomic ALTO XML save, drag-and-drop TIFF upload, live SSE progress display, viewer zoom/pan, VLM-powered article segmentation with METS/MODS output, and full-text article search.
 
 - [x] **Phase 12: Word Correction** — Inline word editing, atomic ALTO XML save with XSD validation gate (completed 2026-02-28)
-- [ ] **Phase 13: Upload UI and Live Progress** — Drag-and-drop upload zone, queue management, SSE-driven progress display, end-to-end integration
+- [x] **Phase 13: Upload UI and Live Progress** — Drag-and-drop upload zone, queue management, SSE-driven progress display, end-to-end integration (completed 2026-03-01)
 - [ ] **Phase 14: Viewer Zoom and Pan** — Mouse-wheel zoom with aligned SVG overlay, click-and-drag pan
 - [ ] **Phase 15: VLM Article Segmentation** — Configurable VLM/LLM provider, region detection, article metadata extraction
 - [ ] **Phase 16: METS/MODS Output** — Logical structure document per DFG Viewer / Goobi-Kitodo newspaper ingest profile
@@ -169,7 +169,7 @@ Plans:
 | 10. TIFF and ALTO Data Endpoints | v1.4 | 2/2 | Complete | 2026-02-27 |
 | 11. Side-by-Side Viewer UI | v1.4 | 2/2 | Complete | 2026-02-28 |
 | 12. Word Correction | 2/2 | Complete    | 2026-03-01 | - |
-| 13. Upload UI and Live Progress | 1/2 | In Progress|  | - |
+| 13. Upload UI and Live Progress | 2/2 | Complete   | 2026-03-01 | - |
 | 14. Viewer Zoom and Pan | v1.5 | 0/TBD | Not started | - |
 | 15. VLM Article Segmentation | v1.5 | 0/TBD | Not started | - |
 | 16. METS/MODS Output | v1.5 | 0/TBD | Not started | - |
