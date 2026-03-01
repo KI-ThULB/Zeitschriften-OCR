@@ -103,6 +103,15 @@ None - settings panel is the UI for entering credentials. No server-side configu
 - Settings persist to output/settings.json; Segment button in viewer uses saved config automatically
 - Ready for Phase 18: Article Browser and Full-Text Search
 
+## Self-Check: PASSED
+
+- `templates/upload.html` — FOUND on disk
+- Commit `b007c67` — FOUND in git log
+- `grep -c 'saveSettings|loadModels|vlm-settings|BACKEND_PRESETS|initSettings'` → 14 matches (expected >= 5)
+- `17-02-SUMMARY.md` — created at `.planning/phases/17-vlm-settings-ui/`
+- `STATE.md` — updated (Phase 18 next, decisions recorded)
+- `ROADMAP.md` — Phase 17 row: 2/2 Complete 2026-03-02
+
 ---
 *Phase: 17-vlm-settings-ui*
 *Completed: 2026-03-02*
