@@ -14,9 +14,10 @@
     #sidebar .file-item { padding: 6px 10px; cursor: pointer; font-size: 0.85rem; word-break: break-all; border-bottom: 1px solid #e8e8e8; }
     #sidebar .file-item:hover { background: #e8f0fe; }
     #sidebar .file-item.active { background: #c2d7ff; font-weight: bold; }
-    #image-panel { flex: 1; overflow: auto; background: #333; }
-    #image-wrapper { position: relative; display: inline-block; }
-    #tiff-img { display: block; max-width: 100%; height: auto; }
+    #image-panel { flex: 1; overflow: hidden; position: relative; cursor: grab; background: #333; }
+    #image-panel.dragging { cursor: grabbing; }
+    #image-container { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+    #tiff-img { display: block; }
     #overlay { position: absolute; top: 0; left: 0; pointer-events: none; }
     #text-panel { width: 380px; overflow-y: auto; padding: 12px; flex-shrink: 0; border-left: 1px solid #ccc; line-height: 1.8; }
     .word { cursor: pointer; }
@@ -60,7 +61,7 @@
   <div id="main">
     <div id="sidebar"><!-- file list injected here --></div>
     <div id="image-panel">
-      <div id="image-wrapper">
+      <div id="image-container">
         <img id="tiff-img" src="" alt="">
         <svg id="overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">
           <rect id="highlight-rect" style="display:none;" fill="rgba(255,220,0,0.35)" stroke="orange" stroke-width="2"/>
@@ -79,12 +80,31 @@
     let loadGen = 0;
     let editingSpan = null;   // the .word span currently in edit mode
 
+    // Zoom/pan state
+    let zoomLevel = 1.0;     // current scale factor (1.0 = fit-to-width)
+    let fitScale = 1.0;      // scale factor that makes image fill panel width
+    let panX = 0;            // current horizontal pan offset in CSS px
+    let panY = 0;            // current vertical pan offset in CSS px
+    const ZOOM_MIN = 0.25;   // 25% of fit-to-width baseline
+    const ZOOM_MAX = 4.0;    // 400% of fit-to-width baseline
+    const ZOOM_STEP = 1.1;   // multiply/divide per wheel tick
+
+    // Drag state
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragStartPanX = 0;
+    let dragStartPanY = 0;
+    let didPan = false;
+
     document.addEventListener('DOMContentLoaded', async () => {
       setupResizeObserver();
       setupKeyboard();
       setupNavButtons();
+      setupZoomPan();
 
       document.getElementById('highlight-rect').addEventListener('click', () => {
+        if (didPan) { didPan = false; return; }
         const rect = document.getElementById('highlight-rect');
         const span = document.querySelector(`.word[data-id="${rect.dataset.wordId}"]`);
         if (!span) return;
@@ -134,7 +154,6 @@
       clearHighlight();
       activeWord = null;
       document.getElementById('text-panel').innerHTML = '<em>Loading\u2026</em>';
-      document.getElementById('image-panel').scrollTop = 0;
       document.getElementById('text-panel').scrollTop = 0;
 
       const img = document.getElementById('tiff-img');
@@ -145,6 +164,7 @@
         if (gen !== loadGen) return;
         pageWidth = data.page_width;
         pageHeight = data.page_height;
+        recomputeFitScale();
         wordById = Object.fromEntries(data.words.map(w => [w.id, w]));
         renderWords(data.words);
       } catch (err) {
@@ -211,12 +231,12 @@
     }
 
     function setupResizeObserver() {
-      const img = document.getElementById('tiff-img');
+      const panel = document.getElementById('image-panel');
       const observer = new ResizeObserver(() => {
-        if (img.clientWidth === 0) return;
+        recomputeFitScale();
         if (activeWord !== null) showHighlight(activeWord);
       });
-      observer.observe(img);
+      observer.observe(panel);
     }
 
     function setupNavButtons() {
@@ -354,6 +374,120 @@
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+    }
+
+    // ── Zoom / Pan Engine ──────────────────────────────────────────────────────
+
+    function recomputeFitScale() {
+      if (pageWidth === 0) return;
+      const panel = document.getElementById('image-panel');
+      fitScale = panel.clientWidth / pageWidth;
+      zoomLevel = 1.0;
+      panX = 0;
+      panY = 0;
+      applyTransform();  // applyTransform calls updateResetButton()
+    }
+
+    function applyTransform() {
+      const scale = fitScale * zoomLevel;
+      document.getElementById('image-container').style.transform =
+        `translate(${panX}px, ${panY}px) scale(${scale})`;
+      updateResetButton();
+    }
+
+    function clampPan() {
+      const scale = fitScale * zoomLevel;
+      const renderedW = pageWidth * scale;
+      const renderedH = pageHeight * scale;
+      const panel = document.getElementById('image-panel');
+      const panelW = panel.clientWidth;
+      const panelH = panel.clientHeight;
+      // At least 20% of the rendered image must remain visible on each axis
+      panX = Math.min(panelW * 0.8, Math.max(-(renderedW * 0.8), panX));
+      panY = Math.min(panelH * 0.8, Math.max(-(renderedH * 0.8), panY));
+    }
+
+    function applyZoom(factor, origin) {
+      if (editingSpan) cancelEdit();
+      const newZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomLevel * factor));
+      const panel = document.getElementById('image-panel');
+      const cx = origin ? origin.x : panel.clientWidth / 2;
+      const cy = origin ? origin.y : panel.clientHeight / 2;
+      const scale = fitScale * zoomLevel;
+      const imgX = (cx - panX) / scale;
+      const imgY = (cy - panY) / scale;
+      const newScale = fitScale * newZoom;
+      panX = cx - imgX * newScale;
+      panY = cy - imgY * newScale;
+      zoomLevel = newZoom;
+      clampPan();
+      applyTransform();
+    }
+
+    function setupZoomPan() {
+      const panel = document.getElementById('image-panel');
+
+      // Mouse-wheel zoom
+      panel.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        applyZoom(e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP, {x: e.offsetX, y: e.offsetY});
+      }, {passive: false});
+
+      // Click-drag pan
+      panel.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        didPan = false;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        dragStartPanX = panX;
+        dragStartPanY = panY;
+        panel.classList.add('dragging');
+      });
+
+      panel.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        if (!didPan && Math.hypot(dx, dy) > 5) {
+          didPan = true;
+          if (editingSpan) cancelEdit();
+        }
+        if (didPan) {
+          panX = dragStartPanX + dx;
+          panY = dragStartPanY + dy;
+          clampPan();
+          applyTransform();
+        }
+      });
+
+      panel.addEventListener('mouseup', () => {
+        isDragging = false;
+        panel.classList.remove('dragging');
+      });
+
+      panel.addEventListener('mouseleave', () => {
+        isDragging = false;
+        panel.classList.remove('dragging');
+      });
+    }
+
+    function updateResetButton() {
+      let btn = document.getElementById('zoom-reset-btn');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'zoom-reset-btn';
+        document.getElementById('image-panel').appendChild(btn);
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          recomputeFitScale();
+        });
+      }
+      const isDefault = (Math.abs(zoomLevel - 1.0) < 0.01);
+      btn.style.display = isDefault ? 'none' : '';
+      if (!isDefault) {
+        const pct = Math.round(fitScale * zoomLevel * 100);
+        btn.textContent = `${pct}% \u22A1`;
+      }
     }
   </script>
 </body>
