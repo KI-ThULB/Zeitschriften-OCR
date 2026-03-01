@@ -164,8 +164,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — OpenAICompatibleProvider in vlm.py + GET/POST /settings + GET /settings/models + segment_page() reads settings.json first (TDD)
-- [ ] 17-02-PLAN.md — Settings panel on upload dashboard: backend selector, base URL, API key, model dropdown, Save button
+- [x] 17-01-PLAN.md — OpenAICompatibleProvider in vlm.py + GET/POST /settings + GET /settings/models + segment_page() reads settings.json first (TDD)
+- [x] 17-02-PLAN.md — Settings panel on upload dashboard: backend selector, base URL, API key, model dropdown, Save button
 
 ### Phase 18: Article Browser and Full-Text Search
 **Goal**: Operators can browse identified articles for any page in a viewer sidebar and search across all articles by title or content from the web interface
@@ -199,5 +199,5 @@ Plans:
 | 14. Viewer Zoom and Pan | 1/1 | Complete    | 2026-03-01 | - |
 | 15. VLM Article Segmentation | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 16. METS/MODS Output | v1.5 | 2/2 | Complete | 2026-03-01 |
-| 17. VLM Settings UI | 1/2 | In Progress|  | - |
+| 17. VLM Settings UI | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 18. Article Browser and Full-Text Search | v1.5 | 0/TBD | Not started | - |

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.5 Web Viewer Complete — Phase 17 (VLM Settings UI) in progress
+**Current focus:** v1.5 Web Viewer Complete — Phase 17 complete, Phase 18 (Article Browser and Full-Text Search) next
 
 ## Current Position
 
-Phase: 17 — VLM Settings UI (in progress)
-Plan: 17-02 next — frontend settings panel in upload.html
-Status: 17-01 complete — OpenAICompatibleProvider, GET/POST /settings, GET /settings/models, segment_page() reads settings.json
-Last activity: 2026-03-01 — 17-01 executed (settings backend, 116 tests pass)
+Phase: 18 — Article Browser and Full-Text Search (not started)
+Plan: 18-01 next — planning required
+Status: 17-02 complete — VLM Settings panel in upload.html, all 8 browser checks passed, 116 tests green
+Last activity: 2026-03-02 — 17-02 executed (settings frontend panel, human verification approved)
 
-Progress: [█████████░░░░░░░░] 16/18 phases complete (Phase 17 planning)
+Progress: [█████████░░░░░░░░] 17/18 phases complete (Phase 18 next)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: 3.6 min
-- Total execution time: 51 min
+- Total plans completed: 16
+- Average duration: ~6 min
+- Total execution time: ~97 min
 
 **By Phase:**
 
@@ -42,7 +42,8 @@ Progress: [█████████░░░░░░░░] 16/18 phases com
 | 13. Upload UI and Live Progress | 2/2 | ~10 min | ~5 min |
 | 14. Viewer Zoom and Pan | 1/1 | ~25 min | ~25 min |
 | 15. VLM Article Segmentation | 2/2 | ~23 min | ~11.5 min |
-| 16. METS/MODS Output | 1/2 | 27 min | 27 min |
+| 16. METS/MODS Output | 2/2 | 27 min | 13.5 min |
+| 17. VLM Settings UI | 2/2 | ~46 min | ~23 min |
 
 *Updated after each plan completion*
 
@@ -102,6 +103,9 @@ Recent decisions affecting current work:
 - [Phase 17-01]: sys.modules patching in tests for lazy openai import inside route handlers and segment() — monkeypatch.setattr doesn't intercept imports that haven't happened yet
 - [Phase 17-01]: settings.json provider resolution: _make_provider_from_settings returns None when backend not in _VALID_BACKENDS or model empty — avoids partial-config provider creation
 - [Phase 17-01]: provider_name/model for result dict set in else branch when provider came from settings.json — prevents NameError on settings-based segmentation calls
+- [Phase 17-02]: BACKEND_PRESETS object keyed by radio value — onBackendChange() reads preset directly; adding a third backend requires only a new key
+- [Phase 17-02]: initSettings() prepends saved model to preset list if not already included — handles custom/live models persisted from a prior loadModels() session
+- [Phase 17-02]: loadModels() always falls back to curated list on API error — panel stays usable when air-gapped or API key not yet entered
 
 ### Pending Todos
 
@@ -116,6 +120,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: Completed 17-01-PLAN.md — settings backend, OpenAICompatibleProvider, 116 tests pass
-Resume at: Execute Phase 17-02 — VLM Settings UI frontend panel in upload.html
+Last session: 2026-03-02
+Stopped at: Completed 17-02-PLAN.md — VLM Settings panel, human verification approved, Phase 17 complete
+Resume at: Plan Phase 18 — Article Browser and Full-Text Search
