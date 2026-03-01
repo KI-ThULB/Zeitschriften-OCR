@@ -6,6 +6,7 @@ Background _ocr_worker calls pipeline.process_tiff() sequentially
 for progressive SSE delivery.
 """
 import argparse
+import contextlib
 import importlib
 import json
 import os
@@ -22,6 +23,50 @@ from werkzeug.utils import secure_filename
 import mets
 import pipeline
 import vlm
+
+# ---------------------------------------------------------------------------
+# Settings helpers
+# ---------------------------------------------------------------------------
+
+_VALID_BACKENDS = frozenset({'openai_compatible'})
+
+
+def _load_settings(output_dir: Path) -> dict:
+    """Load output/settings.json. Returns {} if missing or unreadable."""
+    settings_path = output_dir / 'settings.json'
+    try:
+        return json.loads(settings_path.read_text(encoding='utf-8'))
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return {}
+
+
+def _save_settings(output_dir: Path, settings: dict) -> None:
+    """Atomically write settings dict to output/settings.json."""
+    settings_path = output_dir / 'settings.json'
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=str(output_dir), suffix='.tmp')
+    try:
+        with os.fdopen(tmp_fd, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, indent=2)
+        os.replace(tmp_path, str(settings_path))
+    except Exception:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp_path)
+        raise
+
+
+def _make_provider_from_settings(settings: dict):
+    """Build a SegmentationProvider from persisted settings dict.
+
+    Returns None if settings are incomplete.
+    """
+    backend = settings.get('backend', '')
+    base_url = settings.get('base_url', '').strip()
+    api_key = settings.get('api_key', '').strip()
+    model = settings.get('model', '').strip()
+    if backend not in _VALID_BACKENDS or not model:
+        return None
+    return vlm.get_provider('openai_compatible', model, api_key, base_url=base_url)
+
 
 # ---------------------------------------------------------------------------
 # Module-level constants
@@ -599,13 +644,34 @@ def segment_page(stem):
     if '/' in stem or '..' in stem:
         return jsonify({'error': 'invalid stem'}), 400
 
-    provider_name = app.config.get('VLM_PROVIDER')
-    if not provider_name:
-        return jsonify({
-            'error': 'Article segmentation requires a VLM provider. Restart the server with --vlm-provider claude (or openai).'
-        }), 503
-
+    # --- Provider resolution ---
+    # 1. Read from settings.json (web UI configured)
     output_dir = Path(app.config['OUTPUT_DIR'])
+    settings = _load_settings(output_dir)
+    provider = _make_provider_from_settings(settings)
+
+    if provider is None:
+        # 2. Fall back to CLI flags in app.config
+        provider_name = app.config.get('VLM_PROVIDER', '')
+        if not provider_name:
+            return jsonify({
+                'error': 'Article segmentation requires a VLM provider. Configure it in Settings or restart the server with --vlm-provider claude (or openai).'
+            }), 503
+        model = app.config.get('VLM_MODEL', 'claude-opus-4-6')
+        api_key = (
+            app.config.get('VLM_API_KEY')
+            or os.environ.get('ANTHROPIC_API_KEY')
+            or os.environ.get('OPENAI_API_KEY', '')
+        )
+        try:
+            provider = vlm.get_provider(provider_name, model, api_key)
+        except ValueError as exc:
+            return jsonify({'error': str(exc)}), 400
+    else:
+        # Provider came from settings.json
+        provider_name = settings.get('backend', 'openai_compatible')
+        model = settings.get('model', '')
+
     jpeg_path = output_dir / 'jpegcache' / (stem + '.jpg')
     if not jpeg_path.exists():
         return jsonify({
@@ -613,15 +679,7 @@ def segment_page(stem):
             'stem': stem,
         }), 404
 
-    model = app.config.get('VLM_MODEL', 'claude-opus-4-6')
-    api_key = (
-        app.config.get('VLM_API_KEY')
-        or os.environ.get('ANTHROPIC_API_KEY')
-        or os.environ.get('OPENAI_API_KEY', '')
-    )
-
     try:
-        provider = vlm.get_provider(provider_name, model, api_key)
         regions = provider.segment(jpeg_path)
     except Exception as exc:
         return jsonify({'error': 'VLM API call failed', 'detail': str(exc)}), 502
@@ -695,6 +753,70 @@ def export_mets():
         mimetype='application/xml',
         headers={'Content-Disposition': 'attachment; filename="mets.xml"'},
     )
+
+
+@app.get('/settings')
+def get_settings():
+    """Return current VLM settings from output/settings.json.
+
+    Returns {} if no settings file exists yet.
+    """
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    return jsonify(_load_settings(output_dir))
+
+
+@app.post('/settings')
+def post_settings():
+    """Persist VLM settings to output/settings.json.
+
+    Expected JSON body:
+      { "backend": "openai_compatible",
+        "base_url": "https://...",
+        "api_key": "...",
+        "model": "..." }
+
+    Returns 400 if backend is missing or not a supported value.
+    """
+    body = request.get_json(silent=True) or {}
+    backend = body.get('backend', '')
+    if backend not in _VALID_BACKENDS:
+        return jsonify({'error': f'backend must be one of: {", ".join(sorted(_VALID_BACKENDS))}'}), 400
+
+    settings = {
+        'backend': backend,
+        'base_url': str(body.get('base_url', '')).strip(),
+        'api_key': str(body.get('api_key', '')).strip(),
+        'model': str(body.get('model', '')).strip(),
+    }
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    try:
+        _save_settings(output_dir, settings)
+    except Exception as exc:
+        return jsonify({'error': 'Failed to save settings', 'detail': str(exc)}), 500
+    return jsonify({'ok': True})
+
+
+@app.get('/settings/models')
+def get_settings_models():
+    """Fetch available models from an OpenAI-compatible endpoint.
+
+    Query params: base_url, api_key
+    Returns {"models": ["model-a", "model-b", ...]} on success.
+    Returns 400 if params missing, 502 if remote API errors.
+    """
+    base_url = request.args.get('base_url', '').strip()
+    api_key = request.args.get('api_key', '').strip()
+    if not base_url:
+        return jsonify({'error': 'base_url query param is required'}), 400
+
+    try:
+        import openai  # lazy import
+        client = openai.OpenAI(base_url=base_url, api_key=api_key or 'none')
+        model_list = client.models.list()
+        model_ids = sorted(m.id for m in model_list.data)
+        return jsonify({'models': model_ids})
+    except Exception as exc:
+        return jsonify({'error': 'Failed to fetch models', 'detail': str(exc)}), 502
 
 
 @app.get('/')
