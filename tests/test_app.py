@@ -568,20 +568,41 @@ class TestFilesEndpoint:
 
 # ---------------------------------------------------------------------------
 # Phase 11: GET / viewer route (VIEW-01 entry point)
+# Phase 13: Rerouted to upload dashboard; GET /viewer/<stem> added
 # ---------------------------------------------------------------------------
 
 class TestViewerRoute:
 
-    def test_viewer_returns_200_html(self, client, flask_app):
-        """GET /: returns 200 with content-type text/html."""
+    def test_upload_dashboard_returns_200_html(self, client, flask_app):
+        """GET /: returns 200 with content-type text/html (upload dashboard)."""
         resp = client.get('/')
         assert resp.status_code == 200
         assert 'text/html' in resp.content_type
 
-    def test_viewer_response_not_empty(self, client, flask_app):
-        """GET /: response body is not empty (template loaded successfully)."""
+    def test_upload_dashboard_response_not_empty(self, client, flask_app):
+        """GET /: response body is not empty."""
         resp = client.get('/')
         assert len(resp.data) > 0
+
+
+class TestViewerStemRoute:
+
+    def test_viewer_stem_returns_200_html(self, client, flask_app):
+        """GET /viewer/<stem>: returns 200 with content-type text/html."""
+        resp = client.get('/viewer/scan_001')
+        assert resp.status_code == 200
+        assert 'text/html' in resp.content_type
+
+    def test_viewer_stem_response_not_empty(self, client, flask_app):
+        """GET /viewer/<stem>: response body is not empty."""
+        resp = client.get('/viewer/scan_001')
+        assert len(resp.data) > 0
+
+    def test_viewer_stem_path_traversal_rejected(self, client, flask_app):
+        """GET /viewer/<stem>: path traversal returns 400."""
+        resp = client.get('/viewer/..%2Fetc%2Fpasswd')
+        # Flask route matching may return 400 or 404 for encoded slashes
+        assert resp.status_code in (400, 404)
 
 
 # ---------------------------------------------------------------------------
