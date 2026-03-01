@@ -124,12 +124,23 @@
   <script>
     let stems = [];
     let currentIndex = -1;
+    let currentStem = null;
+    let jpeg_width = 0;
+    let jpeg_height = 0;
     let pageWidth = 0;
     let pageHeight = 0;
     let wordById = {};
     let activeWord = null;
     let loadGen = 0;
     let editingSpan = null;   // the .word span currently in edit mode
+
+    const REGION_COLORS = {
+      headline:      'rgba(255,100,100,0.35)',
+      article:       'rgba(100,150,255,0.25)',
+      advertisement: 'rgba(255,200,50,0.30)',
+      illustration:  'rgba(100,220,100,0.30)',
+      caption:       'rgba(200,100,255,0.25)',
+    };
 
     // Zoom/pan state
     let zoomLevel = 1.0;     // current scale factor (1.0 = fit-to-width)
@@ -550,6 +561,107 @@
       if (!isDefault) {
         const pct = Math.round(fitScale * zoomLevel * 100);
         btn.textContent = `${pct}% \u22A1`;
+      }
+    }
+
+    // ── Segment / Region Overlay ──────────────────────────────────────────────
+
+    function clearSegmentRegions() {
+      const svg = document.getElementById('overlay');
+      svg.querySelectorAll('.segment-region, .segment-label').forEach(el => el.remove());
+    }
+
+    function showSegmentRegions(regions) {
+      clearSegmentRegions();
+      if (!regions || regions.length === 0) return;
+      const svg = document.getElementById('overlay');
+      // jpeg_width/jpeg_height are set by loadFile() from the /alto/<stem> response
+      const W = jpeg_width;
+      const H = jpeg_height;
+      if (!W || !H) return;
+
+      regions.forEach(r => {
+        const bb = r.bounding_box;
+        const x = bb.x * W;
+        const y = bb.y * H;
+        const w = bb.width * W;
+        const h = bb.height * H;
+        const color = REGION_COLORS[r.type] || 'rgba(150,150,150,0.25)';
+        const stroke = color.replace(/[\d.]+\)$/, '0.8)');  // opaque stroke
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', x);
+        rect.setAttribute('y', y);
+        rect.setAttribute('width', w);
+        rect.setAttribute('height', h);
+        rect.setAttribute('fill', color);
+        rect.setAttribute('stroke', stroke);
+        rect.classList.add('segment-region');
+        svg.appendChild(rect);
+
+        const labelText = `${r.type}: ${r.title.slice(0, 40)}`;
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', x + 4);
+        label.setAttribute('y', y + 14);
+        label.textContent = labelText;
+        label.classList.add('segment-label');
+        svg.appendChild(label);
+      });
+    }
+
+    async function segmentPage() {
+      if (!currentStem) return;
+      const btn = document.getElementById('segment-btn');
+      const status = document.getElementById('segment-status');
+
+      btn.disabled = true;
+      btn.classList.add('running');
+      status.textContent = '';
+      status.classList.remove('visible');
+
+      try {
+        const resp = await fetch(`/segment/${currentStem}`, { method: 'POST' });
+        const data = await resp.json();
+        if (!resp.ok) {
+          status.textContent = data.error || `Error ${resp.status}`;
+          status.classList.add('visible');
+          return;
+        }
+        showSegmentRegions(data.regions);
+        const count = data.regions.length;
+        status.textContent = count > 0
+          ? `${count} region${count !== 1 ? 's' : ''} detected`
+          : 'No regions detected';
+        status.style.color = '#555';
+        status.classList.add('visible');
+      } catch (err) {
+        status.textContent = 'Network error';
+        status.classList.add('visible');
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('running');
+      }
+    }
+
+    async function loadSegments(stem) {
+      clearSegmentRegions();
+      const status = document.getElementById('segment-status');
+      status.classList.remove('visible');
+      try {
+        const resp = await fetch(`/segment/${stem}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          showSegmentRegions(data.regions);
+          const count = data.regions.length;
+          if (count > 0) {
+            status.textContent = `${count} region${count !== 1 ? 's' : ''} (stored)`;
+            status.style.color = '#555';
+            status.classList.add('visible');
+          }
+        }
+        // 404 is expected when not yet segmented — silently ignored
+      } catch (e) {
+        // Network error — silently ignored (segmentation is optional)
       }
     }
   </script>
