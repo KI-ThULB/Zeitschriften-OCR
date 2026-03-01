@@ -635,7 +635,9 @@
         const resp = await fetch(`/segment/${currentStem}`, { method: 'POST' });
         const data = await resp.json();
         if (!resp.ok) {
-          status.textContent = data.error || `Error ${resp.status}`;
+          status.textContent = resp.status === 503
+            ? 'VLM not configured on this server'
+            : (data.error || `Error ${resp.status}`);
           status.classList.add('visible');
           return;
         }

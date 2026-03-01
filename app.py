@@ -602,7 +602,7 @@ def segment_page(stem):
     provider_name = app.config.get('VLM_PROVIDER')
     if not provider_name:
         return jsonify({
-            'error': 'VLM provider not configured — start with --vlm-provider'
+            'error': 'Article segmentation requires a VLM provider. Restart the server with --vlm-provider claude (or openai).'
         }), 503
 
     output_dir = Path(app.config['OUTPUT_DIR'])
