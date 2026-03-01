@@ -51,6 +51,21 @@
     .word-saved {
       animation: flash-green 1s ease-out forwards;
     }
+    #zoom-reset-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 10;
+      padding: 3px 10px;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: none;
+    }
+    #zoom-reset-btn:hover { background: rgba(0,0,0,0.8); }
   </style>
 </head>
 <body>
@@ -253,6 +268,18 @@
         if (document.activeElement.tagName === 'INPUT') return;
         if (e.key === 'ArrowLeft') navigateTo(currentIndex - 1);
         if (e.key === 'ArrowRight') navigateTo(currentIndex + 1);
+        if (e.key === '+' || e.key === '=') {
+          e.preventDefault();
+          applyZoom(ZOOM_STEP, null);
+        }
+        if (e.key === '-') {
+          e.preventDefault();
+          applyZoom(1 / ZOOM_STEP, null);
+        }
+        if (e.key === '0') {
+          e.preventDefault();
+          recomputeFitScale();
+        }
       });
     }
 
