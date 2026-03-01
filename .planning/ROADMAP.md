@@ -102,7 +102,11 @@ Plans:
   3. Clicking the Start button triggers OCR on all queued files; the button is disabled while processing is running
   4. A progress bar and status line update in real time showing files completed / total / percentage / ETA as OCR runs
   5. Completed files appear as clickable links in the results list and clicking one opens the side-by-side viewer for that file
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — App routing: add GET /viewer/<stem>, reroute GET / to upload.html
+- [ ] 13-02-PLAN.md — Upload dashboard: drag zone, queue, SSE progress, results linking
 
 ### Phase 14: Viewer Zoom and Pan
 **Goal**: Operators can zoom into any area of the TIFF image using the mouse wheel and pan by dragging — with the word bounding-box overlay staying pixel-accurate at all zoom levels
