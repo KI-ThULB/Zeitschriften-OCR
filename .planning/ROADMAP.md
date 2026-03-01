@@ -164,7 +164,7 @@ Plans:
 | 9. Flask Foundation and Job State | v1.4 | 2/2 | Complete | 2026-02-27 |
 | 10. TIFF and ALTO Data Endpoints | v1.4 | 2/2 | Complete | 2026-02-27 |
 | 11. Side-by-Side Viewer UI | v1.4 | 2/2 | Complete | 2026-02-28 |
-| 12. Word Correction | 2/2 | Complete   | 2026-02-28 | - |
+| 12. Word Correction | 2/2 | Complete    | 2026-03-01 | - |
 | 13. Upload UI and Live Progress | v1.5 | 0/TBD | Not started | - |
 | 14. Viewer Zoom and Pan | v1.5 | 0/TBD | Not started | - |
 | 15. VLM Article Segmentation | v1.5 | 0/TBD | Not started | - |
