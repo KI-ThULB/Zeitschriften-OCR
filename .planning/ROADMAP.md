@@ -89,8 +89,8 @@ See archive: `.planning/milestones/v1.4-ROADMAP.md`
 **Plans**: 2 plans
 
 Plans:
-- [ ] 12-01-PLAN.md — POST /save/<stem> endpoint with atomic ALTO write and XSD validation gate (TDD)
-- [ ] 12-02-PLAN.md — Inline word edit UX in viewer.html (single-click, Enter-to-save, green flash, error display)
+- [x] 12-01-PLAN.md — POST /save/<stem> endpoint with atomic ALTO write and XSD validation gate (TDD)
+- [x] 12-02-PLAN.md — Inline word edit UX in viewer.html (single-click, Enter-to-save, green flash, error display)
 
 ### Phase 13: Upload UI and Live Progress
 **Goal**: A drag-and-drop upload interface with a visible file queue, a Start button that triggers OCR, and a live progress bar fed by the SSE stream — completing the full operator workflow end-to-end
@@ -105,8 +105,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 13-01-PLAN.md — App routing: add GET /viewer/<stem>, reroute GET / to upload.html
-- [ ] 13-02-PLAN.md — Upload dashboard: drag zone, queue, SSE progress, results linking
+- [x] 13-01-PLAN.md — App routing: add GET /viewer/<stem>, reroute GET / to upload.html
+- [x] 13-02-PLAN.md — Upload dashboard: drag zone, queue, SSE progress, results linking
 
 ### Phase 14: Viewer Zoom and Pan
 **Goal**: Operators can zoom into any area of the TIFF image using the mouse wheel and pan by dragging — with the word bounding-box overlay staying pixel-accurate at all zoom levels
@@ -168,8 +168,8 @@ Plans:
 | 9. Flask Foundation and Job State | v1.4 | 2/2 | Complete | 2026-02-27 |
 | 10. TIFF and ALTO Data Endpoints | v1.4 | 2/2 | Complete | 2026-02-27 |
 | 11. Side-by-Side Viewer UI | v1.4 | 2/2 | Complete | 2026-02-28 |
-| 12. Word Correction | 2/2 | Complete    | 2026-03-01 | - |
-| 13. Upload UI and Live Progress | 2/2 | Complete   | 2026-03-01 | - |
+| 12. Word Correction | v1.5 | 2/2 | Complete | 2026-03-01 |
+| 13. Upload UI and Live Progress | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 14. Viewer Zoom and Pan | v1.5 | 0/TBD | Not started | - |
 | 15. VLM Article Segmentation | v1.5 | 0/TBD | Not started | - |
 | 16. METS/MODS Output | v1.5 | 0/TBD | Not started | - |

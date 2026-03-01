@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.5 Web Viewer Complete — Phase 13 (Upload UI and Live Progress) in progress
+**Current focus:** v1.5 Web Viewer Complete — Phase 14 (Viewer Zoom and Pan) next
 
 ## Current Position
 
-Phase: 13 — Upload UI and Live Progress (in progress)
-Plan: 13-01 complete — GET / rerouted to upload.html, GET /viewer/<stem> added
-Status: Phase 13 Plan 01 complete — ready for Plan 02
-Last activity: 2026-03-01 — Plan 13-01 complete (routing prerequisite: upload dashboard + viewer stem route)
+Phase: 13 — Upload UI and Live Progress (complete)
+Plan: 13-02 complete — upload.html, drag zone, SSE progress rows, viewer links
+Status: Phase 13 complete — ready for Phase 14
+Last activity: 2026-03-01 — Phase 13 complete (upload dashboard end-to-end verified)
 
-Progress: [█████░░░░░░░░░░░░] 12/17 phases complete (v1.4 done, Phase 12 done, Phase 13 in progress)
+Progress: [██████░░░░░░░░░░░] 13/17 phases complete (v1.4 done, Phases 12–13 done)
 
 ## Performance Metrics
 
@@ -39,6 +39,7 @@ Progress: [█████░░░░░░░░░░░░] 12/17 phases com
 | 10. TIFF and ALTO Data Endpoints | 2/2 | 7 min | 3.5 min |
 | 11. Side-by-Side Viewer UI | 2/2 | ~62 min | ~31 min |
 | 12. Word Correction | 2/2 | ~7 min | ~3.5 min |
+| 13. Upload UI and Live Progress | 2/2 | ~10 min | ~5 min |
 
 *Updated after each plan completion*
 
@@ -79,6 +80,8 @@ Recent decisions affecting current work:
 - [Phase 13-01]: GET /viewer/<stem> path traversal guard uses same if '/' in stem or '..' in stem pattern as /image/<stem> and /alto/<stem>
 - [Phase 13-01]: TestViewerRoute tests left red (TemplateNotFound: upload.html) until Plan 02 creates the template — expected, not a regression
 - [Phase 13-02]: File objects stored in queue Map entries so FormData can be built at startRun() time — required because browser File objects cannot be reconstructed from filenames
+- [Phase 13-02]: stem = tiff_path.stem.lower() in _ocr_worker — SSE d.stem must match JS stem() which lowercases; original case caused silent file_done row update failures
+- [Phase 13-02]: Parse POST /upload JSON response in startRun() to identify already_processed files — totalInRun must exclude already-done files or status counter denominator is wrong
 
 ### Pending Todos
 
@@ -94,5 +97,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Phase 13 Plan 02 Task 1 complete — upload.html created; paused at human-verify checkpoint (Task 2)
-Resume at: Phase 13 Plan 02 — human verify upload dashboard end-to-end workflow, then phase complete
+Stopped at: Phase 13 complete — upload dashboard verified end-to-end
+Resume at: Phase 14 — Viewer Zoom and Pan (plan next)
