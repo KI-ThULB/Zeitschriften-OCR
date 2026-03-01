@@ -173,7 +173,7 @@ Plans:
 | 11. Side-by-Side Viewer UI | v1.4 | 2/2 | Complete | 2026-02-28 |
 | 12. Word Correction | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 13. Upload UI and Live Progress | v1.5 | 2/2 | Complete | 2026-03-01 |
-| 14. Viewer Zoom and Pan | 1/1 | Complete   | 2026-03-01 | - |
+| 14. Viewer Zoom and Pan | 1/1 | Complete    | 2026-03-01 | - |
 | 15. VLM Article Segmentation | v1.5 | 0/TBD | Not started | - |
 | 16. METS/MODS Output | v1.5 | 0/TBD | Not started | - |
 | 17. Article Browser and Full-Text Search | v1.5 | 0/TBD | Not started | - |
