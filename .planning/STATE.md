@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.5 Web Viewer Complete — Phase 16 (METS/MODS Output) in progress
+**Current focus:** v1.5 Web Viewer Complete — Phase 17 (VLM Settings UI) in progress
 
 ## Current Position
 
-Phase: 16 — METS/MODS Output (in progress)
-Plan: 16-02 planned — next plan in phase
-Status: 16-01 complete — METS builder, GET /mets, --issue-title implemented
-Last activity: 2026-03-01 — 16-01 executed (mets.xsd + mets.py + GET /mets + TDD)
+Phase: 17 — VLM Settings UI (in progress)
+Plan: 17-02 next — frontend settings panel in upload.html
+Status: 17-01 complete — OpenAICompatibleProvider, GET/POST /settings, GET /settings/models, segment_page() reads settings.json
+Last activity: 2026-03-01 — 17-01 executed (settings backend, 116 tests pass)
 
-Progress: [████████░░░░░░░░░] 15/17 phases complete (Phase 16 in progress — 1/2 plans done)
+Progress: [█████████░░░░░░░░] 16/18 phases complete (Phase 17 planning)
 
 ## Performance Metrics
 
@@ -99,6 +99,9 @@ Recent decisions affecting current work:
 - [Phase 16-mets-mods-output]: Bounding box overlap uses intersection logic (HPOS < hpos_max AND HPOS+WIDTH > hpos_min), not containment — allows partial-overlap strings to be included in regions
 - [Phase 16-mets-mods-output]: GET /mets returns 204 (not 404) when no ALTO files — semantically correct: resource exists but has no content yet
 - [Phase 16-mets-mods-output]: mets.py ALTO21_NS = 'http://schema.ccs-gmbh.com/ALTO' matches pipeline.py constant — correct namespace for all project ALTO files after namespace rewrite in build_alto21()
+- [Phase 17-01]: sys.modules patching in tests for lazy openai import inside route handlers and segment() — monkeypatch.setattr doesn't intercept imports that haven't happened yet
+- [Phase 17-01]: settings.json provider resolution: _make_provider_from_settings returns None when backend not in _VALID_BACKENDS or model empty — avoids partial-config provider creation
+- [Phase 17-01]: provider_name/model for result dict set in else branch when provider came from settings.json — prevents NameError on settings-based segmentation calls
 
 ### Pending Todos
 
@@ -114,5 +117,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 16-01-PLAN.md — METS builder, GET /mets, --issue-title
-Resume at: Execute Phase 16-02 if it exists; otherwise Phase 16 complete
+Stopped at: Completed 17-01-PLAN.md — settings backend, OpenAICompatibleProvider, 116 tests pass
+Resume at: Execute Phase 17-02 — VLM Settings UI frontend panel in upload.html

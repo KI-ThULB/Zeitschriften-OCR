@@ -149,10 +149,25 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 16-01-PLAN.md — schemas/mets.xsd + mets.py builder + GET /mets endpoint + --issue-title CLI flag (TDD)
-- [ ] 16-02-PLAN.md — Download METS button on upload dashboard + human verification
+- [x] 16-01-PLAN.md — schemas/mets.xsd + mets.py builder + GET /mets endpoint + --issue-title CLI flag (TDD)
+- [x] 16-02-PLAN.md — Download METS button on upload dashboard + human verification
 
-### Phase 17: Article Browser and Full-Text Search
+### Phase 17: VLM Settings UI
+**Goal**: Operators can configure the VLM provider (Open WebUI or OpenRouter) through a web settings panel on the upload dashboard, with API key and model selection persisted to disk — eliminating the need for CLI flags to enable article segmentation
+**Depends on**: Phase 15 (VLM segmentation), Phase 13 (upload dashboard)
+**Requirements**: STRUCT-02 (configurable provider)
+**Success Criteria** (what must be TRUE):
+  1. A settings panel on the upload dashboard lets the operator choose between Open WebUI and OpenRouter backends with pre-filled base URLs
+  2. The operator can enter an API key and select a model from a curated list (or load live models with a button)
+  3. Settings are saved to `output/settings.json` and survive server restarts — the Segment button in the viewer works without CLI flags after saving
+  4. Switching backends and clicking Save immediately takes effect for subsequent segmentation requests without restarting the server
+**Plans**: 2 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — OpenAICompatibleProvider in vlm.py + GET/POST /settings + GET /settings/models + segment_page() reads settings.json first (TDD)
+- [ ] 17-02-PLAN.md — Settings panel on upload dashboard: backend selector, base URL, API key, model dropdown, Save button
+
+### Phase 18: Article Browser and Full-Text Search
 **Goal**: Operators can browse identified articles for any page in a viewer sidebar and search across all articles by title or content from the web interface
 **Depends on**: Phase 15 (article metadata), Phase 16 (METS/MODS output), Phase 14 (stable viewer)
 **Requirements**: STRUCT-05, STRUCT-06
@@ -182,6 +197,7 @@ Plans:
 | 12. Word Correction | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 13. Upload UI and Live Progress | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 14. Viewer Zoom and Pan | 1/1 | Complete    | 2026-03-01 | - |
-| 15. VLM Article Segmentation | v1.5 | 0/2 | Not started | - |
-| 16. METS/MODS Output | 1/2 | In Progress|  | - |
-| 17. Article Browser and Full-Text Search | v1.5 | 0/TBD | Not started | - |
+| 15. VLM Article Segmentation | v1.5 | 2/2 | Complete | 2026-03-01 |
+| 16. METS/MODS Output | v1.5 | 2/2 | Complete | 2026-03-01 |
+| 17. VLM Settings UI | 1/2 | In Progress|  | - |
+| 18. Article Browser and Full-Text Search | v1.5 | 0/TBD | Not started | - |

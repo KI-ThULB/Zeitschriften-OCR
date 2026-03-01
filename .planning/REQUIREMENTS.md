@@ -31,7 +31,7 @@
 ### Article Structuring
 
 - [ ] **STRUCT-01**: User can trigger automatic article segmentation for any page via a configurable VLM/LLM provider (provider and model set via config file or `--vlm-provider` / `--vlm-model` CLI flags)
-- [ ] **STRUCT-02**: The system identifies article regions on each page (bounding box, type: headline / article / advertisement / illustration / caption) and stores results per page
+- [x] **STRUCT-02**: The system identifies article regions on each page (bounding box, type: headline / article / advertisement / illustration / caption) and stores results per page
 - [ ] **STRUCT-03**: Each identified article gets a title and section type extracted and made accessible as structured metadata
 - [x] **STRUCT-04**: Structured output is written as a METS/MODS logical structure document with article-level `<div>` elements linked to ALTO word coordinates (DFG Viewer / Goobi-Kitodo newspaper ingest profile)
 - [ ] **STRUCT-05**: User can browse identified articles for a page in the viewer sidebar — clicking an article highlights its region on the TIFF image
@@ -74,7 +74,7 @@
 | VIEW-05 | Phase 14 | Complete |
 | VIEW-06 | Phase 14 | Complete |
 | STRUCT-01 | Phase 15 | Pending |
-| STRUCT-02 | Phase 15 | Pending |
+| STRUCT-02 | Phase 15 | Complete |
 | STRUCT-03 | Phase 15 | Pending |
 | STRUCT-04 | Phase 16 | Complete |
 | STRUCT-05 | Phase 17 | Pending |
