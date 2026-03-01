@@ -135,6 +135,75 @@
       display: none;
     }
     #mets-toast.visible { display: block; }
+    #vlm-settings {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #ddd;
+    }
+    #vlm-settings h2 {
+      font-size: 1rem;
+      color: #333;
+      margin: 0 0 12px 0;
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .settings-row label {
+      font-size: 0.85rem;
+      color: #555;
+      min-width: 72px;
+    }
+    .settings-row input[type="text"],
+    .settings-row input[type="password"],
+    .settings-row select {
+      flex: 1;
+      min-width: 200px;
+      padding: 5px 8px;
+      font-size: 0.85rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .backend-radios {
+      display: flex;
+      gap: 16px;
+      font-size: 0.85rem;
+    }
+    .backend-radios label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      min-width: unset;
+      color: #333;
+    }
+    #btn-load-models {
+      padding: 5px 10px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #btn-save-settings {
+      padding: 8px 20px;
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    #btn-save-settings:hover { background: #1558b0; }
+    #settings-status {
+      font-size: 0.82rem;
+      margin-top: 6px;
+      min-height: 1.3em;
+    }
+    #settings-status.ok { color: #188038; }
+    #settings-status.err { color: #c62828; }
   </style>
 </head>
 <body>
@@ -160,6 +229,44 @@
     <div id="mets-export" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #ddd;">
       <button id="btn-mets" onclick="downloadMets()">Download METS</button>
       <div id="mets-toast"></div>
+    </div>
+
+    <div id="vlm-settings">
+      <h2>VLM Settings</h2>
+
+      <div class="settings-row">
+        <label>Backend</label>
+        <div class="backend-radios">
+          <label>
+            <input type="radio" name="vlm-backend" value="openwebui" checked onchange="onBackendChange()">
+            Open WebUI (Uni Jena)
+          </label>
+          <label>
+            <input type="radio" name="vlm-backend" value="openrouter" onchange="onBackendChange()">
+            OpenRouter
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <label>Base URL</label>
+        <input type="text" id="vlm-base-url"
+               value="https://openwebui-workshop.test.uni-jena.de/ollama/v1">
+      </div>
+
+      <div class="settings-row">
+        <label>API Key</label>
+        <input type="password" id="vlm-api-key" placeholder="Enter API key">
+      </div>
+
+      <div class="settings-row">
+        <label>Model</label>
+        <select id="vlm-model"></select>
+        <button id="btn-load-models" onclick="loadModels()">Load models</button>
+      </div>
+
+      <button id="btn-save-settings" onclick="saveSettings()">Save Settings</button>
+      <div id="settings-status"></div>
     </div>
   </main>
 
@@ -554,6 +661,170 @@
     }
 
     // ---------------------------------------------------------------------------
+    // VLM Settings
+    // ---------------------------------------------------------------------------
+
+    const BACKEND_PRESETS = {
+      openwebui: {
+        baseUrl: 'https://openwebui-workshop.test.uni-jena.de/ollama/v1',
+        models: [
+          'llama3.2-vision:latest',
+          'bakllava:latest',
+          'minicpm-v:latest',
+          'moondream:latest',
+          'granite3.2-vision:latest',
+        ],
+      },
+      openrouter: {
+        baseUrl: 'https://openrouter.ai/api/v1',
+        models: [
+          'google/gemini-flash-1.5',
+          'openai/gpt-4o',
+          'anthropic/claude-3-5-sonnet',
+          'meta-llama/llama-3.2-90b-vision-instruct',
+          'google/gemini-pro-1.5',
+          'anthropic/claude-3-opus',
+          'openai/gpt-4o-mini',
+          'mistralai/pixtral-12b',
+          'qwen/qwen-vl-max',
+          'anthropic/claude-3-haiku',
+        ],
+      },
+    };
+
+    function getSelectedBackend() {
+      const radio = document.querySelector('input[name="vlm-backend"]:checked');
+      return radio ? radio.value : 'openwebui';
+    }
+
+    function populateModelDropdown(models, selectedModel) {
+      const select = document.getElementById('vlm-model');
+      select.innerHTML = '';
+      for (const m of models) {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        if (m === selectedModel) opt.selected = true;
+        select.appendChild(opt);
+      }
+    }
+
+    function onBackendChange() {
+      const backend = getSelectedBackend();
+      const preset = BACKEND_PRESETS[backend];
+      document.getElementById('vlm-base-url').value = preset.baseUrl;
+      populateModelDropdown(preset.models, preset.models[0]);
+      document.getElementById('settings-status').textContent = '';
+    }
+
+    async function loadModels() {
+      const baseUrl = document.getElementById('vlm-base-url').value.trim();
+      const apiKey = document.getElementById('vlm-api-key').value.trim();
+      const status = document.getElementById('settings-status');
+      status.className = '';
+      status.textContent = 'Loading models\u2026';
+
+      const url = '/settings/models?base_url=' + encodeURIComponent(baseUrl)
+                + '&api_key=' + encodeURIComponent(apiKey);
+      try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (!resp.ok) {
+          // Fall back to curated list
+          const backend = getSelectedBackend();
+          populateModelDropdown(BACKEND_PRESETS[backend].models, null);
+          status.className = 'err';
+          status.textContent = 'Could not load live models \u2014 showing curated list. ('
+            + (data.error || resp.status) + ')';
+          return;
+        }
+        const models = data.models || [];
+        if (models.length === 0) {
+          status.className = 'err';
+          status.textContent = 'No models returned by endpoint.';
+          return;
+        }
+        const currentModel = document.getElementById('vlm-model').value;
+        populateModelDropdown(models, currentModel);
+        status.className = 'ok';
+        status.textContent = models.length + ' models loaded.';
+      } catch (err) {
+        status.className = 'err';
+        status.textContent = 'Network error: ' + err.message;
+      }
+    }
+
+    async function saveSettings() {
+      const baseUrl = document.getElementById('vlm-base-url').value.trim();
+      const apiKey = document.getElementById('vlm-api-key').value.trim();
+      const model = document.getElementById('vlm-model').value;
+      const status = document.getElementById('settings-status');
+      status.className = '';
+      status.textContent = 'Saving\u2026';
+
+      try {
+        const resp = await fetch('/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            backend: 'openai_compatible',
+            base_url: baseUrl,
+            api_key: apiKey,
+            model: model,
+          }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          status.className = 'err';
+          status.textContent = 'Save failed: ' + (data.error || resp.status);
+          return;
+        }
+        status.className = 'ok';
+        status.textContent = '\u2713 Settings saved';
+        setTimeout(() => {
+          if (status.textContent === '\u2713 Settings saved') status.textContent = '';
+        }, 3000);
+      } catch (err) {
+        status.className = 'err';
+        status.textContent = 'Network error: ' + err.message;
+      }
+    }
+
+    async function initSettings() {
+      try {
+        const resp = await fetch('/settings');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (!data.backend) return;  // empty settings
+
+        // Restore base_url
+        if (data.base_url) {
+          document.getElementById('vlm-base-url').value = data.base_url;
+          // Select matching backend radio if possible
+          const isOpenRouter = data.base_url.includes('openrouter.ai');
+          const radioVal = isOpenRouter ? 'openrouter' : 'openwebui';
+          const radio = document.querySelector(`input[name="vlm-backend"][value="${radioVal}"]`);
+          if (radio) radio.checked = true;
+        }
+
+        // Restore api_key (masked — just mark as having a value)
+        if (data.api_key) {
+          document.getElementById('vlm-api-key').value = data.api_key;
+        }
+
+        // Restore model — populate from preset, then set saved value
+        const backend = getSelectedBackend();
+        const preset = BACKEND_PRESETS[backend];
+        const savedModel = data.model || '';
+        const allModels = savedModel && !preset.models.includes(savedModel)
+          ? [savedModel, ...preset.models]
+          : preset.models;
+        populateModelDropdown(allModels, savedModel || preset.models[0]);
+
+      } catch (_) { /* silent — best-effort init */ }
+    }
+
+    // ---------------------------------------------------------------------------
     // Init
     // ---------------------------------------------------------------------------
 
@@ -562,6 +833,9 @@
       btnStart.addEventListener('click', startRun);
       // Start button starts disabled (queue is empty)
       updateStartButton();
+      // Init VLM settings panel
+      populateModelDropdown(BACKEND_PRESETS.openwebui.models, BACKEND_PRESETS.openwebui.models[0]);
+      initSettings();
     });
   </script>
 </body>
