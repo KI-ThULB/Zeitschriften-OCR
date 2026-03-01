@@ -117,7 +117,10 @@ Plans:
   2. Word bounding-box overlays remain aligned with the correct word positions at every zoom level
   3. Clicking and dragging the zoomed image pans it within the panel without deselecting or triggering word clicks
   4. Zooming and panning survive a window resize without overlay misalignment (ResizeObserver continues to work)
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 14-01-PLAN.md — Zoom/pan engine with shared-container transform, reset button, keyboard shortcuts (+/-/0), human verification
 
 ### Phase 15: VLM Article Segmentation
 **Goal**: Operators can trigger automatic article segmentation for any page using a configurable VLM provider; the system identifies article regions with bounding boxes, types, titles, and section metadata stored per page
@@ -170,7 +173,7 @@ Plans:
 | 11. Side-by-Side Viewer UI | v1.4 | 2/2 | Complete | 2026-02-28 |
 | 12. Word Correction | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 13. Upload UI and Live Progress | v1.5 | 2/2 | Complete | 2026-03-01 |
-| 14. Viewer Zoom and Pan | v1.5 | 0/TBD | Not started | - |
+| 14. Viewer Zoom and Pan | v1.5 | 0/1 | Not started | - |
 | 15. VLM Article Segmentation | v1.5 | 0/TBD | Not started | - |
 | 16. METS/MODS Output | v1.5 | 0/TBD | Not started | - |
 | 17. Article Browser and Full-Text Search | v1.5 | 0/TBD | Not started | - |
