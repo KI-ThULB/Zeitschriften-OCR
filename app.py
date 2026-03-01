@@ -19,6 +19,7 @@ from flask import Flask, Response, jsonify, render_template, request, send_file,
 from PIL import Image
 from werkzeug.utils import secure_filename
 
+import mets
 import pipeline
 import vlm
 
@@ -664,6 +665,38 @@ def get_segment(stem):
         return jsonify({'error': 'parse failed', 'detail': str(exc)}), 500
 
 
+@app.get('/mets')
+def export_mets():
+    """Generate and return METS/MODS XML for all processed pages.
+
+    Reads ALTO files from output_dir/alto/ and segment JSON from output_dir/segments/.
+    Returns XML as a downloadable attachment (Content-Disposition: attachment).
+    Returns 204 if no ALTO files exist yet.
+    Returns 500 on builder exception.
+
+    issue_title can be set via --issue-title CLI arg stored in app.config['ISSUE_TITLE'].
+    """
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    alto_dir = output_dir / 'alto'
+
+    if not alto_dir.exists() or not any(alto_dir.glob('*.xml')):
+        return Response('', status=204)
+
+    issue_title = app.config.get('ISSUE_TITLE', '')
+
+    try:
+        xml_bytes = mets.build_mets(output_dir, issue_title=issue_title)
+    except Exception as exc:
+        return jsonify({'error': 'METS build failed', 'detail': str(exc)}), 500
+
+    return Response(
+        xml_bytes,
+        status=200,
+        mimetype='application/xml',
+        headers={'Content-Disposition': 'attachment; filename="mets.xml"'},
+    )
+
+
 @app.get('/')
 def index():
     """Serve the upload and progress dashboard."""
@@ -696,6 +729,8 @@ if __name__ == '__main__':
                         help='VLM model name (default: claude-opus-4-6 for claude, gpt-4o for openai)')
     parser.add_argument('--vlm-api-key', default=None,
                         help='API key (fallback: ANTHROPIC_API_KEY or OPENAI_API_KEY env vars)')
+    parser.add_argument('--issue-title', default='',
+                        help='Issue title for METS/MODS descriptive metadata')
     args = parser.parse_args()
 
     output_dir = Path(args.output)
@@ -721,5 +756,6 @@ if __name__ == '__main__':
         app.config['VLM_MODEL'] = 'claude-opus-4-6'
     if args.vlm_api_key:
         app.config['VLM_API_KEY'] = args.vlm_api_key
+    app.config['ISSUE_TITLE'] = args.issue_title
 
     app.run(host='0.0.0.0', port=args.port, threaded=True, use_reloader=False)
