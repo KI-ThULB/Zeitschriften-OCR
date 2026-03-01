@@ -206,6 +206,11 @@
       const gen = ++loadGen;
       const stem = stems[index];
 
+      // Clear stale segment overlay and status at start of each file load
+      clearSegmentRegions();
+      const segStatus = document.getElementById('segment-status');
+      if (segStatus) { segStatus.classList.remove('visible'); segStatus.textContent = ''; }
+
       document.querySelectorAll('#sidebar .file-item').forEach((el, i) => {
         el.classList.toggle('active', i === index);
       });
@@ -218,6 +223,10 @@
       document.getElementById('text-panel').innerHTML = '<em>Loading\u2026</em>';
       document.getElementById('text-panel').scrollTop = 0;
 
+      // Enable Segment button and track current stem
+      currentStem = stem;
+      document.getElementById('segment-btn').disabled = false;
+
       const img = document.getElementById('tiff-img');
       img.src = `/image/${stem}`;
 
@@ -226,9 +235,12 @@
         if (gen !== loadGen) return;
         pageWidth = data.page_width;
         pageHeight = data.page_height;
+        jpeg_width = data.jpeg_width || 0;
+        jpeg_height = data.jpeg_height || 0;
         recomputeFitScale();
         wordById = Object.fromEntries(data.words.map(w => [w.id, w]));
         renderWords(data.words);
+        loadSegments(stem);
       } catch (err) {
         if (gen !== loadGen) return;
         document.getElementById('text-panel').innerHTML = `<em>Error loading ALTO: ${escapeHtml(String(err))}</em>`;
