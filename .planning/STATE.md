@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.5 Web Viewer Complete — Phase 15 (VLM Article Segmentation) complete
+**Current focus:** v1.5 Web Viewer Complete — Phase 16 (METS/MODS Output) in progress
 
 ## Current Position
 
-Phase: 15 — VLM Article Segmentation (complete)
-Plan: 15-02 complete — Segment button, SVG region overlay, loadFile() integration (4 tasks, ~20 min)
-Status: Phase 15 fully complete (2/2 plans) — ready for Phase 16 (METS/MODS)
-Last activity: 2026-03-01 — 15-02 executed (4 tasks + human-verify, ~20 min)
+Phase: 16 — METS/MODS Output (in progress)
+Plan: 16-02 planned — next plan in phase
+Status: 16-01 complete — METS builder, GET /mets, --issue-title implemented
+Last activity: 2026-03-01 — 16-01 executed (mets.xsd + mets.py + GET /mets + TDD)
 
-Progress: [████████░░░░░░░░░] 15/17 phases complete (v1.5 done, Phase 15 complete)
+Progress: [████████░░░░░░░░░] 15/17 phases complete (Phase 16 in progress — 1/2 plans done)
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ Progress: [████████░░░░░░░░░] 15/17 phases com
 | 13. Upload UI and Live Progress | 2/2 | ~10 min | ~5 min |
 | 14. Viewer Zoom and Pan | 1/1 | ~25 min | ~25 min |
 | 15. VLM Article Segmentation | 2/2 | ~23 min | ~11.5 min |
+| 16. METS/MODS Output | 1/2 | 27 min | 27 min |
 
 *Updated after each plan completion*
 
@@ -95,6 +96,9 @@ Recent decisions affecting current work:
 - [Phase 15-02]: loadSegments() called after renderWords() inside ALTO success block — ensures jpeg_width/jpeg_height are set before showSegmentRegions() is called
 - [Phase 15-02]: segmentPage() re-enables button in finally block — prevents button getting permanently stuck disabled on network error
 - [Phase 15-02]: clearSegmentRegions() called at start of loadFile() — prevents stale regions from previous file persisting during fetch for new file
+- [Phase 16-mets-mods-output]: Bounding box overlap uses intersection logic (HPOS < hpos_max AND HPOS+WIDTH > hpos_min), not containment — allows partial-overlap strings to be included in regions
+- [Phase 16-mets-mods-output]: GET /mets returns 204 (not 404) when no ALTO files — semantically correct: resource exists but has no content yet
+- [Phase 16-mets-mods-output]: mets.py ALTO21_NS = 'http://schema.ccs-gmbh.com/ALTO' matches pipeline.py constant — correct namespace for all project ALTO files after namespace rewrite in build_alto21()
 
 ### Pending Todos
 
@@ -105,10 +109,10 @@ None.
 - SVG overlay performance ceiling: if any production page exceeds ~2,000 words, Canvas fallback path should be planned from Phase 11 start — sample real ALTO files for word count before building overlay
 - lxml namespace round-trip: spike-test etree.tostring(xml_declaration=True, encoding='UTF-8', pretty_print=True) against a real project ALTO file as first task of Phase 12
 - Phase 15 VLM provider selection: need to evaluate Claude Vision, GPT-4o, and Gemini Vision API response format differences for structured region output before committing to the provider abstraction interface
-- Phase 16 METS/MODS: DFG Viewer newspaper profile XSD must be sourced and bundled before implementation begins; confirm which profile version Goobi-Kitodo targets
+- Phase 16-02: Second METS plan — confirm scope before executing
 
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 15-02-PLAN.md — Segment button, SVG region overlay, loadFile() integration
-Resume at: Execute Phase 16 (METS/MODS) — source DFG Viewer newspaper profile XSD first
+Stopped at: Completed 16-01-PLAN.md — METS builder, GET /mets, --issue-title
+Resume at: Execute Phase 16-02 if it exists; otherwise Phase 16 complete

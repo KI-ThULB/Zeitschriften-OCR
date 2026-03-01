@@ -131,7 +131,11 @@ Plans:
   2. Detected article regions each have a bounding box, a type label (headline / article / advertisement / illustration / caption), and a title string stored in a per-page JSON file
   3. Changing the provider from one VLM (e.g., Claude Vision) to another (e.g., GPT-4o) requires only a config change with no code modification
   4. Pages with no detectable article regions produce an empty region list rather than an error
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — vlm.py provider module (Claude + OpenAI), POST/GET /segment/<stem> endpoints, CLI flags (TDD)
+- [ ] 15-02-PLAN.md — Segment button in viewer.html, region overlay drawing, loadFile() restore
 
 ### Phase 16: METS/MODS Output
 **Goal**: For each processed issue, the system writes a METS/MODS logical structure document with article-level div elements linked to ALTO word coordinates, conforming to the DFG Viewer / Goobi-Kitodo newspaper ingest profile
@@ -142,7 +146,11 @@ Plans:
   2. Each identified article appears as a logical `<div>` element in the METS file with a type attribute and a title drawn from STRUCT-03 metadata
   3. Each article div contains `<area>` elements that reference the correct ALTO file and word-level `BEGIN`/`END` IDs from the corresponding ALTO XML
   4. Re-running the export after adding new articles to a page overwrites the METS file with updated content without corrupting existing article entries
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 16-01-PLAN.md — schemas/mets.xsd + mets.py builder + GET /mets endpoint + --issue-title CLI flag (TDD)
+- [ ] 16-02-PLAN.md — Download METS button on upload dashboard + human verification
 
 ### Phase 17: Article Browser and Full-Text Search
 **Goal**: Operators can browse identified articles for any page in a viewer sidebar and search across all articles by title or content from the web interface
@@ -174,6 +182,6 @@ Plans:
 | 12. Word Correction | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 13. Upload UI and Live Progress | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 14. Viewer Zoom and Pan | 1/1 | Complete    | 2026-03-01 | - |
-| 15. VLM Article Segmentation | v1.5 | 0/TBD | Not started | - |
-| 16. METS/MODS Output | v1.5 | 0/TBD | Not started | - |
+| 15. VLM Article Segmentation | v1.5 | 0/2 | Not started | - |
+| 16. METS/MODS Output | 1/2 | In Progress|  | - |
 | 17. Article Browser and Full-Text Search | v1.5 | 0/TBD | Not started | - |
