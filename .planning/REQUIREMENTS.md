@@ -14,14 +14,14 @@
 
 ### File Ingestion
 
-- [ ] **INGEST-01**: User can drag individual TIFF files onto the app to queue them for OCR processing
-- [ ] **INGEST-02**: User can see the list of queued TIFFs before starting processing
-- [ ] **INGEST-03**: User can remove a file from the queue before processing starts
+- [x] **INGEST-01**: User can drag individual TIFF files onto the app to queue them for OCR processing
+- [x] **INGEST-02**: User can see the list of queued TIFFs before starting processing
+- [x] **INGEST-03**: User can remove a file from the queue before processing starts
 
 ### OCR Processing
 
-- [ ] **PROC-01**: User can start OCR processing on all queued TIFFs with a single button
-- [ ] **PROC-02**: User sees live progress while OCR runs (files done / total / percentage / ETA)
+- [x] **PROC-01**: User can start OCR processing on all queued TIFFs with a single button
+- [x] **PROC-02**: User sees live progress while OCR runs (files done / total / percentage / ETA)
 
 ### Viewer Zoom
 
@@ -66,11 +66,11 @@
 | EDIT-02 | Phase 12 | Complete |
 | EDIT-03 | Phase 12 | Complete |
 | EDIT-04 | Phase 12 | Complete |
-| INGEST-01 | Phase 13 | Pending |
-| INGEST-02 | Phase 13 | Pending |
-| INGEST-03 | Phase 13 | Pending |
-| PROC-01 | Phase 13 | Pending |
-| PROC-02 | Phase 13 | Pending |
+| INGEST-01 | Phase 13 | Complete |
+| INGEST-02 | Phase 13 | Complete |
+| INGEST-03 | Phase 13 | Complete |
+| PROC-01 | Phase 13 | Complete |
+| PROC-02 | Phase 13 | Complete |
 | VIEW-05 | Phase 14 | Pending |
 | VIEW-06 | Phase 14 | Pending |
 | STRUCT-01 | Phase 15 | Pending |

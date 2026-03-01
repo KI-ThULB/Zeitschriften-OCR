@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.5 Web Viewer Complete — Phase 12 (Word Correction) up next
+**Current focus:** v1.5 Web Viewer Complete — Phase 13 (Upload UI and Live Progress) in progress
 
 ## Current Position
 
-Phase: 12 — Word Correction (complete)
-Plan: 12-02 complete — inline word edit UX shipped and verified
-Status: Phase 12 complete — ready for Phase 13
-Last activity: 2026-02-28 — Plan 12-02 complete (inline edit UX: editWord/cancelEdit/saveWord + human verified)
+Phase: 13 — Upload UI and Live Progress (in progress)
+Plan: 13-01 complete — GET / rerouted to upload.html, GET /viewer/<stem> added
+Status: Phase 13 Plan 01 complete — ready for Plan 02
+Last activity: 2026-03-01 — Plan 13-01 complete (routing prerequisite: upload dashboard + viewer stem route)
 
-Progress: [█████░░░░░░░░░░░░] 12/17 phases complete (v1.4 done, Phase 12 done)
+Progress: [█████░░░░░░░░░░░░] 12/17 phases complete (v1.4 done, Phase 12 done, Phase 13 in progress)
 
 ## Performance Metrics
 
@@ -75,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 12-02]: setTimeout(0) in blur handler defers cancel to let onclick fire first on word-to-word transitions
 - [Phase 12-02]: void span.offsetWidth reflow trick required to restart CSS animation on re-edit of same word
 - [Phase 12-02]: loadFile() guard (if editingSpan) cancelEdit() handles file-switch-while-editing cleanly
+- [Phase 13-01]: GET / renamed from viewer() to index() — semantically correct for upload dashboard entry point
+- [Phase 13-01]: GET /viewer/<stem> path traversal guard uses same if '/' in stem or '..' in stem pattern as /image/<stem> and /alto/<stem>
+- [Phase 13-01]: TestViewerRoute tests left red (TemplateNotFound: upload.html) until Plan 02 creates the template — expected, not a regression
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Plan 12-02 complete — Phase 12 Word Correction fully shipped and verified
-Resume at: Phase 13 (next milestone v1.5 phase)
+Last session: 2026-03-01
+Stopped at: Plan 13-01 complete — routing prerequisite for Phase 13 upload dashboard shipped
+Resume at: Phase 13 Plan 02 (create upload.html upload dashboard UI)
