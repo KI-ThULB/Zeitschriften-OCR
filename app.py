@@ -84,7 +84,7 @@ def _ocr_worker(tiff_paths: list, output_dir: Path, lang: str, psm: int, padding
     """
     try:
         for tiff_path in tiff_paths:
-            stem = tiff_path.stem
+            stem = tiff_path.stem.lower()
             alto_path = output_dir / 'alto' / (stem + '.xml')
             t0 = time.monotonic()
 
