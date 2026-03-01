@@ -14,7 +14,7 @@ from pathlib import Path
 # Constants
 # ---------------------------------------------------------------------------
 
-SUPPORTED_PROVIDERS = ('claude', 'openai')
+SUPPORTED_PROVIDERS = ('claude', 'openai', 'openai_compatible')
 
 SEGMENT_PROMPT = (
     'Analyze this newspaper page and identify distinct article regions.\n'
@@ -113,16 +113,56 @@ class OpenAIProvider(SegmentationProvider):
 
 
 # ---------------------------------------------------------------------------
+# OpenAI-compatible provider (Open WebUI, OpenRouter, Ollama, etc.)
+# ---------------------------------------------------------------------------
+
+class OpenAICompatibleProvider(SegmentationProvider):
+    """Provider for any OpenAI-compatible API (Open WebUI, OpenRouter, Ollama).
+
+    Uses openai.OpenAI with a custom base_url — works with any backend
+    that implements the /v1/chat/completions endpoint.
+    """
+
+    def __init__(self, model: str, api_key: str, base_url: str) -> None:
+        self.model = model
+        self.api_key = api_key
+        self.base_url = base_url
+
+    def segment(self, jpeg_path: Path) -> list[dict]:
+        import openai  # lazy — only required at call time
+        data = jpeg_path.read_bytes()
+        b64 = base64.b64encode(data).decode()
+        client = openai.OpenAI(base_url=self.base_url, api_key=self.api_key)
+        response = client.chat.completions.create(
+            model=self.model,
+            messages=[{
+                'role': 'user',
+                'content': [
+                    {
+                        'type': 'image_url',
+                        'image_url': {'url': f'data:image/jpeg;base64,{b64}'},
+                    },
+                    {'type': 'text', 'text': SEGMENT_PROMPT},
+                ],
+            }],
+            max_tokens=2048,
+        )
+        text = response.choices[0].message.content
+        return _parse_regions(text)
+
+
+# ---------------------------------------------------------------------------
 # Factory
 # ---------------------------------------------------------------------------
 
-def get_provider(name: str, model: str, api_key: str) -> SegmentationProvider:
+def get_provider(name: str, model: str, api_key: str, *, base_url: str = '') -> SegmentationProvider:
     """Return a configured SegmentationProvider for the given provider name.
 
     Args:
-        name: Provider name — 'claude' or 'openai'.
-        model: Model identifier (e.g. 'claude-opus-4-6' or 'gpt-4o').
+        name: Provider name — 'claude', 'openai', or 'openai_compatible'.
+        model: Model identifier.
         api_key: API key string.
+        base_url: Base URL for OpenAI-compatible providers (required for 'openai_compatible').
 
     Raises:
         ValueError: If name is not a supported provider.
@@ -131,6 +171,8 @@ def get_provider(name: str, model: str, api_key: str) -> SegmentationProvider:
         return ClaudeProvider(model, api_key)
     if name == 'openai':
         return OpenAIProvider(model, api_key)
+    if name == 'openai_compatible':
+        return OpenAICompatibleProvider(model, api_key, base_url)
     raise ValueError(
         f'Unknown VLM provider: {name!r}. Supported: {", ".join(SUPPORTED_PROVIDERS)}'
     )
