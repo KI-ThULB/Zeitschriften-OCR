@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Zeitschriften-OCR Upload</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    header {
+      margin-bottom: 24px;
+    }
+    header h1 {
+      font-size: 1.4rem;
+      color: #333;
+      margin: 0 0 4px 0;
+    }
+    header a {
+      font-size: 0.85rem;
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    header a:hover {
+      text-decoration: underline;
+    }
+    #drop-zone {
+      border: 3px dashed #999;
+      border-radius: 8px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-bottom: 16px;
+    }
+    #drop-zone.dragover {
+      background: #e8f0fe;
+      border-color: #1a73e8;
+    }
+    #drop-zone p {
+      margin: 0;
+      color: #555;
+    }
+    #drop-zone p.main-text {
+      font-size: 1rem;
+      margin-bottom: 6px;
+    }
+    #drop-zone p.sub-text {
+      font-size: 0.85rem;
+      color: #888;
+    }
+    #queue-section {
+      margin-top: 8px;
+    }
+    #status-line {
+      font-size: 0.85rem;
+      color: #555;
+      margin-bottom: 8px;
+      min-height: 1.4em;
+    }
+    #file-list {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0;
+    }
+    li.file-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+    li.file-row .name {
+      flex: 1;
+      font-size: 0.9rem;
+    }
+    li.file-row .remove {
+      cursor: pointer;
+      color: #888;
+      font-size: 1.1rem;
+      border: none;
+      background: none;
+      padding: 0 4px;
+    }
+    li.file-row .remove:hover {
+      color: #333;
+    }
+    li.state-pending .name {
+      color: #555;
+    }
+    li.state-processing .name::before {
+      content: "\21BB ";
+      color: #1a73e8;
+    }
+    li.state-done .name {
+      color: #188038;
+    }
+    li.state-error .name {
+      color: #c62828;
+    }
+    li.state-invalid {
+      color: #c62828;
+      font-size: 0.9rem;
+      padding: 6px 0;
+      border-bottom: 1px solid #eee;
+    }
+    #btn-start {
+      padding: 10px 28px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 16px;
+    }
+    #btn-start:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Zeitschriften-OCR</h1>
+    <a href="/viewer/">Viewer &rarr;</a>
+  </header>
+
+  <main>
+    <section id="drop-zone" role="button" aria-label="Drop zone for TIFF files" tabindex="0">
+      <p class="main-text">Drag TIFF files here or click to browse</p>
+      <p class="sub-text">Accepted: .tif, .tiff</p>
+    </section>
+
+    <input type="file" id="file-input" accept=".tif,.tiff" multiple style="display:none">
+
+    <section id="queue-section">
+      <div id="status-line"></div>
+      <ul id="file-list"></ul>
+      <button id="btn-start" disabled>Start OCR</button>
+    </section>
+  </main>
+
+  <script>
+    // ---------------------------------------------------------------------------
+    // Module-level state
+    // ---------------------------------------------------------------------------
+    // queue: filename -> {filename, stem, state, wordCount, file}
+    // 'file' holds the File object so we can upload it via FormData in startRun()
+    const queue = new Map();
+    let runActive = false;
+    let doneCount = 0;
+    let totalInRun = 0;
+    let runStartTime = null;
+    let sse = null;
+
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const statusLine = document.getElementById('status-line');
+    const btnStart = document.getElementById('btn-start');
+
+    // ---------------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------------
+
+    function stem(filename) {
+      return filename.replace(/\.[^.]+$/, '').toLowerCase();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ---------------------------------------------------------------------------
+    // Drop zone setup
+    // ---------------------------------------------------------------------------
+
+    function setupDropZone() {
+      dropZone.addEventListener('click', () => fileInput.click());
+
+      dropZone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        // Reset so same file can be re-selected after removal
+        fileInput.value = '';
+      });
+
+      dropZone.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+      });
+    }
+
+    // ---------------------------------------------------------------------------
+    // File handling
+    // ---------------------------------------------------------------------------
+
+    function handleFiles(fileList) {
+      // On first new drop after a completed run: clear old results and rebuild queue
+      if (!runActive && doneCount > 0) {
+        queue.clear();
+        clearFileList();
+        doneCount = 0;
+        runStartTime = null;
+      }
+
+      for (const file of fileList) {
+        if (runActive) {
+          // Cannot add files during active run, silently ignore
+          continue;
+        }
+
+        const nameLower = file.name.toLowerCase();
+        if (!nameLower.endsWith('.tif') && !nameLower.endsWith('.tiff')) {
+          addInvalidRow(file.name);
+          continue;
+        }
+
+        if (queue.has(file.name)) {
+          // Silent de-duplication
+          continue;
+        }
+
+        queue.set(file.name, {
+          filename: file.name,
+          stem: stem(file.name),
+          state: 'pending',
+          wordCount: null,
+          file: file,
+        });
+        renderFileRow(file.name);
+        updateStartButton();
+      }
+    }
+
+    function addInvalidRow(filename) {
+      const li = document.createElement('li');
+      li.className = 'state-invalid';
+      li.textContent = '\u2717 ' + filename + ' \u2014 Not a TIFF file';
+      document.getElementById('file-list').appendChild(li);
+      setTimeout(() => li.remove(), 3000);
+    }
+
+    function renderFileRow(filename) {
+      const li = document.createElement('li');
+      li.id = 'row-' + CSS.escape(filename);
+      li.className = 'file-row state-pending';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'name';
+      nameSpan.textContent = filename;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove';
+      removeBtn.setAttribute('aria-label', 'Remove');
+      removeBtn.setAttribute('title', 'Remove');
+      removeBtn.textContent = '\u00d7';
+      removeBtn.addEventListener('click', () => removeFile(filename));
+
+      li.appendChild(nameSpan);
+      li.appendChild(removeBtn);
+      document.getElementById('file-list').appendChild(li);
+    }
+
+    function removeFile(filename) {
+      queue.delete(filename);
+      const row = document.getElementById('row-' + CSS.escape(filename));
+      if (row) row.remove();
+      updateStartButton();
+    }
+
+    function updateStartButton() {
+      btnStart.disabled = runActive || queue.size === 0;
+      btnStart.textContent = runActive ? 'Processing\u2026' : 'Start OCR';
+    }
+
+    function updateRowState(filename, state, opts) {
+      opts = opts || {};
+      const row = document.getElementById('row-' + CSS.escape(filename));
+      if (!row) return;
+
+      row.className = 'file-row state-' + state;
+
+      const nameSpan = row.querySelector('.name');
+      if (!nameSpan) return;
+
+      if (state === 'done') {
+        const fileStem = stem(filename);
+        const link = document.createElement('a');
+        link.href = '/viewer/' + encodeURIComponent(fileStem);
+        link.textContent = filename;
+        const wc = (opts.wordCount !== null && opts.wordCount !== undefined)
+          ? opts.wordCount + ' words'
+          : 'skipped';
+        nameSpan.innerHTML = '';
+        nameSpan.appendChild(link);
+        nameSpan.appendChild(document.createTextNode(' (' + wc + ')'));
+        // Remove the x button once done
+        const removeBtn = row.querySelector('.remove');
+        if (removeBtn) removeBtn.remove();
+      } else if (state === 'error') {
+        const errMsg = opts.errorMsg ? opts.errorMsg : 'failed';
+        nameSpan.textContent = '\u2717 ' + escapeHtml(filename) + ' \u2014 ' + escapeHtml(errMsg);
+        // Remove the x button on error
+        const removeBtn = row.querySelector('.remove');
+        if (removeBtn) removeBtn.remove();
+      }
+      // state === 'processing': CSS ::before handles the spinner, leave name as-is
+    }
+
+    function clearFileList() {
+      document.getElementById('file-list').innerHTML = '';
+    }
+
+    // ---------------------------------------------------------------------------
+    // Status line
+    // ---------------------------------------------------------------------------
+
+    function updateStatusLine() {
+      if (!runActive) {
+        statusLine.textContent = '';
+        return;
+      }
+      const elapsed = (Date.now() - runStartTime) / 1000;
+      const eta = doneCount > 0
+        ? Math.round(elapsed / doneCount * (totalInRun - doneCount))
+        : '?';
+      statusLine.textContent = doneCount + ' / ' + totalInRun + ' files done \u2014 ETA ' + eta + 's';
+    }
+
+    // ---------------------------------------------------------------------------
+    // OCR run
+    // ---------------------------------------------------------------------------
+
+    async function startRun() {
+      // Build FormData from stored File objects in the queue
+      const fd = new FormData();
+      for (const [filename, entry] of queue) {
+        if (entry.file) {
+          fd.append('files', entry.file, filename);
+        }
+      }
+
+      // POST /upload to stage files on server
+      let uploadResp;
+      try {
+        uploadResp = await fetch('/upload', { method: 'POST', body: fd });
+      } catch (err) {
+        statusLine.textContent = 'Upload failed \u2014 network error';
+        return;
+      }
+
+      if (!uploadResp.ok) {
+        statusLine.textContent = 'Upload failed \u2014 ' + uploadResp.status;
+        updateStartButton();
+        return;
+      }
+
+      // POST /run to kick off OCR
+      let runResp;
+      try {
+        runResp = await fetch('/run', { method: 'POST' });
+      } catch (err) {
+        statusLine.textContent = 'Run failed \u2014 network error';
+        return;
+      }
+
+      if (runResp.status === 409) {
+        statusLine.textContent = 'Already running \u2014 wait for current batch to finish';
+        return;
+      }
+      if (runResp.status === 400) {
+        statusLine.textContent = 'No pending files to process';
+        return;
+      }
+      if (!runResp.ok) {
+        statusLine.textContent = 'Run failed \u2014 ' + runResp.status;
+        return;
+      }
+
+      // Run accepted (202) — activate run state
+      runActive = true;
+      doneCount = 0;
+      totalInRun = queue.size;
+      runStartTime = Date.now();
+      updateStartButton();
+
+      // Mark all queued rows as processing and remove their x buttons
+      for (const [filename] of queue) {
+        const row = document.getElementById('row-' + CSS.escape(filename));
+        if (row) {
+          row.className = 'file-row state-processing';
+          const removeBtn = row.querySelector('.remove');
+          if (removeBtn) removeBtn.remove();
+        }
+      }
+
+      updateStatusLine();
+
+      // Open SSE stream to receive per-file progress
+      sse = new EventSource('/stream');
+
+      sse.addEventListener('file_done', (e) => {
+        const d = JSON.parse(e.data);
+
+        // Find the original filename in the queue by matching stems
+        let filename = null;
+        for (const f of queue.keys()) {
+          if (stem(f) === d.stem) {
+            filename = f;
+            break;
+          }
+        }
+        if (!filename) return;
+
+        doneCount++;
+        const entry = queue.get(filename);
+        if (entry) {
+          entry.state = d.state;
+          entry.wordCount = d.word_count;
+        }
+
+        // Treat 'skipped' as done with null word count display
+        const displayState = d.state === 'skipped' ? 'done' : d.state;
+        const wordCount = d.state === 'skipped' ? null : d.word_count;
+        updateRowState(filename, displayState, {
+          wordCount: wordCount,
+          errorMsg: d.error_msg,
+        });
+        updateStatusLine();
+      });
+
+      sse.addEventListener('run_complete', () => {
+        if (sse) {
+          sse.close();
+          sse = null;
+        }
+        runActive = false;
+        statusLine.textContent = '';
+        updateStartButton();
+      });
+
+      sse.addEventListener('error', () => {
+        statusLine.textContent = 'Connection lost \u2014 reload to retry';
+        if (sse) {
+          sse.close();
+          sse = null;
+        }
+        runActive = false;
+        updateStartButton();
+      });
+    }
+
+    // ---------------------------------------------------------------------------
+    // Init
+    // ---------------------------------------------------------------------------
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setupDropZone();
+      btnStart.addEventListener('click', startRun);
+      // Start button starts disabled (queue is empty)
+      updateStartButton();
+    });
+  </script>
+</body>
+</html>
