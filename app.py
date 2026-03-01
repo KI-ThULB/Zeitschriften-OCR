@@ -581,8 +581,16 @@ def list_files():
 
 
 @app.get('/')
-def viewer():
-    """Serve the side-by-side viewer page."""
+def index():
+    """Serve the upload and progress dashboard."""
+    return render_template('upload.html')
+
+
+@app.get('/viewer/<stem>')
+def viewer(stem):
+    """Serve the side-by-side viewer for a specific TIFF stem."""
+    if '/' in stem or '..' in stem:
+        return jsonify({'error': 'invalid stem'}), 400
     return render_template('viewer.html')
 
 
