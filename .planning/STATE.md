@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.5 Web Viewer Complete — Phase 15 (VLM Article Segmentation) planned
+**Current focus:** v1.5 Web Viewer Complete — Phase 15 (VLM Article Segmentation) complete
 
 ## Current Position
 
-Phase: 15 — VLM Article Segmentation (in progress)
-Plan: 15-01 complete — vlm.py, POST/GET /segment endpoints, CLI flags (TDD — 79 tests pass)
-Status: 15-01 complete — ready to execute 15-02 (region overlay UI)
-Last activity: 2026-03-01 — 15-01 executed (3 tasks, 3m 27s)
+Phase: 15 — VLM Article Segmentation (complete)
+Plan: 15-02 complete — Segment button, SVG region overlay, loadFile() integration (4 tasks, ~20 min)
+Status: Phase 15 fully complete (2/2 plans) — ready for Phase 16 (METS/MODS)
+Last activity: 2026-03-01 — 15-02 executed (4 tasks + human-verify, ~20 min)
 
-Progress: [███████░░░░░░░░░░] 14/17 phases complete (v1.4 done, Phases 12–14 done, Phase 15 in progress — 1/2 plans done)
+Progress: [████████░░░░░░░░░] 15/17 phases complete (v1.5 done, Phase 15 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
-- Average duration: 2.4 min
-- Total execution time: 31 min
+- Total plans completed: 14
+- Average duration: 3.6 min
+- Total execution time: 51 min
 
 **By Phase:**
 
@@ -41,7 +41,7 @@ Progress: [███████░░░░░░░░░░] 14/17 phases com
 | 12. Word Correction | 2/2 | ~7 min | ~3.5 min |
 | 13. Upload UI and Live Progress | 2/2 | ~10 min | ~5 min |
 | 14. Viewer Zoom and Pan | 1/1 | ~25 min | ~25 min |
-| 15. VLM Article Segmentation | 1/2 | ~3 min | ~3 min |
+| 15. VLM Article Segmentation | 2/2 | ~23 min | ~11.5 min |
 
 *Updated after each plan completion*
 
@@ -91,6 +91,10 @@ Recent decisions affecting current work:
 - [Phase 15-01]: Lazy SDK imports inside segment() methods — vlm.py loads without anthropic/openai installed; error surfaces only at call time if SDK absent
 - [Phase 15-01]: _parse_regions uses re.search(r'\{[\s\S]*\}') for JSON extraction — handles VLM preamble/postamble text without requiring clean output
 - [Phase 15-01]: Any Exception from provider.segment() returns 502 (not 500) — distinguishes upstream API errors from internal server errors
+- [Phase 15-02]: currentStem and jpeg_width/jpeg_height added as module-level JS vars — segment functions need them without threading through call chains
+- [Phase 15-02]: loadSegments() called after renderWords() inside ALTO success block — ensures jpeg_width/jpeg_height are set before showSegmentRegions() is called
+- [Phase 15-02]: segmentPage() re-enables button in finally block — prevents button getting permanently stuck disabled on network error
+- [Phase 15-02]: clearSegmentRegions() called at start of loadFile() — prevents stale regions from previous file persisting during fetch for new file
 
 ### Pending Todos
 
@@ -106,5 +110,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 15-01-PLAN.md — vlm.py, segment endpoints, CLI flags
-Resume at: Execute 15-02-PLAN.md (region overlay UI in viewer)
+Stopped at: Completed 15-02-PLAN.md — Segment button, SVG region overlay, loadFile() integration
+Resume at: Execute Phase 16 (METS/MODS) — source DFG Viewer newspaper profile XSD first
