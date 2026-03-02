@@ -359,9 +359,9 @@
         wordById = Object.fromEntries(data.words.map(w => [w.id, w]));
         displayWords = normalizeWords(data.words, data.blocks || [], data.page_width);
         currentBlocks = data.blocks || [];
-        // Phase 20 dry-run: build para blocks to verify no JS errors (result unused in Plan 01; Plan 02 calls renderBlocks)
         const paraBlocks = buildParaBlocks(currentBlocks, wordById, currentArticles, pageWidth, pageHeight);
-        renderWords(displayWords);
+        renderBlocks(paraBlocks);
+        updateStructSummary(paraBlocks);
         applyConfidenceStyling(wcThreshold);
         loadSegments(stem);
         loadArticles(stem);
@@ -1143,12 +1143,12 @@
         const data = await resp.json();
         currentArticles = data.regions || [];
         renderArticleList(currentArticles);
-        // Phase 20: re-run buildParaBlocks now that VLM data is loaded
+        // Re-render with VLM role assignment now that article data has resolved
         // Guard: only if ALTO blocks are present for this page
         if (currentBlocks && currentBlocks.length > 0) {
           const paraBlocks = buildParaBlocks(currentBlocks, wordById, currentArticles, pageWidth, pageHeight);
-          // Plan 02 will call renderBlocks(paraBlocks) and updateStructSummary(paraBlocks) here
-          // For now: just rebuild paraBlocks to verify no errors
+          renderBlocks(paraBlocks);
+          updateStructSummary(paraBlocks);
           applyConfidenceStyling(wcThreshold);
         }
       } catch (e) {
