@@ -99,7 +99,11 @@ See archive: `.planning/milestones/v1.5-ROADMAP.md`
   2. A word split across a line ending with a hyphen (e.g. "Ver-" + "bindung") appears as the rejoined form "Verbindung" in the text panel
   3. User can set a word-confidence threshold in the viewer; words below it appear visually distinct (faded or marked) so low-quality OCR regions are immediately obvious
   4. The original per-word ALTO XML is unchanged — normalization is display-only, not written back to XML
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 19-01-PLAN.md — Extend serve_alto() with blocks array and line_end flag; add TestAltoEndpoint tests
+- [ ] 19-02-PLAN.md — Client-side normalizeWords() pipeline, confidence slider, and WC badge in viewer.html
 
 ### Phase 20: Structure Detection and Viewer
 **Goal**: Users see text organized into labeled paragraphs and headings rather than a flat word list, with structural roles derived from VLM article data
@@ -145,6 +149,6 @@ See archive: `.planning/milestones/v1.5-ROADMAP.md`
 | 16. METS/MODS Output | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 17. VLM Settings UI | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 18. Article Browser and Full-Text Search | v1.5 | 2/2 | Complete | 2026-03-02 |
-| 19. Text Normalization | v1.6 | 0/TBD | Not started | - |
+| 19. Text Normalization | v1.6 | 0/2 | Not started | - |
 | 20. Structure Detection and Viewer | v1.6 | 0/TBD | Not started | - |
 | 21. TEI P5 Export | v1.6 | 0/TBD | Not started | - |
