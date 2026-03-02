@@ -139,6 +139,23 @@
       stroke-width: 2;
       stroke-dasharray: 6 3;
     }
+    .para-block {
+      margin-bottom: 0.75em;
+    }
+    .para-block[data-role="heading"] {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    .para-block[data-role="caption"] {
+      font-size: 0.9em;
+      font-style: italic;
+    }
+    .para-block[data-role="advertisement"] {
+      font-size: 0.9em;
+      font-style: italic;
+      border-left: 3px solid #ccc;
+      padding-left: 0.4em;
+    }
   </style>
 </head>
 <body>
@@ -171,6 +188,7 @@
           <span id="wc-threshold-label" style="font-size:0.78rem;color:#444;"></span>
         </label>
         <div id="wc-badge" style="font-size:0.78rem;color:#888;margin-top:2px;min-height:1em;"></div>
+        <div id="struct-summary" style="font-size:0.78rem;color:#888;margin-top:2px;min-height:1em;"></div>
       </div>
     </div>
   </div>
@@ -620,6 +638,20 @@
       }
     }
 
+    // Delegated click handler for #word-list — shared by renderWords() and renderBlocks()
+    function wordListClickHandler(e) {
+      // Ignore clicks that land inside an open input or error span
+      if (e.target.tagName === 'INPUT' || e.target.classList.contains('word-error')) return;
+      const span = e.target.closest('.word');
+      if (!span) return;
+      // Cancel any in-progress edit before opening a new one
+      if (editingSpan && editingSpan !== span) cancelEdit();
+      if (editingSpan === span) return; // already editing this word — ignore re-click
+      const word = wordById[span.dataset.id];
+      if (!word) return;
+      editWord(word, span);
+    }
+
     function renderWords(words) {
       const list = document.getElementById('word-list');
       if (words.length === 0) {
@@ -629,18 +661,57 @@
       list.innerHTML = words.map(w =>
         `<span class="word" data-id="${escapeHtml(w.id)}" data-wc="${w.confidence ?? ''}">${escapeHtml(w.content)}</span> `
       ).join('');
-      list.onclick = (e) => {
-        // Ignore clicks that land inside an open input or error span
-        if (e.target.tagName === 'INPUT' || e.target.classList.contains('word-error')) return;
-        const span = e.target.closest('.word');
-        if (!span) return;
-        // Cancel any in-progress edit before opening a new one
-        if (editingSpan && editingSpan !== span) cancelEdit();
-        if (editingSpan === span) return; // already editing this word — ignore re-click
-        const word = wordById[span.dataset.id];
-        if (!word) return;
-        editWord(word, span);
-      };
+      list.onclick = wordListClickHandler;
+    }
+
+    /**
+     * renderBlocks(paraBlocks)
+     * Renders structured paragraph blocks into #word-list, replacing the flat word stream.
+     * Each paraBlock becomes a .para-block div with data-role attribute.
+     * Word spans are identical to renderWords() output — applyConfidenceStyling() still works.
+     */
+    function renderBlocks(paraBlocks) {
+      const list = document.getElementById('word-list');
+      const hasWords = paraBlocks.some(pb => pb.words.length > 0);
+      if (paraBlocks.length === 0 || !hasWords) {
+        list.innerHTML = '<em>No words found in this file.</em>';
+        return;
+      }
+      const html = paraBlocks.map(pb =>
+        `<div class="para-block" data-role="${escapeHtml(pb.role)}">${
+          pb.words.map(w =>
+            `<span class="word" data-id="${escapeHtml(w.id)}" data-wc="${w.confidence ?? ''}">${escapeHtml(w.content)}</span> `
+          ).join('')
+        }</div>`
+      ).join('');
+      list.innerHTML = html;
+      list.onclick = wordListClickHandler;
+    }
+
+    /**
+     * updateStructSummary(paraBlocks)
+     * Counts non-empty blocks by role and displays a summary string below the confidence badge.
+     * Roles counted in order: heading, paragraph, caption, advertisement.
+     */
+    function updateStructSummary(paraBlocks) {
+      const el = document.getElementById('struct-summary');
+      if (!el) return;  // defensive guard
+      const counts = { heading: 0, paragraph: 0, caption: 0, advertisement: 0 };
+      for (const pb of paraBlocks) {
+        if (pb.words.length > 0 && pb.role in counts) {
+          counts[pb.role]++;
+        }
+      }
+      const parts = [];
+      if (counts.heading > 0)
+        parts.push(`${counts.heading} ${counts.heading === 1 ? 'heading' : 'headings'}`);
+      if (counts.paragraph > 0)
+        parts.push(`${counts.paragraph} ${counts.paragraph === 1 ? 'paragraph' : 'paragraphs'}`);
+      if (counts.caption > 0)
+        parts.push(`${counts.caption} ${counts.caption === 1 ? 'caption' : 'captions'}`);
+      if (counts.advertisement > 0)
+        parts.push(`${counts.advertisement} ${counts.advertisement === 1 ? 'ad' : 'ads'}`);
+      el.textContent = parts.join(', ');
     }
 
     function selectWord(word, span) {
