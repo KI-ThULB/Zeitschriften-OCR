@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Article Search — Zeitschriften-OCR</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; padding: 24px; background: #f9f9f9; color: #222; }
+    h1 { font-size: 1.2rem; margin-bottom: 20px; color: #333; }
+    #search-bar { display: flex; gap: 8px; margin-bottom: 24px; max-width: 520px; }
+    #search-bar input {
+      flex: 1; padding: 7px 12px; font-size: 0.95rem;
+      border: 1px solid #ccc; border-radius: 4px; outline: none;
+    }
+    #search-bar button {
+      padding: 7px 18px; background: #1a73e8; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer; font-size: 0.95rem;
+    }
+    #search-bar button:hover { background: #1558b0; }
+    #results-count { font-size: 0.85rem; color: #555; margin-bottom: 12px; }
+    .result-item {
+      background: #fff; border: 1px solid #ddd; border-radius: 6px;
+      padding: 10px 14px; margin-bottom: 8px; max-width: 640px;
+      text-decoration: none; display: block; color: inherit;
+    }
+    .result-item:hover { background: #eef3ff; border-color: #99b; }
+    .result-stem { font-size: 0.75rem; color: #888; margin-bottom: 3px; }
+    .result-type {
+      font-size: 0.72rem; text-transform: uppercase; color: #557;
+      font-weight: 600; margin-bottom: 4px;
+    }
+    .result-title { font-size: 0.92rem; font-weight: 500; }
+    #no-results { color: #888; font-size: 0.9rem; }
+    #back-link { font-size: 0.85rem; margin-bottom: 20px; display: block; color: #1a73e8; }
+  </style>
+</head>
+<body>
+  <a href="/" id="back-link">&#8592; Upload Dashboard</a>
+  <h1>Article Search</h1>
+  <div id="search-bar">
+    <input id="search-input" type="text" placeholder="Search articles…"
+           onkeydown="if(event.key==='Enter'){doSearch();}">
+    <button onclick="doSearch()">Search</button>
+  </div>
+  <div id="results-count"></div>
+  <div id="results-list"></div>
+
+  <script>
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function doSearch() {
+      const q = document.getElementById('search-input').value.trim();
+      if (!q) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set('q', q);
+      window.location.href = url.toString();
+    }
+
+    async function runSearch(q) {
+      const countEl = document.getElementById('results-count');
+      const listEl = document.getElementById('results-list');
+      countEl.textContent = 'Searching\u2026';
+      listEl.innerHTML = '';
+
+      try {
+        const resp = await fetch('/api/search?q=' + encodeURIComponent(q));
+        const data = await resp.json();
+        const results = data.results || [];
+
+        if (results.length === 0) {
+          countEl.textContent = '';
+          listEl.innerHTML = '<p id="no-results">No articles found for "' + escapeHtml(q) + '".</p>';
+          return;
+        }
+
+        countEl.textContent = results.length + ' result' + (results.length !== 1 ? 's' : '') + ' for "' + escapeHtml(q) + '"';
+
+        listEl.innerHTML = results.map(r => `
+          <a class="result-item" href="/viewer/${encodeURIComponent(r.stem)}#${encodeURIComponent(r.region_id)}">
+            <div class="result-stem">${escapeHtml(r.stem)}</div>
+            <div class="result-type">${escapeHtml(r.type)}</div>
+            <div class="result-title">${escapeHtml(r.title)}</div>
+          </a>
+        `).join('');
+      } catch (err) {
+        countEl.textContent = '';
+        listEl.innerHTML = '<p id="no-results">Search failed \u2014 ' + escapeHtml(String(err)) + '</p>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('q') || '';
+      document.getElementById('search-input').value = q;
+      if (q) runSearch(q);
+    });
+  </script>
+</body>
+</html>

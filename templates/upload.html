@@ -213,6 +213,16 @@
   </header>
 
   <main>
+    <div id="search-bar" style="display:flex;gap:8px;margin-bottom:16px;max-width:480px;">
+      <input id="search-input" type="text" placeholder="Search articles…"
+             style="flex:1;padding:6px 10px;font-size:0.9rem;border:1px solid #ccc;border-radius:4px;outline:none;"
+             onkeydown="if(event.key==='Enter'){doSearch();}">
+      <button onclick="doSearch()"
+              style="padding:6px 16px;background:#1a73e8;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.9rem;">
+        Search
+      </button>
+    </div>
+
     <section id="drop-zone" role="button" aria-label="Drop zone for TIFF files" tabindex="0">
       <p class="main-text">Drag TIFF files here or click to browse</p>
       <p class="sub-text">Accepted: .tif, .tiff</p>
@@ -822,6 +832,16 @@
         populateModelDropdown(allModels, savedModel || preset.models[0]);
 
       } catch (_) { /* silent — best-effort init */ }
+    }
+
+    // ---------------------------------------------------------------------------
+    // Search
+    // ---------------------------------------------------------------------------
+
+    function doSearch() {
+      const q = document.getElementById('search-input').value.trim();
+      if (!q) return;
+      window.location.href = '/search?q=' + encodeURIComponent(q);
     }
 
     // ---------------------------------------------------------------------------

@@ -751,9 +751,9 @@ def get_articles(stem):
     return jsonify({'stem': stem, 'regions': data.get('regions', [])})
 
 
-@app.get('/search')
+@app.get('/api/search')
 def search_articles():
-    """Full-text search across all indexed article titles.
+    """Full-text search across all indexed article titles (JSON API).
 
     Query param: q (search string)
     Returns {"results": [{stem, region_id, type, title}, ...]} ranked by relevance.
@@ -763,6 +763,12 @@ def search_articles():
     output_dir = Path(app.config['OUTPUT_DIR'])
     results = search.query(output_dir, q)
     return jsonify({'results': results})
+
+
+@app.get('/search')
+def search_page():
+    """Serve the article search results page."""
+    return render_template('search.html')
 
 
 @app.get('/mets')

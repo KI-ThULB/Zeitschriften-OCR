@@ -200,7 +200,7 @@ def test_search_endpoint_returns_matches(client, tmp_path, monkeypatch):
     search_mod.index_stem(tmp_path, 'scan_001', [
         {'id': 'r0', 'type': 'headline', 'title': 'Berliner Nachrichten'},
     ])
-    resp = client.get('/search?q=Berliner')
+    resp = client.get('/api/search?q=Berliner')
     assert resp.status_code == 200
     data = resp.get_json()
     assert 'results' in data
@@ -209,18 +209,18 @@ def test_search_endpoint_returns_matches(client, tmp_path, monkeypatch):
 
 
 def test_search_endpoint_empty_query(client, tmp_path, monkeypatch):
-    """GET /search with no q param or empty q returns 200 with empty results."""
+    """GET /api/search with no q param or empty q returns 200 with empty results."""
     monkeypatch.setitem(client.application.config, 'OUTPUT_DIR', str(tmp_path))
-    resp = client.get('/search?q=')
+    resp = client.get('/api/search?q=')
     assert resp.status_code == 200
     data = resp.get_json()
     assert data['results'] == []
 
 
 def test_search_endpoint_no_db(client, tmp_path, monkeypatch):
-    """GET /search returns 200 with empty results when search.db does not exist."""
+    """GET /api/search returns 200 with empty results when search.db does not exist."""
     monkeypatch.setitem(client.application.config, 'OUTPUT_DIR', str(tmp_path))
-    resp = client.get('/search?q=anything')
+    resp = client.get('/api/search?q=anything')
     assert resp.status_code == 200
     assert resp.get_json()['results'] == []
 
