@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.5 Web Viewer Complete — Phase 17 complete, Phase 18 (Article Browser and Full-Text Search) next
+**Current focus:** v1.5 Web Viewer Complete — Phase 18-02 complete (awaiting human-verify checkpoint approval)
 
 ## Current Position
 
 Phase: 18 — Article Browser and Full-Text Search (in progress)
-Plan: 18-02 next
-Status: 18-01 complete — FTS5 search backend, GET /articles/<stem>, GET /search?q=, auto-index hook, 133 tests green
-Last activity: 2026-03-02 — 18-01 executed (search.py FTS5 module, two new endpoints, TDD 3 tasks)
+Plan: 18-02 at human-verify checkpoint
+Status: 18-02 auto tasks done — article browser UI, search bar, search.html, /api/search route, 133 tests green
+Last activity: 2026-03-02 — 18-02 executed (viewer article panel, upload search bar, search.html, route rename)
 
 Progress: [█████████░░░░░░░░] 17/18 phases complete (Phase 18 next)
 
@@ -47,6 +47,7 @@ Progress: [█████████░░░░░░░░] 17/18 phases com
 
 *Updated after each plan completion*
 | Phase 18-article-browser-search P01 | 3min | 3 tasks | 3 files |
+| Phase 18-article-browser-search P02 | 4min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,9 @@ Recent decisions affecting current work:
 - [Phase 17-02]: initSettings() prepends saved model to preset list if not already included — handles custom/live models persisted from a prior loadModels() session
 - [Phase 17-02]: loadModels() always falls back to curated list on API error — panel stays usable when air-gapped or API key not yet entered
 - [Phase 18-article-browser-search]: DELETE+INSERT for FTS5 idempotency; stem UNINDEXED; /articles reads JSON directly; auto-index calls init_db before index_stem
+- [Phase 18-02]: Renamed GET /search JSON API to GET /api/search — cleanest route conflict resolution; no content negotiation complexity
+- [Phase 18-02]: Poll-based async coordination (50ms x 40) for hash deep-link — avoids Promise refactor of loadFile()/loadArticles()
+- [Phase 18-02]: Article highlight rect isolated from segment overlay — clearSegmentRegions() never touches #article-highlight-rect
 
 ### Pending Todos
 
@@ -123,5 +127,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 18-01-PLAN.md — FTS5 search backend, GET /articles/<stem>, GET /search?q=, 133 tests green
-Resume at: Plan 18-02 — Article Browser Frontend (viewer sidebar, search.html)
+Stopped at: 18-02 human-verify checkpoint — article browser and search UI built, awaiting human approval
+Resume at: After human approval, update requirements and create final docs commit

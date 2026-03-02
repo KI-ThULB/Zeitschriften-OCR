@@ -204,4 +204,4 @@ Plans:
 | 15. VLM Article Segmentation | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 16. METS/MODS Output | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 17. VLM Settings UI | v1.5 | 2/2 | Complete | 2026-03-02 |
-| 18. Article Browser and Full-Text Search | 1/2 | In Progress|  | - |
+| 18. Article Browser and Full-Text Search | 2/2 | Complete   | 2026-03-02 | - |
