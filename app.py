@@ -825,6 +825,13 @@ def index():
     return render_template('upload.html')
 
 
+@app.get('/viewer/')
+@app.get('/viewer')
+def viewer_index():
+    """Serve the viewer without a specific stem — JS auto-loads the first file."""
+    return render_template('viewer.html')
+
+
 @app.get('/viewer/<stem>')
 def viewer(stem):
     """Serve the side-by-side viewer for a specific TIFF stem."""

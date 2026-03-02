@@ -104,6 +104,7 @@
 </head>
 <body>
   <div id="nav-bar">
+    <a href="/" style="padding:4px 10px;font-size:0.85rem;color:#1a73e8;text-decoration:none;align-self:center;">&#8592; Upload</a>
     <button id="btn-prev" disabled>&#8592; Previous</button>
     <button id="btn-next" disabled>&#8594; Next</button>
     <button id="segment-btn" onclick="segmentPage()" disabled title="Detect article regions using the configured VLM provider">Segment</button>
@@ -465,12 +466,16 @@
     // ── Zoom / Pan Engine ──────────────────────────────────────────────────────
 
     function recomputeFitScale() {
-      if (pageWidth === 0) return;
+      if (!jpeg_width || !jpeg_height) return;
       const panel = document.getElementById('image-panel');
-      fitScale = panel.clientWidth / pageWidth;
+      // Fit the whole image into the panel (contain mode — show full page)
+      const scaleW = panel.clientWidth / jpeg_width;
+      const scaleH = panel.clientHeight / jpeg_height;
+      fitScale = Math.min(scaleW, scaleH);
       zoomLevel = 1.0;
-      panX = 0;
-      panY = 0;
+      // Center the image in the panel
+      panX = (panel.clientWidth  - jpeg_width  * fitScale) / 2;
+      panY = (panel.clientHeight - jpeg_height * fitScale) / 2;
       applyTransform();  // applyTransform calls updateResetButton()
     }
 
@@ -483,8 +488,8 @@
 
     function clampPan() {
       const scale = fitScale * zoomLevel;
-      const renderedW = pageWidth * scale;
-      const renderedH = pageHeight * scale;
+      const renderedW = jpeg_width  * scale;
+      const renderedH = jpeg_height * scale;
       const panel = document.getElementById('image-panel');
       const panelW = panel.clientWidth;
       const panelH = panel.clientHeight;
@@ -571,7 +576,7 @@
       const isDefault = (Math.abs(zoomLevel - 1.0) < 0.01);
       btn.style.display = isDefault ? 'none' : '';
       if (!isDefault) {
-        const pct = Math.round(fitScale * zoomLevel * 100);
+        const pct = Math.round(zoomLevel * 100);
         btn.textContent = `${pct}% \u22A1`;
       }
     }
