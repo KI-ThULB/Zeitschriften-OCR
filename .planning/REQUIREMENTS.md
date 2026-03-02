@@ -7,8 +7,8 @@
 
 ### Text Normalization
 
-- [ ] **TEXT-01**: User sees ALTO words delivered in correct multi-column reading order — left-to-right across columns (detected from TextBlock HPOS), then top-to-bottom within each column
-- [ ] **TEXT-02**: System detects and rejoins German end-of-line hyphenated words (e.g. "Ver-" + "bindung" → "Verbindung") for display in the text panel and TEI export, preserving the original split form in ALTO
+- [x] **TEXT-01**: User sees ALTO words delivered in correct multi-column reading order — left-to-right across columns (detected from TextBlock HPOS), then top-to-bottom within each column
+- [x] **TEXT-02**: System detects and rejoins German end-of-line hyphenated words (e.g. "Ver-" + "bindung" → "Verbindung") for display in the text panel and TEI export, preserving the original split form in ALTO
 - [ ] **TEXT-03**: User can configure a minimum word-confidence threshold; words below it are visually marked (e.g. faded) in the text panel so low-quality OCR regions are obvious at a glance
 
 ### Structure Detection
@@ -56,8 +56,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEXT-01 | Phase 19 | Pending |
-| TEXT-02 | Phase 19 | Pending |
+| TEXT-01 | Phase 19 | Complete |
+| TEXT-02 | Phase 19 | Complete |
 | TEXT-03 | Phase 19 | Pending |
 | STRUCT-07 | Phase 20 | Pending |
 | STRUCT-08 | Phase 20 | Pending |
