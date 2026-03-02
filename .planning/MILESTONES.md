@@ -89,3 +89,27 @@
 
 ---
 
+
+## v1.5 Web Viewer Complete (Shipped: 2026-03-02)
+
+**Phases completed:** 7 phases (12–18), 13 plans, 56 commits
+
+**Stats:**
+- Timeline: 2026-02-28 → 2026-03-02 (3 days)
+- Files: 40 changed, +9,726 lines
+- LOC: ~6,595 total (Python + HTML/JS)
+- Tests: 133 passing
+
+**Key accomplishments:**
+- Inline word correction with atomic ALTO XML write and XSD validation gate (Phase 12)
+- Drag-and-drop upload dashboard with SSE live progress bar (Phase 13)
+- Mouse-wheel zoom + drag-pan with shared container transform — no per-word coordinate recalculation (Phase 14)
+- VLM article segmentation (Claude / OpenAI / OpenAI-compatible) with bounding boxes stored per page (Phase 15)
+- METS/MODS output with logical article structure linked to ALTO word coordinates (Phase 16)
+- Web-based VLM provider settings (Open WebUI / OpenRouter) with live model list + persistent settings.json (Phase 17)
+- SQLite FTS5 full-text search + article browser with deep-link `/viewer/<stem>#<region_id>` (Phase 18)
+
+**Archive:** `.planning/milestones/v1.5-ROADMAP.md`, `.planning/milestones/v1.5-REQUIREMENTS.md`
+
+---
+

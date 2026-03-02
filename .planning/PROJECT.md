@@ -2,17 +2,17 @@
 
 ## What This Is
 
-A tool for digitizing archival journal and magazine scans. It takes large TIFF files (117–240 MB each), automatically deskews and crops each scan, runs Tesseract OCR in parallel, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems. A local Flask web application wraps the pipeline with a drag-and-drop interface and a side-by-side TIFF/text viewer with word-level post-correction.
+A tool for digitizing archival journal and magazine scans. It takes large TIFF files (117–240 MB each), automatically deskews and crops each scan, runs Tesseract OCR in parallel, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems. A local Flask web application wraps the pipeline with a drag-and-drop upload interface, live SSE progress, a side-by-side TIFF/text viewer with inline word correction, VLM-powered article segmentation, METS/MODS export, and full-text article search.
 
-## Current Milestone: v1.5 Web Viewer Complete
+## Current State: v1.5 Shipped
 
-**Goal:** Complete the full web operator workflow — inline word correction with atomic ALTO XML save, drag-and-drop TIFF upload, live SSE progress display, and end-to-end integration.
-
-**Target features:**
-- Click a word in the viewer to edit it inline; save correction back to ALTO XML (atomic write + XSD validation gate)
-- Drag-and-drop individual TIFFs onto upload zone to queue them for OCR processing
-- Start OCR from the UI; watch live progress (files done / total / percentage / ETA via SSE)
-- Completed files appear as links opening directly in the side-by-side viewer
+All 18 phases complete. The full operator workflow is live:
+- OCR pipeline (CLI) → ALTO 2.1 XML per TIFF
+- Web UI: drag-and-drop upload, live progress, side-by-side viewer, inline word correction
+- VLM article segmentation (Claude / OpenAI / OpenAI-compatible) with bounding boxes per page
+- METS/MODS logical structure export (DFG Viewer / Goobi-Kitodo profile)
+- Web-based VLM settings (Open WebUI / OpenRouter), persisted to settings.json
+- SQLite FTS5 full-text article search with deep-link viewer navigation
 
 ## Core Value
 
@@ -44,12 +44,19 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - ✓ Click a word in the text panel to highlight its bounding box on the TIFF image — v1.4
 - ✓ Bounding box overlay scales correctly on window resize (ResizeObserver) — v1.4
 - ✓ Prev/Next navigation with keyboard shortcuts — v1.4
+- ✓ Inline word correction with atomic ALTO XML write and XSD validation gate — v1.5 (Phase 12)
+- ✓ Drag-and-drop upload UI with file queue, Start button, live SSE progress bar, results links — v1.5 (Phase 13)
+- ✓ Mouse-wheel zoom + click-drag pan with aligned SVG word overlay — v1.5 (Phase 14)
+- ✓ VLM article segmentation via configurable provider (`--vlm-provider` / `--vlm-model` CLI flags or web settings UI) — v1.5 (Phase 15+17)
+- ✓ Article regions with bounding box, type, and title stored per page in segment JSON — v1.5 (Phase 15)
+- ✓ Article title and section type accessible as structured metadata via `/articles/<stem>` and FTS5 search — v1.5 (Phase 15+18)
+- ✓ METS/MODS logical structure document per DFG Viewer / Goobi-Kitodo profile — v1.5 (Phase 16)
+- ✓ Viewer article browser — article cards with type/title, click to highlight region on TIFF — v1.5 (Phase 18)
+- ✓ Full-text search across all articles from the web interface; deep-link to `/viewer/<stem>#<region_id>` — v1.5 (Phase 18)
 
 ### Active
 
-- [ ] Drag individual TIFF files onto the web app to queue them for OCR processing — v1.5
-- [ ] Start OCR processing from the UI; see live progress (files done / total / percentage / ETA) — v1.5
-- [ ] Edit a word in the text panel and save the correction back to the ALTO XML (word-level, overwrite in place) — v1.5
+(none — all v1.5 requirements complete)
 
 ### Out of Scope
 
@@ -58,6 +65,8 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - ALTO 3.x / 4.x output — target is ALTO 2.1 for Goobi/Kitodo compatibility
 - Languages other than German — pipeline optimized for modern German text
 - Direct Goobi/Kitodo plugin integration — standalone tool, ingest handled separately
+- Multi-user / authentication — local single-operator tool
+- ALTO structural editing (merge/split words) — different problem class; extreme complexity
 
 ## Context
 
@@ -66,7 +75,8 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - Scan border issue: scanner bed artifacts need algorithmic removal before OCR
 - Target system: DFG Viewer / Goobi / Kitodo — requires ALTO 2.1 XML with word-level coordinates
 - Platform: macOS development (must also run on Linux servers for batch production)
-- Current codebase: 1,146 lines Python (`pipeline.py`) + `schemas/alto-2-1.xsd`; 5 pinned dependencies (removed `tqdm`, replaced by `ProgressTracker`); 21 tests in `tests/`
+- Current codebase: ~6,600 lines total — `pipeline.py`, `app.py`, `search.py`, `vlm.py`, `mets.py`, `templates/`, `tests/`; 133 tests passing
+- Tech stack: Python, Flask 3.1, Tesseract, Pillow, OpenCV, lxml, SQLite FTS5, vanilla JS
 
 ## Constraints
 
@@ -80,46 +90,31 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Tesseract for OCR | Open source, standard in German digital library ecosystem, good `deu` model | ✓ Good — verified on real scan |
-| OpenCV for crop detection | Robust contour/edge detection for scanner border removal | ✓ Good — THRESH_BINARY + THRESH_OTSU works correctly for dark-bed scans |
-| THRESH_BINARY (not INV) | Archival scans have dark scanner bed, light page — THRESH_BINARY makes page content the largest white contour | ✓ Good — confirmed in 01-01 |
-| ALTO21_NS = `http://schema.ccs-gmbh.com/ALTO` | CCS-GmbH namespace required by Goobi/Kitodo (not Tesseract's ALTO 3.x default) | ✓ Good — namespace verified in output |
-| Crop offset BEFORE namespace rewrite | ALTO3_NS element lookup must precede string replace or tag names change | ✓ Good — critical ordering invariant in build_alto21() |
-| WIDTH/HEIGHT not offset | Only HPOS/VPOS receive crop offset; modifying dimensions would break ALTO layout model | ✓ Good — verified invariant |
-| opencv-python-headless | Server/batch use without display dependency | ✓ Good |
-| `process_tiff()` uses `raise` not `sys.exit` | `sys.exit` in ProcessPoolExecutor workers kills parent process pool on macOS/spawn | ✓ Good — critical fix in 02-01 |
-| `executor.submit()` + `as_completed()` | `executor.map()` aborts on first exception; submit/as_completed isolates per-file errors | ✓ Good — BATC-03 requirement |
-| XSD bundled at `schemas/alto-2-1.xsd` | No network dependency at runtime; namespace-adapted to CCS-GmbH namespace (LoC upstream ns would fail validation) | ✓ Good — XSD compiles correctly, live smoke test passed |
-| Validation as separate post-OCR pass | Clean separation from OCR parallelism; `--validate-only` re-validation possible without re-running OCR | ✓ Good — VALD-01/02/03 satisfied |
-| `deskew` library (Hough-line) over projection-profile | More robust on mixed-content archival pages with illustrations and column rules | ✓ Good — clean results, plausibility gate at 10° |
-| Deskew before crop (not after) | Page contour is axis-aligned when OpenCV `findContours` runs — prevents crop fallback on deskewed images | ✓ Good — critical ordering invariant |
-| `DESKEW_MAX_ANGLE = 10.0` named constant | Archival periodical skew is under 5°; 10° gate catches misdetections without being too aggressive | ✓ Good — tunable if corpus changes |
-| `--adaptive-threshold` opt-in (off by default) | Default pipeline behavior preserved; operator enables only for problematic scans | ✓ Good — PREP-05 requirement satisfied |
-| `ADAPTIVE_BLOCK_SIZE = 51`, `ADAPTIVE_C = 10` as named constants | Starting values for corpus tuning; named constants make them adjustable without code search | ○ Pending empirical tuning against real scans |
-| `ProgressTracker` class over `tqdm` | Native implementation; avoids external dependency and output corruption with `--verbose` multi-line blocks; `tqdm` removed from requirements | ✓ Good — rolling 10-file ETA, clean `\r` overwrite |
-| `show_progress` guard: `(not verbose) and sys.stderr.isatty() and len(to_process) > 0` | Prevents progress line in verbose mode, piped stderr, and empty batches (avoids ZeroDivisionError in `_render()`) | ✓ Good — all suppression cases handled correctly |
-| Two-pass argparse for `--config` | `parse_known_args()` extracts config path before main parser is built; `set_defaults()` injects values so CLI flags auto-override via argparse precedence | ✓ Good — zero custom merge logic needed |
-| Config key naming matches argparse `dest` names | No translation layer; operators use same names as CLI flag arguments (`lang`, `psm`, `dry_run`) | ✓ Good — minimal cognitive overhead |
-| `Error:` prefix (not `ERROR:`) for config errors | Locked in CONTEXT.md; consistent with operator-facing messages rather than internal debug style | ✓ Good — applied throughout load_config() |
-
-| Flask web app over desktop GUI | Browser as UI — no Electron/Qt dependency; same Python stack; works on macOS and Linux | ✓ Good — viewer ships in one HTML file, zero build step |
-| Web app is local-only | No authentication, no multi-user, no remote deployment | ✓ Good — matches target use case |
-| Vanilla JS, no bundler | Entire viewer in templates/viewer.html (~211 lines); no npm, no build step | ✓ Good — deployable with one Python command |
-| SVG overlay click-only | Single persistent `<rect>` in-place; 0–1 SVG elements regardless of word count | ✓ Good — no canvas fallback needed |
-| `--input` flag for serve_image() | Fallback scan for CLI-processed TIFFs not in uploads/ | ○ Workaround — Phase 13 upload UI will make all TIFFs accessible via uploads/ |
+| Tesseract for OCR | Open source, standard in German digital library ecosystem, good `deu` model | ✓ Good |
+| OpenCV THRESH_BINARY + THRESH_OTSU | Dark-bed scans: THRESH_BINARY makes page content largest white contour | ✓ Good |
+| ALTO21_NS = `http://schema.ccs-gmbh.com/ALTO` | CCS-GmbH namespace required by Goobi/Kitodo | ✓ Good |
+| Crop offset BEFORE namespace rewrite | ALTO3_NS element lookup must precede string replace | ✓ Good |
+| `process_tiff()` raises (not sys.exit) | sys.exit in ProcessPoolExecutor workers kills parent on macOS/spawn | ✓ Good |
+| `executor.submit()` + `as_completed()` | executor.map() aborts on first exception; submit/as_completed isolates errors | ✓ Good |
+| XSD bundled at `schemas/alto-2-1.xsd` | No network dependency; namespace-adapted to CCS-GmbH | ✓ Good |
+| Validation as separate post-OCR pass | Clean separation; `--validate-only` works without re-running OCR | ✓ Good |
+| Flask web app, local-only | Browser as UI; no Electron/Qt; no auth needed for single operator | ✓ Good |
+| Vanilla JS, no bundler | Entire viewer in templates/viewer.html; no npm, no build step | ✓ Good |
+| Shared container transform for zoom/pan | Single `#image-container` div wraps img + SVG — no per-word coordinate recalculation | ✓ Good |
+| Atomic write via tempfile.mkstemp + os.replace | No partial-write corruption on ALTO XML edits | ✓ Good |
+| threading.Thread (not ProcessPoolExecutor) for _ocr_worker | Enables per-file SSE streaming; avoids macOS spawn issues | ✓ Good |
+| OpenAICompatibleProvider with lazy openai import | Single class covers Open WebUI, OpenRouter, Ollama; no SDK required at import time | ✓ Good |
+| VLM settings.json in output_dir | Persists across server restarts; no separate config file needed | ✓ Good |
+| SQLite FTS5 DELETE+INSERT for idempotent upsert | FTS5 INSERT OR REPLACE semantics differ from regular tables | ✓ Good |
+| `stem UNINDEXED` in FTS5 schema | stem is a lookup key, not content to tokenize | ✓ Good |
+| GET /articles/<stem> reads segment JSON directly | Always consistent with authoritative JSON; no DB state dependency | ✓ Good |
+| `GET /search` serves HTML page; `GET /api/search` returns JSON | Avoids route conflict; clean content-type split | ✓ Good |
+| article-highlight-rect uses `style.display = 'block'` (not `''`) | CSS rule sets display:none; empty string removes inline override but CSS wins | ✓ Good |
 
 ## Known Technical Debt
 
 - `ADAPTIVE_BLOCK_SIZE = 51` and `ADAPTIVE_C = 10` are informed starting points; empirical tuning against the real Zeitschriften corpus is recommended before batch production with `--adaptive-threshold`.
-- `--input` flag is a workaround for CLI-processed TIFFs; superseded when Phase 13 upload UI ships.
-
-## Context
-
-- Input: several hundred TIFF files, 117–240 MB each (archival resolution, likely 400–600 DPI)
-- Content type: digitized German-language journals and magazines (modern typeface)
-- Current codebase: `pipeline.py` (1,146 lines) + `app.py` (527 lines) + `templates/viewer.html` (211 lines) + `tests/test_app.py` (584 lines); 47 tests passing
-- Tech stack: Python, Flask 3.1, Tesseract, Pillow, OpenCV, lxml, vanilla JS + ResizeObserver
-- Shipped through v1.4: single-file OCR pipeline → parallel batch → XSD validation → Flask web server → TIFF/ALTO endpoints → two-panel viewer
+- VLM reasoning models (e.g. Gemini 2.5 Pro) consume nearly all output tokens for internal reasoning, leaving insufficient tokens for JSON output — non-reasoning models (GPT-4o, Claude Sonnet) are required for structured region output.
 
 ---
-*Last updated: 2026-02-28 after v1.4 milestone completion*
+*Last updated: 2026-03-02 after v1.5 milestone completion*
