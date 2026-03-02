@@ -461,6 +461,128 @@
       return rejoinHyphens(ordered);
     }
 
+    // ── Paragraph Detection & Role Assignment (Phase 20) ─────────────────────
+
+    // VLM type → structural role mapping
+    const VLM_TYPE_TO_ROLE = {
+      headline:      'heading',
+      article:       'paragraph',
+      advertisement: 'advertisement',
+      illustration:  'paragraph',
+      caption:       'caption',
+    };
+
+    /**
+     * detectParagraphs(block, wordById)
+     * Splits a TextBlock into paragraph groups by detecting VPOS gaps > 1.5x the median inter-line gap.
+     * Returns [{block, words: [...]}] — one entry per detected paragraph within the block.
+     */
+    function detectParagraphs(block, wordById) {
+      const blockWords = (block.word_ids || [])
+        .map(id => wordById[id])
+        .filter(Boolean);
+      blockWords.sort((a, b) => a.vpos - b.vpos);
+
+      if (blockWords.length === 0) return [{ block, words: [] }];
+
+      const vposValues = [...new Set(blockWords.map(w => w.vpos))].sort((a, b) => a - b);
+      if (vposValues.length <= 1) return [{ block, words: blockWords }];
+
+      const gaps = [];
+      for (let i = 1; i < vposValues.length; i++) {
+        gaps.push(vposValues[i] - vposValues[i - 1]);
+      }
+      const sorted = [...gaps].sort((a, b) => a - b);
+      const median = sorted[Math.floor(sorted.length / 2)];
+      const threshold = median * 1.5;
+
+      const paragraphs = [];
+      let current = [];
+      for (const w of blockWords) {
+        if (current.length > 0) {
+          const lastVpos = current[current.length - 1].vpos;
+          if (w.vpos - lastVpos > threshold) {
+            paragraphs.push(current);
+            current = [];
+          }
+        }
+        current.push(w);
+      }
+      if (current.length > 0) paragraphs.push(current);
+
+      return paragraphs.map(words => ({ block, words }));
+    }
+
+    /**
+     * intersectionArea(ax1, ay1, ax2, ay2, bx1, by1, bx2, by2)
+     * Returns the area of the intersection of two axis-aligned rectangles, or 0 if they don't overlap.
+     */
+    function intersectionArea(ax1, ay1, ax2, ay2, bx1, by1, bx2, by2) {
+      const ix1 = Math.max(ax1, bx1);
+      const iy1 = Math.max(ay1, by1);
+      const ix2 = Math.min(ax2, bx2);
+      const iy2 = Math.min(ay2, by2);
+      if (ix2 <= ix1 || iy2 <= iy1) return 0;
+      return (ix2 - ix1) * (iy2 - iy1);
+    }
+
+    /**
+     * assignRoles(blocks, articles, pageWidth, pageHeight)
+     * For each block, finds the VLM region with the greatest bounding-box overlap and maps its type
+     * to a structural role via VLM_TYPE_TO_ROLE. Defaults to 'paragraph' when no overlap found.
+     * Returns Map<block.id, role>.
+     */
+    function assignRoles(blocks, articles, pageWidth, pageHeight) {
+      const roleMap = new Map();
+      for (const block of blocks) {
+        let bestRole = 'paragraph';
+        let bestArea = 0;
+        for (const region of articles) {
+          const bb = region.bounding_box;
+          const rx1 = bb.x * pageWidth;
+          const ry1 = bb.y * pageHeight;
+          const rx2 = rx1 + bb.width * pageWidth;
+          const ry2 = ry1 + bb.height * pageHeight;
+          const area = intersectionArea(
+            block.hpos, block.vpos,
+            block.hpos + block.width, block.vpos + block.height,
+            rx1, ry1, rx2, ry2
+          );
+          if (area > bestArea) {
+            bestArea = area;
+            bestRole = VLM_TYPE_TO_ROLE[region.type] || 'paragraph';
+          }
+        }
+        roleMap.set(block.id, bestRole);
+      }
+      return roleMap;
+    }
+
+    /**
+     * buildParaBlocks(blocks, wordById, articles, pageWidth, pageHeight)
+     * Top-level coordinator: assigns roles, detects paragraphs within each block,
+     * and appends orphan words (not referenced by any block) as a final paragraph fallback.
+     * Returns [{block, role, words: [...]}].
+     */
+    function buildParaBlocks(blocks, wordById, articles, pageWidth, pageHeight) {
+      const roleMap = assignRoles(blocks, articles, pageWidth, pageHeight);
+      const result = [];
+      for (const block of blocks) {
+        const role = roleMap.get(block.id) || 'paragraph';
+        const subParas = detectParagraphs(block, wordById);
+        for (const { words } of subParas) {
+          result.push({ block, role, words });
+        }
+      }
+      // Append words not referenced by any block (ALTO files without TextBlock structure)
+      const coveredIds = new Set(result.flatMap(pb => pb.words.map(w => w.id)));
+      const orphans = Object.values(wordById).filter(w => !coveredIds.has(w.id));
+      if (orphans.length > 0) {
+        result.push({ block: null, role: 'paragraph', words: orphans });
+      }
+      return result;
+    }
+
     // ── Confidence Threshold UI ────────────────────────────────────────────────
 
     /**
