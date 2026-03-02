@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-02)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.6 Structured Text & TEI Export — Phase 19 in progress (Plan 01 complete)
+**Current focus:** v1.6 Structured Text & TEI Export — Phase 19 in progress (Plan 02 complete)
 
 ## Current Position
 
 Phase: Phase 19 of 21 (Text Normalization)
-Plan: Plan 01 complete (19-01-PLAN.md executed)
-Status: In progress — Plan 01 done, Plan 02 next (column sort + hyphen rejoin)
-Last activity: 2026-03-02 — 19-01: Extended serve_alto() with blocks array and line_end flag; 136 tests green
+Plan: Plan 02 complete (19-02-PLAN.md executed)
+Status: In progress — Plan 02 done, Plan 03 next (if applicable)
+Last activity: 2026-03-02 — 19-02: normalizeWords pipeline (column sort + hyphen rejoin) and confidence threshold slider added to viewer.html; 136 tests green
 
 Progress: [·················] 0/3 phases complete
 
@@ -31,7 +31,7 @@ Progress: [·················] 0/3 phases complete
 | 16. METS/MODS Output | 2/2 | 27 min | 13.5 min |
 | 17. VLM Settings UI | 2/2 | ~46 min | ~23 min |
 | 18. Article Browser and Full-Text Search | 2/2 | ~7 min | ~3.5 min |
-| 19. Text Normalization | 1/3 | ~3 min | ~3 min |
+| 19. Text Normalization | 2/3 | ~6 min | ~3 min |
 
 *Updated after each plan completion*
 
@@ -48,6 +48,8 @@ Recent decisions affecting current work:
 - [Phase 16]: mets.py ALTO21_NS matches pipeline.py — CCS-GmbH namespace for all project ALTO files
 - [Phase 19-01]: lxml proxy recycling fix — materialise root.iter() into all_strings list once; use (CONTENT,HPOS,VPOS) tuple for block-membership lookup
 - [Phase 19-01]: serve_alto() blocks array and line_end flag are additive (no existing keys removed)
+- [Phase 19-02]: #word-list inner container isolates word span injection from #wc-settings slider — prevents renderWords() innerHTML from destroying persistent UI elements
+- [Phase 19-02]: wordById maps original data.words (not displayWords) — edit/save operates on ALTO-original content; rejoinHyphens() joined word inherits first fragment ID
 
 ### Pending Todos
 
@@ -62,5 +64,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 19-01-PLAN.md — serve_alto() blocks array and line_end flag
-Resume at: /gsd:execute-phase 19-text-normalization (Plan 02 next)
+Stopped at: Completed 19-02-PLAN.md — normalizeWords pipeline, confidence slider in viewer.html
+Resume at: /gsd:execute-phase 19-text-normalization (Plan 03 next, if applicable)

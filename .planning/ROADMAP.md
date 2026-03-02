@@ -84,7 +84,7 @@ See archive: `.planning/milestones/v1.5-ROADMAP.md`
 
 **Milestone Goal:** Transform raw OCR word streams into structured, readable text and export full scholarly TEI P5 XML with facsimile links.
 
-- [ ] **Phase 19: Text Normalization** — Column reading order, hyphenation rejoining, confidence marking
+- [x] **Phase 19: Text Normalization** — Column reading order, hyphenation rejoining, confidence marking (completed 2026-03-02)
 - [ ] **Phase 20: Structure Detection and Viewer** — Paragraph detection, role annotation, structured viewer display
 - [ ] **Phase 21: TEI P5 Export** — TEI document generation with article divs, line/page elements, facsimile section
 
@@ -99,7 +99,7 @@ See archive: `.planning/milestones/v1.5-ROADMAP.md`
   2. A word split across a line ending with a hyphen (e.g. "Ver-" + "bindung") appears as the rejoined form "Verbindung" in the text panel
   3. User can set a word-confidence threshold in the viewer; words below it appear visually distinct (faded or marked) so low-quality OCR regions are immediately obvious
   4. The original per-word ALTO XML is unchanged — normalization is display-only, not written back to XML
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 19-01-PLAN.md — Extend serve_alto() with blocks array and line_end flag; add TestAltoEndpoint tests
@@ -149,6 +149,6 @@ Plans:
 | 16. METS/MODS Output | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 17. VLM Settings UI | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 18. Article Browser and Full-Text Search | v1.5 | 2/2 | Complete | 2026-03-02 |
-| 19. Text Normalization | 1/2 | In Progress|  | - |
+| 19. Text Normalization | 2/2 | Complete   | 2026-03-02 | - |
 | 20. Structure Detection and Viewer | v1.6 | 0/TBD | Not started | - |
 | 21. TEI P5 Export | v1.6 | 0/TBD | Not started | - |
