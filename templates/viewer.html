@@ -340,6 +340,9 @@
         // wordById uses original data.words (not normalized) — edit/save operates on ALTO-original content
         wordById = Object.fromEntries(data.words.map(w => [w.id, w]));
         displayWords = normalizeWords(data.words, data.blocks || [], data.page_width);
+        currentBlocks = data.blocks || [];
+        // Phase 20 dry-run: build para blocks to verify no JS errors (result unused in Plan 01; Plan 02 calls renderBlocks)
+        const paraBlocks = buildParaBlocks(currentBlocks, wordById, currentArticles, pageWidth, pageHeight);
         renderWords(displayWords);
         applyConfidenceStyling(wcThreshold);
         loadSegments(stem);
@@ -1055,6 +1058,7 @@
 
     // ── Article Browser ────────────────────────────────────────────────────────
 
+    let currentBlocks = [];     // TextBlocks array for current stem (populated in loadFile())
     let currentArticles = [];   // regions array for current stem
     let activeArticleId = null; // region_id of highlighted article card
 
@@ -1068,6 +1072,14 @@
         const data = await resp.json();
         currentArticles = data.regions || [];
         renderArticleList(currentArticles);
+        // Phase 20: re-run buildParaBlocks now that VLM data is loaded
+        // Guard: only if ALTO blocks are present for this page
+        if (currentBlocks && currentBlocks.length > 0) {
+          const paraBlocks = buildParaBlocks(currentBlocks, wordById, currentArticles, pageWidth, pageHeight);
+          // Plan 02 will call renderBlocks(paraBlocks) and updateStructSummary(paraBlocks) here
+          // For now: just rebuild paraBlocks to verify no errors
+          applyConfidenceStyling(wcThreshold);
+        }
       } catch (e) {
         // Network error — silently skip (article list is optional)
       }
