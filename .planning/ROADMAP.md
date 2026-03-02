@@ -114,7 +114,7 @@ Plans:
   2. User can see each text block labelled with its structural role (heading, paragraph, caption, or advertisement) derived from the VLM article segmentation regions stored per page
   3. Headings render with prominent styling (bold, larger size) in the text panel so article structure is readable at a glance without needing to consult the TIFF image
   4. Structural role labels and paragraph grouping persist correctly when the user navigates to a different file via the sidebar
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 20-01-PLAN.md — detectParagraphs(), assignRoles(), buildParaBlocks() algorithms and currentBlocks state
@@ -154,5 +154,5 @@ Plans:
 | 17. VLM Settings UI | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 18. Article Browser and Full-Text Search | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 19. Text Normalization | v1.6 | 2/2 | Complete | 2026-03-02 |
-| 20. Structure Detection and Viewer | v1.6 | 0/2 | Not started | - |
+| 20. Structure Detection and Viewer | 1/2 | In Progress|  | - |
 | 21. TEI P5 Export | v1.6 | 0/TBD | Not started | - |

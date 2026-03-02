@@ -13,8 +13,8 @@
 
 ### Structure Detection
 
-- [ ] **STRUCT-07**: System groups ALTO words into paragraphs by detecting line-spacing gaps larger than the median line height, producing paragraph-separated text instead of a flat word stream
-- [ ] **STRUCT-08**: System annotates detected text blocks with a structural role (heading / paragraph / caption / advertisement) derived from existing VLM article segmentation regions, stored per page
+- [x] **STRUCT-07**: System groups ALTO words into paragraphs by detecting line-spacing gaps larger than the median line height, producing paragraph-separated text instead of a flat word stream
+- [x] **STRUCT-08**: System annotates detected text blocks with a structural role (heading / paragraph / caption / advertisement) derived from existing VLM article segmentation regions, stored per page
 
 ### Viewer
 
@@ -59,8 +59,8 @@
 | TEXT-01 | Phase 19 | Complete |
 | TEXT-02 | Phase 19 | Complete |
 | TEXT-03 | Phase 19 | Complete |
-| STRUCT-07 | Phase 20 | Pending |
-| STRUCT-08 | Phase 20 | Pending |
+| STRUCT-07 | Phase 20 | Complete |
+| STRUCT-08 | Phase 20 | Complete |
 | VIEW-07 | Phase 20 | Pending |
 | TEI-01 | Phase 21 | Pending |
 | TEI-02 | Phase 21 | Pending |
