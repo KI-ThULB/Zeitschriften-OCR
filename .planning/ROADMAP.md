@@ -177,7 +177,11 @@ Plans:
   3. Typing a query into the search field returns a ranked list of matching articles with the file stem and article title visible in each result
   4. Clicking a search result opens the correct file in the viewer with the matched article's region highlighted
   5. The search index updates automatically when new segmentation results are saved so new articles appear in subsequent queries without a manual rebuild step
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 18-01-PLAN.md — search.py (SQLite FTS5: init_db, index_stem, query) + GET /articles/<stem> + GET /api/search?q= + auto-index hook in segment_page() (TDD)
+- [ ] 18-02-PLAN.md — Article list panel in viewer right panel + highlightRegion() + search bar on upload dashboard + search.html results page + human verification
 
 ## Progress
 
@@ -200,4 +204,4 @@ Plans:
 | 15. VLM Article Segmentation | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 16. METS/MODS Output | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 17. VLM Settings UI | v1.5 | 2/2 | Complete | 2026-03-02 |
-| 18. Article Browser and Full-Text Search | v1.5 | 0/TBD | Not started | - |
+| 18. Article Browser and Full-Text Search | v1.5 | 0/2 | Not started | - |
