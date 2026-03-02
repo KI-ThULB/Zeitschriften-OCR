@@ -100,6 +100,45 @@
       stroke-width: 3;
       fill: #111;
     }
+    /* Article list panel — sits below OCR words in #text-panel */
+    #article-section {
+      margin-top: 16px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+    #article-section h3 {
+      font-size: 0.80rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .article-card {
+      padding: 6px 8px;
+      margin-bottom: 4px;
+      border: 1px solid #dde;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      background: #f4f6ff;
+      user-select: none;
+    }
+    .article-card:hover { background: #dce4ff; border-color: #99b; }
+    .article-card.active { background: #c2d7ff; border-color: #668; font-weight: 600; }
+    .article-card .article-type {
+      font-size: 0.70rem;
+      text-transform: uppercase;
+      color: #557;
+      margin-bottom: 2px;
+    }
+    /* Distinct highlight rect for article region — not cleared by segment operations */
+    #article-highlight-rect {
+      display: none;
+      fill: rgba(80, 180, 80, 0.25);
+      stroke: #2a8c2a;
+      stroke-width: 2;
+      stroke-dasharray: 6 3;
+    }
   </style>
 </head>
 <body>
@@ -117,6 +156,7 @@
         <img id="tiff-img" src="" alt="">
         <svg id="overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">
           <rect id="highlight-rect" style="display:none;" fill="rgba(255,220,0,0.35)" stroke="orange" stroke-width="2"/>
+          <rect id="article-highlight-rect"/>
         </svg>
       </div>
     </div>
@@ -185,6 +225,21 @@
       stems = data.stems;
       renderSidebar(stems);
       if (stems.length > 0) loadFile(0);
+
+      // Deep-link: if URL has a #region_id hash, highlight that region after load
+      if (location.hash) {
+        // Wait for loadFile() + loadArticles() to complete (they are async)
+        // Use a short poll — 50ms intervals, up to 2s total
+        const targetId = location.hash.slice(1);
+        let attempts = 0;
+        const poll = setInterval(() => {
+          attempts++;
+          if (currentArticles.length > 0 || attempts > 40) {
+            clearInterval(poll);
+            highlightRegionById(targetId);
+          }
+        }, 50);
+      }
     });
 
     function renderSidebar(stems) {
@@ -209,6 +264,8 @@
 
       // Clear stale segment overlay and status at start of each file load
       clearSegmentRegions();
+      clearArticleHighlight();
+      activeArticleId = null;
       const segStatus = document.getElementById('segment-status');
       if (segStatus) { segStatus.classList.remove('visible'); segStatus.textContent = ''; }
 
@@ -242,6 +299,7 @@
         wordById = Object.fromEntries(data.words.map(w => [w.id, w]));
         renderWords(data.words);
         loadSegments(stem);
+        loadArticles(stem);
       } catch (err) {
         if (gen !== loadGen) return;
         document.getElementById('text-panel').innerHTML = `<em>Error loading ALTO: ${escapeHtml(String(err))}</em>`;
@@ -682,6 +740,107 @@
       } catch (e) {
         // Network error — silently ignored (segmentation is optional)
       }
+    }
+
+    // ── Article Browser ────────────────────────────────────────────────────────
+
+    let currentArticles = [];   // regions array for current stem
+    let activeArticleId = null; // region_id of highlighted article card
+
+    async function loadArticles(stem) {
+      currentArticles = [];
+      activeArticleId = null;
+      renderArticleList([]);  // clear previous
+      try {
+        const resp = await fetch(`/articles/${encodeURIComponent(stem)}`);
+        if (!resp.ok) return;  // 404 = not yet segmented — silently skip
+        const data = await resp.json();
+        currentArticles = data.regions || [];
+        renderArticleList(currentArticles);
+      } catch (e) {
+        // Network error — silently skip (article list is optional)
+      }
+    }
+
+    function renderArticleList(regions) {
+      const panel = document.getElementById('text-panel');
+      // Remove previous article section if present
+      const existing = document.getElementById('article-section');
+      if (existing) existing.remove();
+      if (!regions || regions.length === 0) return;
+
+      const section = document.createElement('div');
+      section.id = 'article-section';
+
+      const heading = document.createElement('h3');
+      heading.textContent = `Articles (${regions.length})`;
+      section.appendChild(heading);
+
+      regions.forEach(region => {
+        const card = document.createElement('div');
+        card.className = 'article-card';
+        card.dataset.regionId = region.id;
+
+        const typeEl = document.createElement('div');
+        typeEl.className = 'article-type';
+        typeEl.textContent = region.type || 'unknown';
+
+        const titleEl = document.createElement('div');
+        titleEl.textContent = region.title || '(no title)';
+
+        card.appendChild(typeEl);
+        card.appendChild(titleEl);
+        card.addEventListener('click', () => selectArticle(region, card));
+        section.appendChild(card);
+      });
+
+      panel.appendChild(section);
+    }
+
+    function selectArticle(region, cardEl) {
+      // Deactivate previously active card
+      document.querySelectorAll('.article-card.active').forEach(c => c.classList.remove('active'));
+      if (activeArticleId === region.id) {
+        // Second click on same card — deselect
+        activeArticleId = null;
+        clearArticleHighlight();
+        return;
+      }
+      activeArticleId = region.id;
+      cardEl.classList.add('active');
+      highlightRegion(region);
+    }
+
+    function highlightRegion(region) {
+      if (!region || !region.bounding_box) return;
+      const W = jpeg_width;
+      const H = jpeg_height;
+      if (!W || !H) return;
+
+      const bb = region.bounding_box;
+      const x = bb.x * W;
+      const y = bb.y * H;
+      const w = bb.width * W;
+      const h = bb.height * H;
+
+      const rect = document.getElementById('article-highlight-rect');
+      rect.setAttribute('x', x);
+      rect.setAttribute('y', y);
+      rect.setAttribute('width', w);
+      rect.setAttribute('height', h);
+      rect.style.display = '';
+    }
+
+    function clearArticleHighlight() {
+      document.getElementById('article-highlight-rect').style.display = 'none';
+    }
+
+    function highlightRegionById(regionId) {
+      if (!regionId) return;
+      const region = currentArticles.find(r => r.id === regionId);
+      if (!region) return;
+      const card = document.querySelector(`.article-card[data-region-id="${CSS.escape(regionId)}"]`);
+      selectArticle(region, card || document.createElement('div'));
     }
   </script>
 </body>
