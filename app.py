@@ -22,6 +22,7 @@ from werkzeug.utils import secure_filename
 
 import mets
 import pipeline
+import search
 import vlm
 
 # ---------------------------------------------------------------------------
@@ -700,6 +701,10 @@ def segment_page(stem):
     seg_path = seg_dir / (stem + '.json')
     seg_path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
 
+    # Auto-index into FTS5 search DB
+    search.init_db(output_dir)
+    search.index_stem(output_dir, stem, regions)
+
     return jsonify(result), 200
 
 
@@ -721,6 +726,43 @@ def get_segment(stem):
         return jsonify(json.loads(seg_path.read_text()))
     except Exception as exc:
         return jsonify({'error': 'parse failed', 'detail': str(exc)}), 500
+
+
+@app.get('/articles/<stem>')
+def get_articles(stem):
+    """Return article region list for the given stem from segment JSON.
+
+    Reads output/segments/<stem>.json directly — no DB lookup required.
+    Returns 400 for path traversal, 404 if not yet segmented.
+    """
+    if '/' in stem or '..' in stem:
+        return jsonify({'error': 'invalid stem'}), 400
+
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    seg_path = output_dir / 'segments' / (stem + '.json')
+    if not seg_path.exists():
+        return jsonify({'error': 'not segmented', 'stem': stem}), 404
+
+    try:
+        data = json.loads(seg_path.read_text())
+    except Exception as exc:
+        return jsonify({'error': 'parse failed', 'detail': str(exc)}), 500
+
+    return jsonify({'stem': stem, 'regions': data.get('regions', [])})
+
+
+@app.get('/search')
+def search_articles():
+    """Full-text search across all indexed article titles.
+
+    Query param: q (search string)
+    Returns {"results": [{stem, region_id, type, title}, ...]} ranked by relevance.
+    Returns empty results list for empty q or missing search DB.
+    """
+    q = request.args.get('q', '').strip()
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    results = search.query(output_dir, q)
+    return jsonify({'results': results})
 
 
 @app.get('/mets')
