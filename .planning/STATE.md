@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 18 — Article Browser and Full-Text Search (not started)
-Plan: 18-01 next — planning required
-Status: 17-02 complete — VLM Settings panel in upload.html, all 8 browser checks passed, 116 tests green
-Last activity: 2026-03-02 — 17-02 executed (settings frontend panel, human verification approved)
+Phase: 18 — Article Browser and Full-Text Search (in progress)
+Plan: 18-02 next
+Status: 18-01 complete — FTS5 search backend, GET /articles/<stem>, GET /search?q=, auto-index hook, 133 tests green
+Last activity: 2026-03-02 — 18-01 executed (search.py FTS5 module, two new endpoints, TDD 3 tasks)
 
 Progress: [█████████░░░░░░░░] 17/18 phases complete (Phase 18 next)
 
@@ -46,6 +46,7 @@ Progress: [█████████░░░░░░░░] 17/18 phases com
 | 17. VLM Settings UI | 2/2 | ~46 min | ~23 min |
 
 *Updated after each plan completion*
+| Phase 18-article-browser-search P01 | 3min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,7 @@ Recent decisions affecting current work:
 - [Phase 17-02]: BACKEND_PRESETS object keyed by radio value — onBackendChange() reads preset directly; adding a third backend requires only a new key
 - [Phase 17-02]: initSettings() prepends saved model to preset list if not already included — handles custom/live models persisted from a prior loadModels() session
 - [Phase 17-02]: loadModels() always falls back to curated list on API error — panel stays usable when air-gapped or API key not yet entered
+- [Phase 18-article-browser-search]: DELETE+INSERT for FTS5 idempotency; stem UNINDEXED; /articles reads JSON directly; auto-index calls init_db before index_stem
 
 ### Pending Todos
 
@@ -121,5 +123,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 17-02-PLAN.md — VLM Settings panel, human verification approved, Phase 17 complete
-Resume at: Plan Phase 18 — Article Browser and Full-Text Search
+Stopped at: Completed 18-01-PLAN.md — FTS5 search backend, GET /articles/<stem>, GET /search?q=, 133 tests green
+Resume at: Plan 18-02 — Article Browser Frontend (viewer sidebar, search.html)
