@@ -507,6 +507,13 @@ def serve_alto(stem):
         else:
             jpeg_width, jpeg_height = 0, 0
 
+    # Pre-compute set of last String element ids in each TextLine (for line_end flag)
+    last_in_line = set()
+    for tl in root.findall(f'.//{{{ns}}}TextLine'):
+        tl_strings = list(tl.iter(f'{{{ns}}}String'))
+        if tl_strings:
+            last_in_line.add(id(tl_strings[-1]))
+
     # Flat word array — all String elements in document order
     words = []
     for i, elem in enumerate(root.iter(f'{{{ns}}}String')):
@@ -519,6 +526,29 @@ def serve_alto(stem):
             'width': int(elem.get('WIDTH', 0)),
             'height': int(elem.get('HEIGHT', 0)),
             'confidence': float(wc_raw) if wc_raw is not None else None,
+            'line_end': id(elem) in last_in_line,
+        })
+
+    # Second pass: build elem_to_idx map for blocks word_ids
+    elem_to_idx = {}
+    for i, elem in enumerate(root.iter(f'{{{ns}}}String')):
+        elem_to_idx[id(elem)] = i
+
+    # Build blocks_out array from TextBlock elements
+    blocks_out = []
+    for block_elem in root.findall(f'.//{{{ns}}}TextBlock'):
+        word_ids = [
+            f'w{elem_to_idx[id(s)]}'
+            for s in block_elem.iter(f'{{{ns}}}String')
+            if id(s) in elem_to_idx
+        ]
+        blocks_out.append({
+            'id': block_elem.get('ID', ''),
+            'hpos': int(block_elem.get('HPOS', 0)),
+            'vpos': int(block_elem.get('VPOS', 0)),
+            'width': int(block_elem.get('WIDTH', 0)),
+            'height': int(block_elem.get('HEIGHT', 0)),
+            'word_ids': word_ids,
         })
 
     return jsonify({
@@ -527,6 +557,7 @@ def serve_alto(stem):
         'jpeg_width': jpeg_width,
         'jpeg_height': jpeg_height,
         'words': words,
+        'blocks': blocks_out,
     })
 
 
