@@ -4,6 +4,17 @@
 
 A tool for digitizing archival journal and magazine scans. It takes large TIFF files (117–240 MB each), automatically deskews and crops each scan, runs Tesseract OCR in parallel, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems. A local Flask web application wraps the pipeline with a drag-and-drop upload interface, live SSE progress, a side-by-side TIFF/text viewer with inline word correction, VLM-powered article segmentation, METS/MODS export, and full-text article search.
 
+## Current Milestone: v1.6 Structured Text & TEI Export
+
+**Goal:** Transform raw OCR word streams into structured, readable text and export full scholarly TEI P5 XML with facsimile links.
+
+**Target features:**
+- Multi-column reading order correction (HPOS-based column detection)
+- German end-of-line hyphenation rejoining for clean text display
+- Paragraph and heading detection from ALTO line-spacing + VLM article roles
+- Structured text viewer (headings styled, paragraphs separated)
+- TEI P5 XML export per issue with article `<div>`, `<lb/>`, `<pb facs/>`, and facsimile section
+
 ## Current State: v1.5 Shipped
 
 All 18 phases complete. The full operator workflow is live:
@@ -54,9 +65,15 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - ✓ Viewer article browser — article cards with type/title, click to highlight region on TIFF — v1.5 (Phase 18)
 - ✓ Full-text search across all articles from the web interface; deep-link to `/viewer/<stem>#<region_id>` — v1.5 (Phase 18)
 
-### Active
+### Active (v1.6)
 
-(none — all v1.5 requirements complete)
+- Column reading order correction for multi-column ALTO pages
+- German end-of-line hyphenation rejoining (display + TEI export)
+- Noise/low-confidence word visual marking (configurable WC threshold)
+- Paragraph detection from ALTO line-spacing gaps
+- TextBlock structural role annotation (heading/paragraph/caption/advertisement)
+- Structured viewer text display (headings + paragraph separation)
+- TEI P5 XML export per issue (article `<div>`, `<lb/>`, `<pb facs/>`, `<facsimile>` section)
 
 ### Out of Scope
 
@@ -117,4 +134,4 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - VLM reasoning models (e.g. Gemini 2.5 Pro) consume nearly all output tokens for internal reasoning, leaving insufficient tokens for JSON output — non-reasoning models (GPT-4o, Claude Sonnet) are required for structured region output.
 
 ---
-*Last updated: 2026-03-02 after v1.5 milestone completion*
+*Last updated: 2026-03-02 — v1.6 milestone started*

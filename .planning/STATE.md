@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-28)
+See: .planning/PROJECT.md (updated 2026-03-02)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.5 Web Viewer Complete — Phase 18 complete ✅
+**Current focus:** v1.6 Structured Text & TEI Export — Phase 19 not started
 
 ## Current Position
 
-Phase: 18 — Article Browser and Full-Text Search ✅ COMPLETE
-Plan: all plans done (18-01, 18-02)
-Status: All 18 phases complete — 133 tests green
-Last activity: 2026-03-02 — 18-02 human-verified (article browser, search UI, deep-link highlight)
+Phase: Not started (roadmap created, ready for Phase 19)
+Plan: —
+Status: Defining roadmap — 133 tests green from v1.5
+Last activity: 2026-03-02 — Milestone v1.6 started (requirements + roadmap defined)
 
-Progress: [█████████████████] 18/18 phases complete
+Progress: [·················] 0/3 phases complete
 
 ## Performance Metrics
 
