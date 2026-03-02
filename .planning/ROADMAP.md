@@ -149,6 +149,6 @@ Plans:
 | 16. METS/MODS Output | v1.5 | 2/2 | Complete | 2026-03-01 |
 | 17. VLM Settings UI | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 18. Article Browser and Full-Text Search | v1.5 | 2/2 | Complete | 2026-03-02 |
-| 19. Text Normalization | 2/2 | Complete   | 2026-03-02 | - |
+| 19. Text Normalization | 2/2 | Complete    | 2026-03-02 | - |
 | 20. Structure Detection and Viewer | v1.6 | 0/TBD | Not started | - |
 | 21. TEI P5 Export | v1.6 | 0/TBD | Not started | - |
