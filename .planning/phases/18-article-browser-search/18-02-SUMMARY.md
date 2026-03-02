@@ -38,7 +38,9 @@ key-decisions:
   - "Renamed GET /search JSON route to GET /api/search to avoid conflict with new HTML search page at GET /search — cleanest approach, avoids content negotiation complexity"
   - "Article highlight rect (#article-highlight-rect) is a sibling to #highlight-rect in the SVG overlay and styled via CSS (not inline style) for easy override"
   - "loadArticles() called after loadSegments() in loadFile() try block — both are fire-and-forget async; 404 is silently ignored (unsegmented files show no article section)"
-  - "Hash deep-link polling: 50ms interval up to 2s (40 attempts) — avoids race between async loadArticles() completion and highlightRegionById() needing currentArticles"
+  - "Hash deep-link polling: 50ms interval up to 5s (100 attempts) — avoids race between async loadArticles() completion and highlightRegionById() needing currentArticles"
+  - "article-highlight-rect display fix: CSS rule sets display:none; rect.style.display='' removes inline override but CSS wins; must use rect.style.display='block' to show"
+  - "initial_stem passed explicitly as None from viewer_index() — avoids Jinja2 is-defined ambiguity in production mode"
   - "search.html fetches /api/search (not /search) so the same-origin search page does not recurse"
 
 patterns-established:
@@ -109,8 +111,13 @@ Each task was committed atomically:
 **Total deviations:** 1 auto-fixed (1 bug — corrected fetch URL in search.html template)
 **Impact on plan:** Necessary for correctness. Without this fix the search page would loop on itself.
 
-## Issues Encountered
-None — all tasks completed cleanly. 133 tests pass before and after changes.
+## Issues Encountered (during human verification)
+
+1. **article-highlight-rect invisible despite correct coordinates** — `highlightRegion()` used `rect.style.display = ''` (empty string). For `#highlight-rect` (which has an inline `style="display:none"`) this works: removing the inline override reveals the element. But `#article-highlight-rect` has `display:none` in a CSS rule, not inline, so `''` just removes any inline override and the CSS rule wins → element stays hidden. Fix: `rect.style.display = 'block'`.
+
+2. **`initialStem` JS variable undefined in template** — `viewer_index()` didn't pass `initial_stem` to `render_template`, causing the Jinja2 `is defined` check to be unreliable in production mode. Fix: pass `initial_stem=None` explicitly. Also simplified template to `{{ initial_stem|tojson }}` (no `is defined` check needed).
+
+3. **Deep-link poll timeout too short** — extended from 40 to 100 attempts (2s → 5s) for slower systems; poll now only calls `highlightRegionById` when articles are actually loaded (not on timeout with empty list).
 
 ## User Setup Required
 None - no external service configuration required.
@@ -124,3 +131,14 @@ None - no external service configuration required.
 ---
 *Phase: 18-article-browser-search*
 *Completed: 2026-03-02*
+
+## Self-Check: PASSED
+
+- FOUND: templates/viewer.html
+- FOUND: templates/upload.html
+- FOUND: templates/search.html
+- FOUND: app.py
+- FOUND: tests/test_search.py
+- FOUND: commit 0251de7 (Task 1)
+- FOUND: commit 0b26f51 (Task 2)
+- FOUND: commit 3bc574b (docs)

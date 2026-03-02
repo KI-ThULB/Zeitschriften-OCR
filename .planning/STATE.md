@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.5 Web Viewer Complete — Phase 18-02 complete (awaiting human-verify checkpoint approval)
+**Current focus:** v1.5 Web Viewer Complete — Phase 18 complete ✅
 
 ## Current Position
 
-Phase: 18 — Article Browser and Full-Text Search (in progress)
-Plan: 18-02 at human-verify checkpoint
-Status: 18-02 auto tasks done — article browser UI, search bar, search.html, /api/search route, 133 tests green
-Last activity: 2026-03-02 — 18-02 executed (viewer article panel, upload search bar, search.html, route rename)
+Phase: 18 — Article Browser and Full-Text Search ✅ COMPLETE
+Plan: all plans done (18-01, 18-02)
+Status: All 18 phases complete — 133 tests green
+Last activity: 2026-03-02 — 18-02 human-verified (article browser, search UI, deep-link highlight)
 
-Progress: [█████████░░░░░░░░] 17/18 phases complete (Phase 18 next)
+Progress: [█████████████████] 18/18 phases complete
 
 ## Performance Metrics
 
@@ -127,5 +127,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: 18-02 human-verify checkpoint — article browser and search UI built, awaiting human approval
-Resume at: After human approval, update requirements and create final docs commit
+Stopped at: Phase 18 complete — all 18 phases done, 133 tests green
+Resume at: /gsd:complete-milestone v1.5 or /gsd:new-milestone for next milestone

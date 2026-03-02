@@ -877,7 +877,7 @@ def index():
 @app.get('/viewer')
 def viewer_index():
     """Serve the viewer without a specific stem — JS auto-loads the first file."""
-    return render_template('viewer.html')
+    return render_template('viewer.html', initial_stem=None)
 
 
 @app.get('/viewer/<stem>')
@@ -885,7 +885,7 @@ def viewer(stem):
     """Serve the side-by-side viewer for a specific TIFF stem."""
     if '/' in stem or '..' in stem:
         return jsonify({'error': 'invalid stem'}), 400
-    return render_template('viewer.html')
+    return render_template('viewer.html', initial_stem=stem)
 
 
 # ---------------------------------------------------------------------------

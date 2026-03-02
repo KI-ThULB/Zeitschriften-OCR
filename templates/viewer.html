@@ -224,19 +224,27 @@
       const data = await resp.json();
       stems = data.stems;
       renderSidebar(stems);
-      if (stems.length > 0) loadFile(0);
+
+      // If server provided an initial stem (from /viewer/<stem> URL), load that file
+      const initialStem = {{ initial_stem|tojson }};
+      let startIndex = 0;
+      if (initialStem !== null) {
+        const idx = stems.indexOf(initialStem);
+        if (idx >= 0) startIndex = idx;
+      }
+      if (stems.length > 0) loadFile(startIndex);
 
       // Deep-link: if URL has a #region_id hash, highlight that region after load
       if (location.hash) {
-        // Wait for loadFile() + loadArticles() to complete (they are async)
-        // Use a short poll — 50ms intervals, up to 2s total
-        const targetId = location.hash.slice(1);
+        // Decode in case the hash was URI-encoded
+        const targetId = decodeURIComponent(location.hash.slice(1));
+        // Poll until loadArticles() populates currentArticles — up to 5s
         let attempts = 0;
         const poll = setInterval(() => {
           attempts++;
-          if (currentArticles.length > 0 || attempts > 40) {
+          if (currentArticles.length > 0 || attempts > 100) {
             clearInterval(poll);
-            highlightRegionById(targetId);
+            if (currentArticles.length > 0) highlightRegionById(targetId);
           }
         }, 50);
       }
@@ -828,7 +836,7 @@
       rect.setAttribute('y', y);
       rect.setAttribute('width', w);
       rect.setAttribute('height', h);
-      rect.style.display = '';
+      rect.style.display = 'block';
     }
 
     function clearArticleHighlight() {

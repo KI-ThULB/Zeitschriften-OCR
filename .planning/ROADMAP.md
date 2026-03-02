@@ -180,8 +180,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 18-01-PLAN.md — search.py (SQLite FTS5: init_db, index_stem, query) + GET /articles/<stem> + GET /api/search?q= + auto-index hook in segment_page() (TDD)
-- [ ] 18-02-PLAN.md — Article list panel in viewer right panel + highlightRegion() + search bar on upload dashboard + search.html results page + human verification
+- [x] 18-01-PLAN.md — search.py (SQLite FTS5: init_db, index_stem, query) + GET /articles/<stem> + GET /api/search?q= + auto-index hook in segment_page() (TDD)
+- [x] 18-02-PLAN.md — Article list panel in viewer right panel + highlightRegion() + search bar on upload dashboard + search.html results page + human verification
 
 ## Progress
 
