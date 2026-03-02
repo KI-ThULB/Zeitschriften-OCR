@@ -160,7 +160,19 @@
         </svg>
       </div>
     </div>
-    <div id="text-panel"><!-- word spans injected here --></div>
+    <div id="text-panel">
+      <!-- word spans injected into #word-list; #wc-settings is always present -->
+      <div id="word-list"><!-- word spans injected here --></div>
+      <div id="wc-settings" style="padding:8px 0 4px;border-top:1px solid #eee;margin-top:8px;">
+        <label style="font-size:0.78rem;color:#666;display:block;">
+          Confidence threshold:
+          <input type="range" id="wc-slider" min="0" max="1" step="0.05"
+                 style="vertical-align:middle;width:100px;">
+          <span id="wc-threshold-label" style="font-size:0.78rem;color:#444;"></span>
+        </label>
+        <div id="wc-badge" style="font-size:0.78rem;color:#888;margin-top:2px;min-height:1em;"></div>
+      </div>
+    </div>
   </div>
   <script>
     let stems = [];
@@ -171,9 +183,14 @@
     let pageWidth = 0;
     let pageHeight = 0;
     let wordById = {};
+    let displayWords = [];    // normalized display word list (column-sorted, hyphen-rejoined)
     let activeWord = null;
     let loadGen = 0;
     let editingSpan = null;   // the .word span currently in edit mode
+
+    // Confidence threshold state (persisted in localStorage)
+    const WC_THRESHOLD_KEY = 'wc_threshold';
+    let wcThreshold = parseFloat(localStorage.getItem(WC_THRESHOLD_KEY) ?? '0.5');
 
     const REGION_COLORS = {
       headline:      'rgba(255,100,100,0.35)',
@@ -205,6 +222,22 @@
       setupKeyboard();
       setupNavButtons();
       setupZoomPan();
+
+      // Initialize confidence threshold slider from persisted state
+      const slider = document.getElementById('wc-slider');
+      const label = document.getElementById('wc-threshold-label');
+      if (slider && label) {
+        slider.value = wcThreshold;
+        label.textContent = wcThreshold.toFixed(2);
+      }
+
+      // Slider event — real-time update on 'input' (not 'change')
+      document.getElementById('wc-slider')?.addEventListener('input', (e) => {
+        wcThreshold = parseFloat(e.target.value);
+        localStorage.setItem(WC_THRESHOLD_KEY, wcThreshold);
+        document.getElementById('wc-threshold-label').textContent = wcThreshold.toFixed(2);
+        applyConfidenceStyling(wcThreshold);
+      });
 
       document.getElementById('highlight-rect').addEventListener('click', () => {
         if (didPan) { didPan = false; return; }
@@ -286,7 +319,7 @@
 
       clearHighlight();
       activeWord = null;
-      document.getElementById('text-panel').innerHTML = '<em>Loading\u2026</em>';
+      document.getElementById('word-list').innerHTML = '<em>Loading\u2026</em>';
       document.getElementById('text-panel').scrollTop = 0;
 
       // Enable Segment button and track current stem
@@ -304,26 +337,174 @@
         jpeg_width = data.jpeg_width || 0;
         jpeg_height = data.jpeg_height || 0;
         recomputeFitScale();
+        // wordById uses original data.words (not normalized) — edit/save operates on ALTO-original content
         wordById = Object.fromEntries(data.words.map(w => [w.id, w]));
-        renderWords(data.words);
+        displayWords = normalizeWords(data.words, data.blocks || [], data.page_width);
+        renderWords(displayWords);
+        applyConfidenceStyling(wcThreshold);
         loadSegments(stem);
         loadArticles(stem);
       } catch (err) {
         if (gen !== loadGen) return;
-        document.getElementById('text-panel').innerHTML = `<em>Error loading ALTO: ${escapeHtml(String(err))}</em>`;
+        document.getElementById('word-list').innerHTML = `<em>Error loading ALTO: ${escapeHtml(String(err))}</em>`;
+      }
+    }
+
+    // ── Text Normalization Pipeline ────────────────────────────────────────────
+
+    /**
+     * clusterByHpos(blocks, pageWidth)
+     * Groups column-level TextBlocks into horizontal clusters.
+     * A new cluster starts when the HPOS gap exceeds 5% of page width.
+     * Returns [{centerHpos: number, blocks: [...]}]
+     */
+    function clusterByHpos(blocks, pageWidth) {
+      if (!blocks || blocks.length === 0) return [];
+      const sorted = [...blocks].sort((a, b) => a.hpos - b.hpos);
+      const clusters = [];
+      let current = { blocks: [sorted[0]] };
+      for (let i = 1; i < sorted.length; i++) {
+        const prev = current.blocks[current.blocks.length - 1];
+        if (sorted[i].hpos - prev.hpos > pageWidth * 0.05) {
+          // Compute centerHpos for current cluster before starting new one
+          current.centerHpos = current.blocks.reduce((s, b) => s + b.hpos, 0) / current.blocks.length;
+          clusters.push(current);
+          current = { blocks: [sorted[i]] };
+        } else {
+          current.blocks.push(sorted[i]);
+        }
+      }
+      current.centerHpos = current.blocks.reduce((s, b) => s + b.hpos, 0) / current.blocks.length;
+      clusters.push(current);
+      return clusters;
+    }
+
+    /**
+     * columnSort(words, blocks, pageWidth)
+     * Sorts words into natural newspaper reading order.
+     * Full-width blocks (>60% page width, near left edge) come first top-to-bottom.
+     * Column blocks are clustered left-to-right, then sorted top-to-bottom within each cluster.
+     * Falls back to original word order if no blocks.
+     */
+    function columnSort(words, blocks, pageWidth) {
+      if (!blocks || blocks.length === 0) return words;
+      const FULL_WIDTH_THRESHOLD = 0.6;
+      const fullWidthBlocks = blocks.filter(b =>
+        b.width >= pageWidth * FULL_WIDTH_THRESHOLD && b.hpos < pageWidth * 0.05
+      );
+      const columnBlocks = blocks.filter(b =>
+        !(b.width >= pageWidth * FULL_WIDTH_THRESHOLD && b.hpos < pageWidth * 0.05)
+      );
+      // Sort full-width blocks top-to-bottom
+      fullWidthBlocks.sort((a, b) => a.vpos - b.vpos);
+      // Cluster and sort column blocks left-to-right, then top-to-bottom within each cluster
+      const clusters = clusterByHpos(columnBlocks, pageWidth);
+      clusters.sort((a, b) => a.centerHpos - b.centerHpos);
+      clusters.forEach(col => col.blocks.sort((a, b) => a.vpos - b.vpos));
+      // Build word lookup
+      const wordMap = Object.fromEntries(words.map(w => [w.id, w]));
+      // Build ordered ID list: full-width blocks first, then column clusters left-to-right
+      const allBlockIds = [
+        ...fullWidthBlocks.flatMap(b => b.word_ids || []),
+        ...clusters.flatMap(col => col.blocks.flatMap(b => b.word_ids || [])),
+      ];
+      // Deduplicate and map back to word objects
+      const seen = new Set();
+      const ordered = [];
+      for (const id of allBlockIds) {
+        if (!seen.has(id) && wordMap[id]) {
+          seen.add(id);
+          ordered.push(wordMap[id]);
+        }
+      }
+      // Append words not referenced by any block (ALTO files without TextBlock elements)
+      for (const w of words) {
+        if (!seen.has(w.id)) ordered.push(w);
+      }
+      return ordered;
+    }
+
+    /**
+     * rejoinHyphens(words)
+     * Rejoins end-of-line hyphenated words.
+     * Uses line_end flag from Plan 01 API extension.
+     * The joined word inherits id and coordinates of the first fragment.
+     * wordById[id] still returns un-rejoined ALTO content for edit/save.
+     */
+    function rejoinHyphens(words) {
+      const result = [];
+      let i = 0;
+      while (i < words.length) {
+        const w = words[i];
+        if (w.line_end && w.content.endsWith('-') && i + 1 < words.length) {
+          const next = words[i + 1];
+          // Strip the trailing hyphen and concatenate with the first word of the next line.
+          // The joined word inherits the id and coordinates of the first fragment.
+          // This preserves click-to-edit behavior: wordById[id] returns the un-rejoined ALTO content.
+          const joined = { ...w, content: w.content.slice(0, -1) + next.content };
+          result.push(joined);
+          i += 2;
+        } else {
+          result.push(w);
+          i += 1;
+        }
+      }
+      return result;
+    }
+
+    /**
+     * normalizeWords(words, blocks, pageWidth)
+     * Full normalization pipeline: column sort then hyphen rejoin.
+     */
+    function normalizeWords(words, blocks, pageWidth) {
+      const ordered = columnSort(words, blocks, pageWidth);
+      return rejoinHyphens(ordered);
+    }
+
+    // ── Confidence Threshold UI ────────────────────────────────────────────────
+
+    /**
+     * applyConfidenceStyling(threshold)
+     * Applies opacity fading to .word[data-wc] spans below threshold.
+     * Updates the low-confidence badge count.
+     * Does NOT re-render — mutates opacity on existing spans only.
+     */
+    function applyConfidenceStyling(threshold) {
+      let lowCount = 0;
+      document.querySelectorAll('.word[data-wc]').forEach(span => {
+        const raw = span.dataset.wc;
+        if (raw === '' || raw === null || raw === undefined) {
+          // No WC attribute — leave unstyled
+          span.style.opacity = '';
+          span.title = '';
+          return;
+        }
+        const wc = parseFloat(raw);
+        if (!isNaN(wc) && wc < threshold) {
+          span.style.opacity = '0.4';
+          span.title = `Confidence: ${wc.toFixed(2)}`;
+          lowCount++;
+        } else {
+          span.style.opacity = '';
+          span.title = '';
+        }
+      });
+      const badge = document.getElementById('wc-badge');
+      if (badge) {
+        badge.textContent = lowCount > 0 ? `${lowCount} low-confidence word${lowCount === 1 ? '' : 's'}` : '';
       }
     }
 
     function renderWords(words) {
-      const panel = document.getElementById('text-panel');
+      const list = document.getElementById('word-list');
       if (words.length === 0) {
-        panel.innerHTML = '<em>No words found in this file.</em>';
+        list.innerHTML = '<em>No words found in this file.</em>';
         return;
       }
-      panel.innerHTML = words.map(w =>
-        `<span class="word" data-id="${escapeHtml(w.id)}">${escapeHtml(w.content)}</span> `
+      list.innerHTML = words.map(w =>
+        `<span class="word" data-id="${escapeHtml(w.id)}" data-wc="${w.confidence ?? ''}">${escapeHtml(w.content)}</span> `
       ).join('');
-      panel.onclick = (e) => {
+      list.onclick = (e) => {
         // Ignore clicks that land inside an open input or error span
         if (e.target.tagName === 'INPUT' || e.target.classList.contains('word-error')) return;
         const span = e.target.closest('.word');
