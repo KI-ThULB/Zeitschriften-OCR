@@ -431,6 +431,194 @@ class TestAltoEndpoint:
             f"Expected confidence=None for word without WC, got {w1.get('confidence')!r}"
         )
 
+    def test_alto_blocks_array(self, client, flask_app):
+        """GET /alto/<stem> response includes 'blocks' array with geometry and word_ids per TextBlock."""
+        from lxml import etree
+        from pathlib import Path
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+
+        ns = ALTO_NS
+        root = etree.Element(f'{{{ns}}}alto')
+        layout = etree.SubElement(root, f'{{{ns}}}Layout')
+        page = etree.SubElement(layout, f'{{{ns}}}Page')
+        page.set('WIDTH', '2000')
+        page.set('HEIGHT', '3000')
+        ps = etree.SubElement(page, f'{{{ns}}}PrintSpace')
+
+        # Block 0 — contains word 'Erste'
+        tb0 = etree.SubElement(ps, f'{{{ns}}}TextBlock')
+        tb0.set('ID', 'TB1')
+        tb0.set('HPOS', '100')
+        tb0.set('VPOS', '200')
+        tb0.set('WIDTH', '400')
+        tb0.set('HEIGHT', '50')
+        tl0 = etree.SubElement(tb0, f'{{{ns}}}TextLine')
+        s0 = etree.SubElement(tl0, f'{{{ns}}}String')
+        s0.set('CONTENT', 'Erste')
+        s0.set('HPOS', '100')
+        s0.set('VPOS', '200')
+        s0.set('WIDTH', '80')
+        s0.set('HEIGHT', '30')
+
+        # Block 1 — contains word 'Zweite'
+        tb1 = etree.SubElement(ps, f'{{{ns}}}TextBlock')
+        tb1.set('ID', 'TB2')
+        tb1.set('HPOS', '600')
+        tb1.set('VPOS', '200')
+        tb1.set('WIDTH', '400')
+        tb1.set('HEIGHT', '50')
+        tl1 = etree.SubElement(tb1, f'{{{ns}}}TextLine')
+        s1 = etree.SubElement(tl1, f'{{{ns}}}String')
+        s1.set('CONTENT', 'Zweite')
+        s1.set('HPOS', '600')
+        s1.set('VPOS', '200')
+        s1.set('WIDTH', '90')
+        s1.set('HEIGHT', '30')
+
+        (alto_dir / 'blocks_test.xml').write_bytes(
+            etree.tostring(root, xml_declaration=True, encoding='UTF-8', pretty_print=True)
+        )
+
+        resp = client.get('/alto/blocks_test')
+        assert resp.status_code == 200
+        body = resp.get_json()
+
+        # 'blocks' key must exist and be a list with 2 items
+        assert 'blocks' in body, "Response missing 'blocks' key"
+        blocks = body['blocks']
+        assert isinstance(blocks, list)
+        assert len(blocks) == 2
+
+        # Each block has the required keys
+        for blk in blocks:
+            for key in ('id', 'hpos', 'vpos', 'width', 'height', 'word_ids'):
+                assert key in blk, f"Block missing key '{key}'"
+
+        # block[0] maps to w0, block[1] maps to w1
+        assert blocks[0]['word_ids'] == ['w0']
+        assert blocks[1]['word_ids'] == ['w1']
+
+        # Block geometry matches fixture values
+        assert blocks[0]['id'] == 'TB1'
+        assert blocks[0]['hpos'] == 100
+        assert blocks[0]['vpos'] == 200
+        assert blocks[0]['width'] == 400
+        assert blocks[0]['height'] == 50
+
+        assert blocks[1]['id'] == 'TB2'
+        assert blocks[1]['hpos'] == 600
+
+    def test_alto_line_end_flag(self, client, flask_app):
+        """GET /alto/<stem>: each word has line_end=True iff it is the last String in its TextLine."""
+        from lxml import etree
+        from pathlib import Path
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+
+        ns = ALTO_NS
+        root = etree.Element(f'{{{ns}}}alto')
+        layout = etree.SubElement(root, f'{{{ns}}}Layout')
+        page = etree.SubElement(layout, f'{{{ns}}}Page')
+        page.set('WIDTH', '2000')
+        page.set('HEIGHT', '3000')
+        ps = etree.SubElement(page, f'{{{ns}}}PrintSpace')
+        tb = etree.SubElement(ps, f'{{{ns}}}TextBlock')
+        tb.set('ID', 'TB1')
+        tb.set('HPOS', '0')
+        tb.set('VPOS', '0')
+        tb.set('WIDTH', '2000')
+        tb.set('HEIGHT', '400')
+
+        # TextLine 0: words[0]='Alpha', words[1]='Beta' (line_end for words[1])
+        tl0 = etree.SubElement(tb, f'{{{ns}}}TextLine')
+        for content, hpos in [('Alpha', '100'), ('Beta', '200')]:
+            s = etree.SubElement(tl0, f'{{{ns}}}String')
+            s.set('CONTENT', content)
+            s.set('HPOS', hpos)
+            s.set('VPOS', '100')
+            s.set('WIDTH', '80')
+            s.set('HEIGHT', '30')
+
+        # TextLine 1: words[2]='Gamma', words[3]='Delta' (line_end for words[3])
+        tl1 = etree.SubElement(tb, f'{{{ns}}}TextLine')
+        for content, hpos in [('Gamma', '100'), ('Delta', '200')]:
+            s = etree.SubElement(tl1, f'{{{ns}}}String')
+            s.set('CONTENT', content)
+            s.set('HPOS', hpos)
+            s.set('VPOS', '200')
+            s.set('WIDTH', '80')
+            s.set('HEIGHT', '30')
+
+        (alto_dir / 'linend_test.xml').write_bytes(
+            etree.tostring(root, xml_declaration=True, encoding='UTF-8', pretty_print=True)
+        )
+
+        resp = client.get('/alto/linend_test')
+        assert resp.status_code == 200
+        words = resp.get_json()['words']
+        assert len(words) == 4
+
+        # line_end is True only for the last word in each TextLine
+        assert words[0]['line_end'] is False, f"words[0].line_end should be False, got {words[0]['line_end']}"
+        assert words[1]['line_end'] is True,  f"words[1].line_end should be True, got {words[1]['line_end']}"
+        assert words[2]['line_end'] is False, f"words[2].line_end should be False, got {words[2]['line_end']}"
+        assert words[3]['line_end'] is True,  f"words[3].line_end should be True, got {words[3]['line_end']}"
+
+    def test_alto_blocks_empty_when_no_textblocks(self, client, flask_app):
+        """GET /alto/<stem>: blocks is [] when ALTO has no TextBlock elements."""
+        from lxml import etree
+        from pathlib import Path
+
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+
+        ns = ALTO_NS
+
+        # First: verify _write_alto fixture (single TextBlock) returns a list for blocks
+        _write_alto(
+            alto_dir / 'blocks_list_test.xml',
+            page_w=1000,
+            page_h=2000,
+            strings=[{'CONTENT': 'Test', 'HPOS': '10', 'VPOS': '20', 'WIDTH': '50', 'HEIGHT': '20'}],
+        )
+        resp = client.get('/alto/blocks_list_test')
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert isinstance(body.get('blocks'), list), "blocks should be a list"
+
+        # Second: ALTO with PrintSpace → TextLine → String (no TextBlock) → blocks is []
+        root2 = etree.Element(f'{{{ns}}}alto')
+        layout2 = etree.SubElement(root2, f'{{{ns}}}Layout')
+        page2 = etree.SubElement(layout2, f'{{{ns}}}Page')
+        page2.set('WIDTH', '1000')
+        page2.set('HEIGHT', '2000')
+        ps2 = etree.SubElement(page2, f'{{{ns}}}PrintSpace')
+        tl2 = etree.SubElement(ps2, f'{{{ns}}}TextLine')
+        s2 = etree.SubElement(tl2, f'{{{ns}}}String')
+        s2.set('CONTENT', 'NoBlock')
+        s2.set('HPOS', '10')
+        s2.set('VPOS', '20')
+        s2.set('WIDTH', '50')
+        s2.set('HEIGHT', '20')
+
+        (alto_dir / 'notextblock.xml').write_bytes(
+            etree.tostring(root2, xml_declaration=True, encoding='UTF-8', pretty_print=True)
+        )
+
+        resp2 = client.get('/alto/notextblock')
+        assert resp2.status_code == 200
+        body2 = resp2.get_json()
+        assert body2['blocks'] == [], f"Expected empty blocks list, got {body2['blocks']}"
+        # words should still be populated
+        assert len(body2['words']) == 1
+        assert body2['words'][0]['content'] == 'NoBlock'
+
     def test_jpeg_dims_from_cache(self, client, flask_app):
         """GET /alto/scan_003 → jpeg_width=4, jpeg_height=8 when jpegcache/scan_003.jpg is 4x8."""
         from pathlib import Path
