@@ -129,7 +129,11 @@ Plans:
   2. The TEI document contains `<lb/>` elements at each OCR line boundary and `<pb n="N" facs="#page-N"/>` elements at each page transition, linking text to the correct JPEG image
   3. The TEI document contains a `<facsimile>` section with one `<surface xml:id="page-N">` per page and `<zone>` elements per article region carrying ALTO-derived coordinate attributes (x, y, width, height)
   4. Exported TEI validates as well-formed XML and the `facs` references in `<pb>` correctly resolve to `xml:id` values in the `<facsimile>` section
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 21-01-PLAN.md — TDD: tei.py builder (column sort, hyphen rejoin, lb/pb, facsimile zones)
+- [ ] 21-02-PLAN.md — Flask GET /tei/<stem> endpoint + Download TEI button in viewer #nav-bar
 
 ## Progress
 
