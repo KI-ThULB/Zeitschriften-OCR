@@ -16,11 +16,12 @@ XML_NS = 'http://www.w3.org/XML/1998/namespace'
 
 # Two TextBlocks on a 4000×6000 page.
 # Block 0: HPOS=0, VPOS=0, WIDTH=1800, HEIGHT=3000 (left column)
-#   TextLine 0: HPOS=0, VPOS=50, HEIGHT=150 — "Hello" and "World"
-#   TextLine 1: HPOS=0, VPOS=250, HEIGHT=150 — "Ver-" (hyphen candidate) and "Test"
+#   TextLine 0: HPOS=0, VPOS=50, HEIGHT=150  — "Hello" and "World" (World is line_end)
+#   TextLine 1: HPOS=0, VPOS=250, HEIGHT=150 — "Ver-" only (Ver- is line_end → triggers rejoin)
+#   TextLine 2: HPOS=0, VPOS=450, HEIGHT=150 — "Test" only (continuation of Ver-)
 # Block 1: HPOS=2200, VPOS=0, WIDTH=1800, HEIGHT=3000 (right column)
-#   TextLine 0: HPOS=2200, VPOS=50, HEIGHT=150 — "Right" and "Column"
-#   TextLine 1: HPOS=2200, VPOS=250, HEIGHT=150 — "End"
+#   TextLine 0: HPOS=2200, VPOS=50, HEIGHT=150  — "Right" and "Column" (Column is line_end)
+#   TextLine 1: HPOS=2200, VPOS=250, HEIGHT=150 — "End" only (End is line_end)
 
 ALTO_FIXTURE = b"""<?xml version='1.0' encoding='UTF-8'?>
 <alto xmlns="http://schema.ccs-gmbh.com/ALTO">
@@ -35,15 +36,17 @@ ALTO_FIXTURE = b"""<?xml version='1.0' encoding='UTF-8'?>
           </TextLine>
           <TextLine ID="line_1" HPOS="0" VPOS="250" WIDTH="1800" HEIGHT="150">
             <String ID="string_2" HPOS="100" VPOS="250" WIDTH="200" HEIGHT="150" WC="0.90" CONTENT="Ver-"/>
-            <String ID="string_3" HPOS="450" VPOS="250" WIDTH="200" HEIGHT="150" WC="0.90" CONTENT="Test"/>
+          </TextLine>
+          <TextLine ID="line_2" HPOS="0" VPOS="450" WIDTH="1800" HEIGHT="150">
+            <String ID="string_3" HPOS="100" VPOS="450" WIDTH="200" HEIGHT="150" WC="0.90" CONTENT="Test"/>
           </TextLine>
         </TextBlock>
         <TextBlock ID="block_1" HPOS="2200" VPOS="0" WIDTH="1800" HEIGHT="3000">
-          <TextLine ID="line_2" HPOS="2200" VPOS="50" WIDTH="1800" HEIGHT="150">
+          <TextLine ID="line_3" HPOS="2200" VPOS="50" WIDTH="1800" HEIGHT="150">
             <String ID="string_4" HPOS="2200" VPOS="50" WIDTH="200" HEIGHT="150" WC="0.92" CONTENT="Right"/>
             <String ID="string_5" HPOS="2600" VPOS="50" WIDTH="200" HEIGHT="150" WC="0.92" CONTENT="Column"/>
           </TextLine>
-          <TextLine ID="line_3" HPOS="2200" VPOS="250" WIDTH="1800" HEIGHT="150">
+          <TextLine ID="line_4" HPOS="2200" VPOS="250" WIDTH="1800" HEIGHT="150">
             <String ID="string_6" HPOS="2200" VPOS="250" WIDTH="200" HEIGHT="150" WC="0.88" CONTENT="End"/>
           </TextLine>
         </TextBlock>
@@ -210,20 +213,28 @@ class TestBuildTeiBody:
 class TestBuildTeiLineBreaks:
 
     def test_lb_between_lines_not_after_last_line(self, tmp_path):
-        """<lb/> must appear between lines but NOT after the last line in a <p>."""
+        """<lb/> must appear between lines but NOT as a trailing empty element at end of <p>.
+
+        In lxml mixed content, <lb/> between two lines has the next line's text in its .tail.
+        A trailing <lb/> would have an empty or None tail — that is forbidden.
+        """
         _setup_output(tmp_path, with_segments=False)
         result = tei_module.build_tei(tmp_path, 'page001')
         root = etree.fromstring(result)
-        # Find all <p> elements; none should end with <lb/> as last child
         ps = root.findall(f'.//{{{TEI_NS}}}p')
         assert len(ps) >= 1
         for p in ps:
             children = list(p)
             if children:
                 last_child = children[-1]
-                assert last_child.tag != f'{{{TEI_NS}}}lb', (
-                    f'<p> must not end with <lb/>; last child was {last_child.tag}'
-                )
+                if last_child.tag == f'{{{TEI_NS}}}lb':
+                    # Last child is lb — only allowed if it has non-empty tail text
+                    # (meaning more text follows on the next line, e.g. "Right Column<lb/>End")
+                    tail = last_child.tail or ''
+                    assert tail.strip(), (
+                        f'<p> ends with trailing <lb/> that has empty tail — '
+                        f'no text follows the last line boundary'
+                    )
 
     def test_hyphen_rejoin_suppresses_intermediate_lb(self, tmp_path):
         """'Ver-' + 'Test' across a line boundary should NOT have an lb between them."""
