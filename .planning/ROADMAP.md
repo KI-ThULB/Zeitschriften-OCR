@@ -159,4 +159,4 @@ Plans:
 | 18. Article Browser and Full-Text Search | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 19. Text Normalization | v1.6 | 2/2 | Complete | 2026-03-02 |
 | 20. Structure Detection and Viewer | v1.6 | 2/2 | Complete | 2026-03-02 |
-| 21. TEI P5 Export | v1.6 | 2/2 | Complete | 2026-03-03 |
+| 21. TEI P5 Export | v1.6 | Complete    | 2026-03-03 | 2026-03-03 |
