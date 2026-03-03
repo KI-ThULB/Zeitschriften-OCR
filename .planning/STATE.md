@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-02)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.6 Structured Text & TEI Export — Phase 21 Plans 01 and 02 complete (human-verify checkpoint pending)
+**Current focus:** v1.6 Structured Text & TEI Export — Phase 21 Plans 01 and 02 complete (all phases done)
 
 ## Current Position
 
 Phase: Phase 21 of 21 (TEI P5 Export)
-Plan: Plan 02 automation complete (21-02-PLAN.md Tasks 1-2 executed) — checkpoint:human-verify pending for Task 3
-Status: Phase 21 automation complete — awaiting user browser verification of TEI download
-Last activity: 2026-03-03 — 21-02: GET /tei/<stem> endpoint, Download TEI button, 3 new endpoint tests; 156 tests green
+Plan: Plan 02 complete (all 3 tasks done — Task 3 human-verify approved by user)
+Status: Phase 21 complete — all plans done; v1.6 milestone complete
+Last activity: 2026-03-03 — 21-02: Task 3 human-verify checkpoint passed (user approved TEI download in browser)
 
 Progress: [·················] 0/3 phases complete
 
@@ -78,5 +78,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: 21-02-PLAN.md Task 3 checkpoint:human-verify — browser verification of TEI download required
-Resume at: User verifies TEI download in browser, then mark Phase 21 complete
+Stopped at: 21-02-PLAN.md — fully complete (Task 3 human-verify approved)
+Resume at: All phases complete — v1.6 milestone shipped

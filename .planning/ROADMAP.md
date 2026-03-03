@@ -8,7 +8,7 @@
 - ✅ **v1.3 Operator Experience** — Phases 6–8 (shipped 2026-02-26)
 - ✅ **v1.4 Web Viewer** — Phases 9–11 (shipped 2026-02-28)
 - ✅ **v1.5 Web Viewer Complete** — Phases 12–18 (shipped 2026-03-02)
-- 🚧 **v1.6 Structured Text & TEI Export** — Phases 19–21 (in progress)
+- ✅ **v1.6 Structured Text & TEI Export** — Phases 19–21 (shipped 2026-03-03)
 
 ---
 
@@ -80,13 +80,13 @@ See archive: `.planning/milestones/v1.5-ROADMAP.md`
 
 </details>
 
-### v1.6 Structured Text & TEI Export (In Progress)
+### v1.6 Structured Text & TEI Export (Shipped 2026-03-03)
 
 **Milestone Goal:** Transform raw OCR word streams into structured, readable text and export full scholarly TEI P5 XML with facsimile links.
 
 - [x] **Phase 19: Text Normalization** — Column reading order, hyphenation rejoining, confidence marking (completed 2026-03-02)
 - [x] **Phase 20: Structure Detection and Viewer** — Paragraph detection, role annotation, structured viewer display (completed 2026-03-02)
-- [x] **Phase 21: TEI P5 Export** — TEI document generation with article divs, line/page elements, facsimile section (completed 2026-03-03)
+- [x] **Phase 21: TEI P5 Export** — TEI document generation with article divs, line/page elements, facsimile section (completed 2026-03-03) — user-verified
 
 ## Phase Details
 
@@ -132,8 +132,8 @@ Plans:
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 21-01-PLAN.md — TDD: tei.py builder (column sort, hyphen rejoin, lb/pb, facsimile zones)
-- [ ] 21-02-PLAN.md — Flask GET /tei/<stem> endpoint + Download TEI button in viewer #nav-bar
+- [x] 21-01-PLAN.md — TDD: tei.py builder (column sort, hyphen rejoin, lb/pb, facsimile zones)
+- [x] 21-02-PLAN.md — Flask GET /tei/<stem> endpoint + Download TEI button in viewer #nav-bar
 
 ## Progress
 
@@ -159,4 +159,4 @@ Plans:
 | 18. Article Browser and Full-Text Search | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 19. Text Normalization | v1.6 | 2/2 | Complete | 2026-03-02 |
 | 20. Structure Detection and Viewer | v1.6 | 2/2 | Complete | 2026-03-02 |
-| 21. TEI P5 Export | 2/2 | Complete   | 2026-03-03 | - |
+| 21. TEI P5 Export | v1.6 | 2/2 | Complete | 2026-03-03 |

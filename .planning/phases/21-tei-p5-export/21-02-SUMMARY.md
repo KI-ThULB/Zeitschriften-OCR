@@ -55,7 +55,7 @@ completed: 2026-03-03
 - **Duration:** ~10 min
 - **Started:** 2026-03-03T12:30:00Z
 - **Completed:** 2026-03-03T12:40:00Z
-- **Tasks:** 2 automated + 1 checkpoint (human-verify pending)
+- **Tasks:** 3 (2 automated + 1 human-verify checkpoint — approved)
 - **Files modified:** 3
 
 ## Accomplishments
@@ -71,7 +71,7 @@ Each task was committed atomically:
 
 1. **Task 1: Add GET /tei/<stem> endpoint to app.py** - `e255cf1` (feat)
 2. **Task 2: Add Download TEI button to viewer.html #nav-bar** - `3e843c9` (feat)
-3. **Task 3: Human-verify TEI download end-to-end** - (checkpoint: human-verify pending)
+3. **Task 3: Human-verify TEI download end-to-end** - user approved (checkpoint: human-verify passed)
 
 ## Files Created/Modified
 
@@ -101,9 +101,9 @@ None - no external service configuration required.
 
 ## Next Phase Readiness
 
-- Phase 21 automation complete — human verification of browser download pending (Task 3 checkpoint)
-- After user confirms TEI download works end-to-end, Phase 21 TEI P5 Export is fully complete
+- Phase 21 fully complete — user confirmed TEI download end-to-end in browser (Task 3 checkpoint passed)
 - Requirements TEI-01, TEI-02, TEI-03 satisfied by Plans 01 and 02 combined
+- v1.6 Structured Text & TEI Export milestone complete (Phases 19-21)
 
 ## Self-Check: PASSED
 
