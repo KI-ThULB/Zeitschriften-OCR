@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-02)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.6 Structured Text & TEI Export — Phase 21 in progress (Plan 01 complete)
+**Current focus:** v1.6 Structured Text & TEI Export — Phase 21 Plans 01 and 02 complete (human-verify checkpoint pending)
 
 ## Current Position
 
 Phase: Phase 21 of 21 (TEI P5 Export)
-Plan: Plan 01 complete (21-01-PLAN.md executed) — tei.py builder shipped
-Status: Phase 21 in progress — Plan 02 (Flask endpoint + UI button) next
-Last activity: 2026-03-03 — 21-01: tei.py module with build_tei(), column sort, hyphen rejoin, lb milestones; 153 tests green
+Plan: Plan 02 automation complete (21-02-PLAN.md Tasks 1-2 executed) — checkpoint:human-verify pending for Task 3
+Status: Phase 21 automation complete — awaiting user browser verification of TEI download
+Last activity: 2026-03-03 — 21-02: GET /tei/<stem> endpoint, Download TEI button, 3 new endpoint tests; 156 tests green
 
 Progress: [·················] 0/3 phases complete
 
@@ -34,7 +34,7 @@ Progress: [·················] 0/3 phases complete
 | 19. Text Normalization | 2/3 | ~6 min | ~3 min |
 | 20. Structure Detection and Viewer | 2/2 | ~8 min | ~4 min |
 
-| 21. TEI P5 Export | 1/2 (P01 done) | 22 min | 22 min |
+| 21. TEI P5 Export | 2/2 (P02 automation done, verify pending) | 32 min | 16 min |
 
 *Updated after each plan completion*
 
@@ -62,6 +62,8 @@ Recent decisions affecting current work:
 - [Phase 21-01]: ALTO fixture for hyphen-rejoin test: "Ver-" must be sole word in TextLine so line_end=True; otherwise rejoin cannot trigger
 - [Phase 21-01]: lb mixed-content semantics: lb IS the last child element when final line text is in lb.tail — test checks empty tail, not element presence
 - [Phase 21-01]: facs on surface uses ../uploads/{stem}.tif (matches app.py UPLOAD_SUBDIR); CONTEXT.md ../scans/ was illustrative
+- [Phase 21-02]: TestExportTei in test_app.py (not test_mets.py) — per plan spec; path traversal test uses URL-encoded stem (%2F) since Flask normalises raw slashes
+- [Phase 21-02]: tei-btn positioned between segment-btn and segment-status span; encodeURIComponent(currentStem) in downloadTei()
 
 ### Pending Todos
 
@@ -76,5 +78,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 21-01-PLAN.md — tei.py TEI P5 builder, 17 new tests, 153 total green
-Resume at: /gsd:execute-phase 21-tei-p5-export (Phase 21 Plan 02 next — Flask endpoint + Download TEI button)
+Stopped at: 21-02-PLAN.md Task 3 checkpoint:human-verify — browser verification of TEI download required
+Resume at: User verifies TEI download in browser, then mark Phase 21 complete

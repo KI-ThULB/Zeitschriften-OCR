@@ -86,7 +86,7 @@ See archive: `.planning/milestones/v1.5-ROADMAP.md`
 
 - [x] **Phase 19: Text Normalization** — Column reading order, hyphenation rejoining, confidence marking (completed 2026-03-02)
 - [x] **Phase 20: Structure Detection and Viewer** — Paragraph detection, role annotation, structured viewer display (completed 2026-03-02)
-- [ ] **Phase 21: TEI P5 Export** — TEI document generation with article divs, line/page elements, facsimile section
+- [x] **Phase 21: TEI P5 Export** — TEI document generation with article divs, line/page elements, facsimile section (completed 2026-03-03)
 
 ## Phase Details
 
@@ -129,7 +129,7 @@ Plans:
   2. The TEI document contains `<lb/>` elements at each OCR line boundary and `<pb n="N" facs="#page-N"/>` elements at each page transition, linking text to the correct JPEG image
   3. The TEI document contains a `<facsimile>` section with one `<surface xml:id="page-N">` per page and `<zone>` elements per article region carrying ALTO-derived coordinate attributes (x, y, width, height)
   4. Exported TEI validates as well-formed XML and the `facs` references in `<pb>` correctly resolve to `xml:id` values in the `<facsimile>` section
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 21-01-PLAN.md — TDD: tei.py builder (column sort, hyphen rejoin, lb/pb, facsimile zones)
@@ -159,4 +159,4 @@ Plans:
 | 18. Article Browser and Full-Text Search | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 19. Text Normalization | v1.6 | 2/2 | Complete | 2026-03-02 |
 | 20. Structure Detection and Viewer | v1.6 | 2/2 | Complete | 2026-03-02 |
-| 21. TEI P5 Export | 1/2 | In Progress|  | - |
+| 21. TEI P5 Export | 2/2 | Complete   | 2026-03-03 | - |
