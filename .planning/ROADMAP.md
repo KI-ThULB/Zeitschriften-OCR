@@ -85,7 +85,7 @@ See archive: `.planning/milestones/v1.5-ROADMAP.md`
 **Milestone Goal:** Transform raw OCR word streams into structured, readable text and export full scholarly TEI P5 XML with facsimile links.
 
 - [x] **Phase 19: Text Normalization** — Column reading order, hyphenation rejoining, confidence marking (completed 2026-03-02)
-- [ ] **Phase 20: Structure Detection and Viewer** — Paragraph detection, role annotation, structured viewer display
+- [x] **Phase 20: Structure Detection and Viewer** — Paragraph detection, role annotation, structured viewer display (completed 2026-03-02)
 - [ ] **Phase 21: TEI P5 Export** — TEI document generation with article divs, line/page elements, facsimile section
 
 ## Phase Details
@@ -114,11 +114,11 @@ Plans:
   2. User can see each text block labelled with its structural role (heading, paragraph, caption, or advertisement) derived from the VLM article segmentation regions stored per page
   3. Headings render with prominent styling (bold, larger size) in the text panel so article structure is readable at a glance without needing to consult the TIFF image
   4. Structural role labels and paragraph grouping persist correctly when the user navigates to a different file via the sidebar
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 20-01-PLAN.md — detectParagraphs(), assignRoles(), buildParaBlocks() algorithms and currentBlocks state
-- [ ] 20-02-PLAN.md — renderBlocks(), updateStructSummary(), CSS role styling, and loadFile()/loadArticles() wiring
+- [x] 20-01-PLAN.md — detectParagraphs(), assignRoles(), buildParaBlocks() algorithms and currentBlocks state
+- [x] 20-02-PLAN.md — renderBlocks(), updateStructSummary(), CSS role styling, and loadFile()/loadArticles() wiring
 
 ### Phase 21: TEI P5 Export
 **Goal**: Users can download a single TEI P5 XML file per issue that encodes article structure, text with line and page markers, and facsimile coordinates — ready for scholarly use
@@ -154,5 +154,5 @@ Plans:
 | 17. VLM Settings UI | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 18. Article Browser and Full-Text Search | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 19. Text Normalization | v1.6 | 2/2 | Complete | 2026-03-02 |
-| 20. Structure Detection and Viewer | 1/2 | In Progress|  | - |
+| 20. Structure Detection and Viewer | v1.6 | 2/2 | Complete | 2026-03-02 |
 | 21. TEI P5 Export | v1.6 | 0/TBD | Not started | - |
