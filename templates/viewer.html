@@ -78,6 +78,9 @@
     #segment-btn:hover:not(:disabled) { background: #4458c8; }
     #segment-btn:disabled { opacity: 0.6; cursor: not-allowed; }
     #segment-btn.running::after { content: ' …'; }
+    #tei-btn { background: #2e7d32; color: #fff; border: none; border-radius: 3px; padding: 4px 14px; cursor: pointer; font-size: 0.85rem; }
+    #tei-btn:hover:not(:disabled) { background: #1b5e20; }
+    #tei-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
     #segment-status {
       font-size: 0.78rem;
@@ -164,6 +167,7 @@
     <button id="btn-prev" disabled>&#8592; Previous</button>
     <button id="btn-next" disabled>&#8594; Next</button>
     <button id="segment-btn" onclick="segmentPage()" disabled title="Detect article regions using the configured VLM provider">Segment</button>
+    <button id="tei-btn" onclick="downloadTei()" disabled title="Download TEI P5 XML for the current page">Download TEI</button>
     <span id="segment-status"></span>
   </div>
   <div id="main">
@@ -340,9 +344,10 @@
       document.getElementById('word-list').innerHTML = '<em>Loading\u2026</em>';
       document.getElementById('text-panel').scrollTop = 0;
 
-      // Enable Segment button and track current stem
+      // Enable Segment and TEI buttons, track current stem
       currentStem = stem;
       document.getElementById('segment-btn').disabled = false;
+      document.getElementById('tei-btn').disabled = false;
 
       const img = document.getElementById('tiff-img');
       img.src = `/image/${stem}`;
@@ -1067,6 +1072,11 @@
         label.classList.add('segment-label');
         svg.appendChild(label);
       });
+    }
+
+    function downloadTei() {
+      if (!currentStem) return;
+      window.location = '/tei/' + encodeURIComponent(currentStem);
     }
 
     async function segmentPage() {
