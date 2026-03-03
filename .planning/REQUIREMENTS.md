@@ -22,9 +22,9 @@
 
 ### TEI Export
 
-- [ ] **TEI-01**: System generates a TEI P5 XML document per processed issue combining all pages; each VLM-identified article appears as a `<div type="article">` with `@n` and title metadata
-- [ ] **TEI-02**: TEI document preserves line structure via `<lb/>` elements and page transitions via `<pb n="N" facs="#page-N"/>` elements linked to JPEG images
-- [ ] **TEI-03**: TEI document includes a `<facsimile>` section with one `<surface xml:id="page-N">` per page and `<zone>` elements for each article region carrying ALTO-derived coordinate attributes
+- [x] **TEI-01**: System generates a TEI P5 XML document per processed issue combining all pages; each VLM-identified article appears as a `<div type="article">` with `@n` and title metadata
+- [x] **TEI-02**: TEI document preserves line structure via `<lb/>` elements and page transitions via `<pb n="N" facs="#page-N"/>` elements linked to JPEG images
+- [x] **TEI-03**: TEI document includes a `<facsimile>` section with one `<surface xml:id="page-N">` per page and `<zone>` elements for each article region carrying ALTO-derived coordinate attributes
 
 ## Future Requirements
 
@@ -62,9 +62,9 @@
 | STRUCT-07 | Phase 20 | Complete |
 | STRUCT-08 | Phase 20 | Complete |
 | VIEW-07 | Phase 20 | Pending |
-| TEI-01 | Phase 21 | Pending |
-| TEI-02 | Phase 21 | Pending |
-| TEI-03 | Phase 21 | Pending |
+| TEI-01 | Phase 21 | Complete |
+| TEI-02 | Phase 21 | Complete |
+| TEI-03 | Phase 21 | Complete |
 
 **Coverage:**
 - v1.6 requirements: 9 total

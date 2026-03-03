@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-02)
 
 **Core value:** Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, produced without manual intervention and with safe reruns.
-**Current focus:** v1.6 Structured Text & TEI Export — Phase 20 in progress (Plan 01 complete)
+**Current focus:** v1.6 Structured Text & TEI Export — Phase 21 in progress (Plan 01 complete)
 
 ## Current Position
 
-Phase: Phase 20 of 21 (Structure Detection and Viewer)
-Plan: Plan 01 complete (20-01-PLAN.md executed)
-Status: In progress — Plan 01 done, Plan 02 next
-Last activity: 2026-03-02 — 20-01: paragraph detection (VPOS gap analysis), VLM role assignment, buildParaBlocks algorithms added to viewer.html; currentBlocks state wired; 136 tests green
+Phase: Phase 21 of 21 (TEI P5 Export)
+Plan: Plan 01 complete (21-01-PLAN.md executed) — tei.py builder shipped
+Status: Phase 21 in progress — Plan 02 (Flask endpoint + UI button) next
+Last activity: 2026-03-03 — 21-01: tei.py module with build_tei(), column sort, hyphen rejoin, lb milestones; 153 tests green
 
 Progress: [·················] 0/3 phases complete
 
@@ -32,7 +32,9 @@ Progress: [·················] 0/3 phases complete
 | 17. VLM Settings UI | 2/2 | ~46 min | ~23 min |
 | 18. Article Browser and Full-Text Search | 2/2 | ~7 min | ~3.5 min |
 | 19. Text Normalization | 2/3 | ~6 min | ~3 min |
-| 20. Structure Detection and Viewer | 1/2 | ~3 min | ~3 min |
+| 20. Structure Detection and Viewer | 2/2 | ~8 min | ~4 min |
+
+| 21. TEI P5 Export | 1/2 (P01 done) | 22 min | 22 min |
 
 *Updated after each plan completion*
 
@@ -54,6 +56,12 @@ Recent decisions affecting current work:
 - [Phase 20-01]: currentBlocks promoted to module-level state so loadArticles() can rebuild paraBlocks after async VLM fetch resolves
 - [Phase 20-01]: buildParaBlocks called as dry-run in Plan 01 result discarded; Plan 02 adds renderBlocks() replacing renderWords()
 - [Phase 20-01]: VLM coordinate conversion: bb.x * pageWidth not jpeg_width — ALTO pixel space differs from JPEG when TIFF > 1600px
+- [Phase 20-02]: renderBlocks() writes data-wc on spans identical to renderWords() — applyConfidenceStyling() finds .word[data-wc] without change
+- [Phase 20-02]: wordListClickHandler re-attached after renderBlocks() innerHTML write — delegated click-to-edit preserved across renders
+- [Phase 20-02]: struct-summary in #wc-settings (sibling of #word-list) — survives renderBlocks() innerHTML overwrites
+- [Phase 21-01]: ALTO fixture for hyphen-rejoin test: "Ver-" must be sole word in TextLine so line_end=True; otherwise rejoin cannot trigger
+- [Phase 21-01]: lb mixed-content semantics: lb IS the last child element when final line text is in lb.tail — test checks empty tail, not element presence
+- [Phase 21-01]: facs on surface uses ../uploads/{stem}.tif (matches app.py UPLOAD_SUBDIR); CONTEXT.md ../scans/ was illustrative
 
 ### Pending Todos
 
@@ -67,6 +75,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-02
-Stopped at: Completed 20-01-PLAN.md — detectParagraphs/assignRoles/buildParaBlocks algorithms + currentBlocks state wiring in viewer.html
-Resume at: /gsd:execute-phase 20-structure-detection-and-viewer (Plan 02 next)
+Last session: 2026-03-03
+Stopped at: Completed 21-01-PLAN.md — tei.py TEI P5 builder, 17 new tests, 153 total green
+Resume at: /gsd:execute-phase 21-tei-p5-export (Phase 21 Plan 02 next — Flask endpoint + Download TEI button)
