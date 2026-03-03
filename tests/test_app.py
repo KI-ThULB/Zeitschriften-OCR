@@ -997,3 +997,53 @@ class TestSaveEndpoint:
         )
         assert resp.status_code == 422
         assert (alto_dir / 'scan_001.xml').read_bytes() == original_content
+
+
+# ---------------------------------------------------------------------------
+# Phase 21: GET /tei/<stem> endpoint
+# ---------------------------------------------------------------------------
+
+_TEI_ALTO_FIXTURE = b"""<?xml version='1.0' encoding='UTF-8'?>
+<alto xmlns="http://schema.ccs-gmbh.com/ALTO">
+  <Description><MeasurementUnit>pixel</MeasurementUnit></Description>
+  <Layout>
+    <Page WIDTH="4000" HEIGHT="6000" PHYSICAL_IMG_NR="0" ID="page_0">
+      <PrintSpace HPOS="0" VPOS="0" WIDTH="4000" HEIGHT="6000">
+        <TextBlock ID="block_0" HPOS="0" VPOS="0" WIDTH="4000" HEIGHT="500">
+          <TextLine ID="line_0" HPOS="0" VPOS="50" WIDTH="4000" HEIGHT="150">
+            <String ID="string_0" HPOS="100" VPOS="50" WIDTH="300" HEIGHT="150" WC="0.95" CONTENT="Hello"/>
+            <String ID="string_1" HPOS="450" VPOS="50" WIDTH="300" HEIGHT="150" WC="0.90" CONTENT="World"/>
+          </TextLine>
+        </TextBlock>
+      </PrintSpace>
+    </Page>
+  </Layout>
+</alto>"""
+
+
+class TestExportTei:
+    """Tests for GET /tei/<stem> endpoint (Phase 21-02)."""
+
+    def test_returns_xml_download_when_alto_exists(self, client, flask_app, tmp_path):
+        """GET /tei/page001 returns 200 with XML attachment when ALTO file exists."""
+        output_dir = Path(flask_app.config['OUTPUT_DIR'])
+        alto_dir = output_dir / 'alto'
+        alto_dir.mkdir(parents=True, exist_ok=True)
+        (alto_dir / 'page001.xml').write_bytes(_TEI_ALTO_FIXTURE)
+
+        resp = client.get('/tei/page001')
+
+        assert resp.status_code == 200
+        assert resp.mimetype == 'application/xml'
+        assert 'page001_tei.xml' in resp.headers.get('Content-Disposition', '')
+        assert resp.data.startswith(b'<?xml')
+
+    def test_returns_404_when_no_alto_file(self, client, flask_app, tmp_path):
+        """GET /tei/missing returns 404 when no ALTO file exists for that stem."""
+        resp = client.get('/tei/missing')
+        assert resp.status_code == 404
+
+    def test_returns_400_on_path_traversal(self, client, flask_app, tmp_path):
+        """GET /tei/../../etc/passwd returns 400 for path traversal attempt."""
+        resp = client.get('/tei/..%2F..%2Fetc%2Fpasswd')
+        assert resp.status_code == 400

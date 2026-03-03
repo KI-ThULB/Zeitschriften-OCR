@@ -23,6 +23,7 @@ from werkzeug.utils import secure_filename
 import mets
 import pipeline
 import search
+import tei as tei_module
 import vlm
 
 # ---------------------------------------------------------------------------
@@ -507,16 +508,36 @@ def serve_alto(stem):
         else:
             jpeg_width, jpeg_height = 0, 0
 
-    # Pre-compute set of last String element ids in each TextLine (for line_end flag)
-    last_in_line = set()
+    # Materialise all String elements once — lxml creates new proxy objects on each
+    # iteration call, so id() is only stable within a single list built here.
+    all_strings = list(root.iter(f'{{{ns}}}String'))
+
+    # Map from stable Python object id → global word index (positional)
+    elem_to_idx: dict[int, int] = {id(s): i for i, s in enumerate(all_strings)}
+
+    # Compute set of global indices for the last String in each TextLine (line_end flag)
+    last_in_line: set[int] = set()
     for tl in root.findall(f'.//{{{ns}}}TextLine'):
         tl_strings = list(tl.iter(f'{{{ns}}}String'))
         if tl_strings:
-            last_in_line.add(id(tl_strings[-1]))
+            last_obj = tl_strings[-1]
+            # Match last_obj to the canonical object in all_strings via tag+attribs identity
+            # lxml may return a different proxy; fall back to attribute-based lookup if needed
+            oid = id(last_obj)
+            if oid in elem_to_idx:
+                last_in_line.add(elem_to_idx[oid])
+            else:
+                # Proxy recycling: locate by HPOS/VPOS/CONTENT match within all_strings
+                for j, s in enumerate(all_strings):
+                    if (s.get('CONTENT') == last_obj.get('CONTENT')
+                            and s.get('HPOS') == last_obj.get('HPOS')
+                            and s.get('VPOS') == last_obj.get('VPOS')):
+                        last_in_line.add(j)
+                        break
 
     # Flat word array — all String elements in document order
     words = []
-    for i, elem in enumerate(root.iter(f'{{{ns}}}String')):
+    for i, elem in enumerate(all_strings):
         wc_raw = elem.get('WC')
         words.append({
             'id': f'w{i}',
@@ -526,22 +547,25 @@ def serve_alto(stem):
             'width': int(elem.get('WIDTH', 0)),
             'height': int(elem.get('HEIGHT', 0)),
             'confidence': float(wc_raw) if wc_raw is not None else None,
-            'line_end': id(elem) in last_in_line,
+            'line_end': i in last_in_line,
         })
 
-    # Second pass: build elem_to_idx map for blocks word_ids
-    elem_to_idx = {}
-    for i, elem in enumerate(root.iter(f'{{{ns}}}String')):
-        elem_to_idx[id(elem)] = i
-
     # Build blocks_out array from TextBlock elements
+    # Each TextBlock's Strings are matched to all_strings by HPOS/VPOS/CONTENT.
+    # We build a positional lookup from (CONTENT, HPOS, VPOS) → first matching global index.
+    _pos_key_to_idx: dict[tuple, int] = {}
+    for i, s in enumerate(all_strings):
+        key = (s.get('CONTENT', ''), s.get('HPOS', ''), s.get('VPOS', ''))
+        _pos_key_to_idx.setdefault(key, i)
+
     blocks_out = []
     for block_elem in root.findall(f'.//{{{ns}}}TextBlock'):
-        word_ids = [
-            f'w{elem_to_idx[id(s)]}'
-            for s in block_elem.iter(f'{{{ns}}}String')
-            if id(s) in elem_to_idx
-        ]
+        word_ids = []
+        for s in block_elem.iter(f'{{{ns}}}String'):
+            key = (s.get('CONTENT', ''), s.get('HPOS', ''), s.get('VPOS', ''))
+            idx = _pos_key_to_idx.get(key)
+            if idx is not None:
+                word_ids.append(f'w{idx}')
         blocks_out.append({
             'id': block_elem.get('ID', ''),
             'hpos': int(block_elem.get('HPOS', 0)),
@@ -831,6 +855,42 @@ def export_mets():
         status=200,
         mimetype='application/xml',
         headers={'Content-Disposition': 'attachment; filename="mets.xml"'},
+    )
+
+
+@app.get('/tei/<stem>')
+def export_tei(stem):
+    """Generate and return TEI P5 XML for a single processed page.
+
+    Reads ALTO from output_dir/alto/<stem>.xml and optional VLM segments from
+    output_dir/segments/<stem>.json. Writes output to output_dir/tei/<stem>.xml
+    and returns it as a downloadable attachment.
+    Returns 404 if no ALTO file exists for that stem.
+    Returns 400 if stem contains path traversal characters.
+    Returns 500 on builder exception.
+    """
+    if '/' in stem or '..' in stem:
+        return jsonify({'error': 'invalid stem'}), 400
+
+    output_dir = Path(app.config['OUTPUT_DIR'])
+    alto_path = output_dir / 'alto' / (stem + '.xml')
+    if not alto_path.exists():
+        return jsonify({'error': 'not found', 'stem': stem}), 404
+
+    try:
+        xml_bytes = tei_module.build_tei(output_dir, stem)
+    except Exception as exc:
+        return jsonify({'error': 'TEI build failed', 'detail': str(exc)}), 500
+
+    tei_dir = output_dir / 'tei'
+    tei_dir.mkdir(parents=True, exist_ok=True)
+    (tei_dir / (stem + '.xml')).write_bytes(xml_bytes)
+
+    return Response(
+        xml_bytes,
+        status=200,
+        mimetype='application/xml',
+        headers={'Content-Disposition': f'attachment; filename="{stem}_tei.xml"'},
     )
 
 
