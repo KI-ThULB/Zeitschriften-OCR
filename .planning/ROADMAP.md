@@ -80,60 +80,16 @@ See archive: `.planning/milestones/v1.5-ROADMAP.md`
 
 </details>
 
-### v1.6 Structured Text & TEI Export (Shipped 2026-03-03)
+<details>
+<summary>✅ v1.6 Structured Text & TEI Export — SHIPPED 2026-03-03</summary>
 
-**Milestone Goal:** Transform raw OCR word streams into structured, readable text and export full scholarly TEI P5 XML with facsimile links.
+- [x] Phase 19: Text Normalization (2/2 plans) — completed 2026-03-02
+- [x] Phase 20: Structure Detection and Viewer (2/2 plans) — completed 2026-03-02
+- [x] Phase 21: TEI P5 Export (2/2 plans) — completed 2026-03-03
 
-- [x] **Phase 19: Text Normalization** — Column reading order, hyphenation rejoining, confidence marking (completed 2026-03-02)
-- [x] **Phase 20: Structure Detection and Viewer** — Paragraph detection, role annotation, structured viewer display (completed 2026-03-02)
-- [x] **Phase 21: TEI P5 Export** — TEI document generation with article divs, line/page elements, facsimile section (completed 2026-03-03) — user-verified
+See archive: `.planning/milestones/v1.6-ROADMAP.md`
 
-## Phase Details
-
-### Phase 19: Text Normalization
-**Goal**: Users see a clean, correctly ordered word stream — columns read left-to-right, hyphens rejoined, low-confidence words visually flagged
-**Depends on**: Phase 18 (existing ALTO word JSON endpoint and text panel)
-**Requirements**: TEXT-01, TEXT-02, TEXT-03
-**Success Criteria** (what must be TRUE):
-  1. User views a two-column scan in the text panel and words appear in left-column-first order, not interleaved top-to-bottom across both columns
-  2. A word split across a line ending with a hyphen (e.g. "Ver-" + "bindung") appears as the rejoined form "Verbindung" in the text panel
-  3. User can set a word-confidence threshold in the viewer; words below it appear visually distinct (faded or marked) so low-quality OCR regions are immediately obvious
-  4. The original per-word ALTO XML is unchanged — normalization is display-only, not written back to XML
-**Plans:** 2/2 plans complete
-
-Plans:
-- [ ] 19-01-PLAN.md — Extend serve_alto() with blocks array and line_end flag; add TestAltoEndpoint tests
-- [ ] 19-02-PLAN.md — Client-side normalizeWords() pipeline, confidence slider, and WC badge in viewer.html
-
-### Phase 20: Structure Detection and Viewer
-**Goal**: Users see text organized into labeled paragraphs and headings rather than a flat word list, with structural roles derived from VLM article data
-**Depends on**: Phase 19 (normalized word stream), Phase 15 (VLM article segment JSON)
-**Requirements**: STRUCT-07, STRUCT-08, VIEW-07
-**Success Criteria** (what must be TRUE):
-  1. User views a multi-paragraph page and the text panel shows paragraph breaks at points where ALTO line-spacing gaps exceed the median line height — paragraphs are visually separated, not run together
-  2. User can see each text block labelled with its structural role (heading, paragraph, caption, or advertisement) derived from the VLM article segmentation regions stored per page
-  3. Headings render with prominent styling (bold, larger size) in the text panel so article structure is readable at a glance without needing to consult the TIFF image
-  4. Structural role labels and paragraph grouping persist correctly when the user navigates to a different file via the sidebar
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] 20-01-PLAN.md — detectParagraphs(), assignRoles(), buildParaBlocks() algorithms and currentBlocks state
-- [x] 20-02-PLAN.md — renderBlocks(), updateStructSummary(), CSS role styling, and loadFile()/loadArticles() wiring
-
-### Phase 21: TEI P5 Export
-**Goal**: Users can download a single TEI P5 XML file per issue that encodes article structure, text with line and page markers, and facsimile coordinates — ready for scholarly use
-**Depends on**: Phase 19 (normalized text), Phase 20 (structural roles), Phase 15 (article segment regions)
-**Requirements**: TEI-01, TEI-02, TEI-03
-**Success Criteria** (what must be TRUE):
-  1. User triggers TEI export and receives a well-formed TEI P5 XML document where each VLM-identified article appears as a `<div type="article">` element with `@n` and title metadata
-  2. The TEI document contains `<lb/>` elements at each OCR line boundary and `<pb n="N" facs="#page-N"/>` elements at each page transition, linking text to the correct JPEG image
-  3. The TEI document contains a `<facsimile>` section with one `<surface xml:id="page-N">` per page and `<zone>` elements per article region carrying ALTO-derived coordinate attributes (x, y, width, height)
-  4. Exported TEI validates as well-formed XML and the `facs` references in `<pb>` correctly resolve to `xml:id` values in the `<facsimile>` section
-**Plans:** 2/2 plans complete
-
-Plans:
-- [x] 21-01-PLAN.md — TDD: tei.py builder (column sort, hyphen rejoin, lb/pb, facsimile zones)
-- [x] 21-02-PLAN.md — Flask GET /tei/<stem> endpoint + Download TEI button in viewer #nav-bar
+</details>
 
 ## Progress
 
@@ -159,4 +115,4 @@ Plans:
 | 18. Article Browser and Full-Text Search | v1.5 | 2/2 | Complete | 2026-03-02 |
 | 19. Text Normalization | v1.6 | 2/2 | Complete | 2026-03-02 |
 | 20. Structure Detection and Viewer | v1.6 | 2/2 | Complete | 2026-03-02 |
-| 21. TEI P5 Export | v1.6 | Complete    | 2026-03-03 | 2026-03-03 |
+| 21. TEI P5 Export | v1.6 | 2/2 | Complete | 2026-03-03 |

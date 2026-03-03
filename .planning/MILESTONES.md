@@ -113,3 +113,13 @@
 
 ---
 
+
+## v1.6 Structured Text and TEI Export (Shipped: 2026-03-03)
+
+**Phases completed:** 9 phases, 18 plans, 0 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+

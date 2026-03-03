@@ -2,28 +2,20 @@
 
 ## What This Is
 
-A tool for digitizing archival journal and magazine scans. It takes large TIFF files (117–240 MB each), automatically deskews and crops each scan, runs Tesseract OCR in parallel, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems. A local Flask web application wraps the pipeline with a drag-and-drop upload interface, live SSE progress, a side-by-side TIFF/text viewer with inline word correction, VLM-powered article segmentation, METS/MODS export, and full-text article search.
+A tool for digitizing archival journal and magazine scans. It takes large TIFF files (117–240 MB each), automatically deskews and crops each scan, runs Tesseract OCR in parallel, and writes one ALTO 2.1 XML file per TIFF — ready for ingest into Goobi/Kitodo-based digital library systems. A local Flask web application wraps the pipeline with a drag-and-drop upload interface, live SSE progress, a side-by-side TIFF/text viewer with inline word correction, VLM-powered article segmentation, structured text rendering (headings/paragraphs from ALTO + VLM roles), METS/MODS export, full-text article search, and TEI P5 XML download per page.
 
-## Current Milestone: v1.6 Structured Text & TEI Export
+## Current State: v1.6 Shipped
 
-**Goal:** Transform raw OCR word streams into structured, readable text and export full scholarly TEI P5 XML with facsimile links.
-
-**Target features:**
-- Multi-column reading order correction (HPOS-based column detection)
-- German end-of-line hyphenation rejoining for clean text display
-- Paragraph and heading detection from ALTO line-spacing + VLM article roles
-- Structured text viewer (headings styled, paragraphs separated)
-- TEI P5 XML export per issue with article `<div>`, `<lb/>`, `<pb facs/>`, and facsimile section
-
-## Current State: v1.5 Shipped
-
-All 18 phases complete. The full operator workflow is live:
+All 21 phases complete. The full operator workflow is live:
 - OCR pipeline (CLI) → ALTO 2.1 XML per TIFF
 - Web UI: drag-and-drop upload, live progress, side-by-side viewer, inline word correction
 - VLM article segmentation (Claude / OpenAI / OpenAI-compatible) with bounding boxes per page
 - METS/MODS logical structure export (DFG Viewer / Goobi-Kitodo profile)
 - Web-based VLM settings (Open WebUI / OpenRouter), persisted to settings.json
 - SQLite FTS5 full-text article search with deep-link viewer navigation
+- Column-sorted, hyphen-rejoined structured text display with confidence threshold slider
+- Paragraph detection + VLM role styling (heading/caption/advertisement)
+- TEI P5 XML export per page via "Download TEI" toolbar button
 
 ## Core Value
 
@@ -64,16 +56,18 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - ✓ METS/MODS logical structure document per DFG Viewer / Goobi-Kitodo profile — v1.5 (Phase 16)
 - ✓ Viewer article browser — article cards with type/title, click to highlight region on TIFF — v1.5 (Phase 18)
 - ✓ Full-text search across all articles from the web interface; deep-link to `/viewer/<stem>#<region_id>` — v1.5 (Phase 18)
+- ✓ ALTO words column-sorted left-to-right via HPOS clustering (TextBlock gap > 5% page width) — v1.6 (Phase 19)
+- ✓ German end-of-line hyphens rejoined for display and TEI export; original ALTO XML unchanged — v1.6 (Phase 19)
+- ✓ Word-confidence threshold slider (0–1, step 0.05); words below threshold faded to 40% opacity; persisted via localStorage — v1.6 (Phase 19)
+- ✓ Paragraph detection from ALTO VPOS gap analysis (> 1.5× median inter-line gap); every TextBlock boundary also breaks — v1.6 (Phase 20)
+- ✓ Structural role assignment from VLM article regions (max-overlap bounding box, ALTO pixel space); heading/paragraph/caption/advertisement — v1.6 (Phase 20)
+- ✓ Structured text panel: `.para-block[data-role]` divs with CSS role styling; role count summary below confidence badge — v1.6 (Phase 20)
+- ✓ TEI P5 XML builder (`tei.py`) — column-sorted, hyphen-rejoined text with `<lb/>`, `<pb facs/>`, `<facsimile>` + `<zone>` in ALTO pixel space — v1.6 (Phase 21)
+- ✓ `GET /tei/<stem>` endpoint writes `output/tei/<stem>.xml` and serves browser download; "Download TEI" button in viewer toolbar — v1.6 (Phase 21)
 
-### Active (v1.6)
+### Active (next milestone)
 
-- Column reading order correction for multi-column ALTO pages
-- German end-of-line hyphenation rejoining (display + TEI export)
-- Noise/low-confidence word visual marking (configurable WC threshold)
-- Paragraph detection from ALTO line-spacing gaps
-- TextBlock structural role annotation (heading/paragraph/caption/advertisement)
-- Structured viewer text display (headings + paragraph separation)
-- TEI P5 XML export per issue (article `<div>`, `<lb/>`, `<pb facs/>`, `<facsimile>` section)
+(No active requirements — planning next milestone)
 
 ### Out of Scope
 
@@ -92,7 +86,7 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 - Scan border issue: scanner bed artifacts need algorithmic removal before OCR
 - Target system: DFG Viewer / Goobi / Kitodo — requires ALTO 2.1 XML with word-level coordinates
 - Platform: macOS development (must also run on Linux servers for batch production)
-- Current codebase: ~6,600 lines total — `pipeline.py`, `app.py`, `search.py`, `vlm.py`, `mets.py`, `templates/`, `tests/`; 133 tests passing
+- Current codebase: ~7,500 lines total — `pipeline.py`, `app.py`, `tei.py`, `search.py`, `vlm.py`, `mets.py`, `templates/`, `tests/`; 156 tests passing
 - Tech stack: Python, Flask 3.1, Tesseract, Pillow, OpenCV, lxml, SQLite FTS5, vanilla JS
 
 ## Constraints
@@ -127,11 +121,22 @@ Every TIFF in the input folder gets a correctly structured ALTO 2.1 XML file, pr
 | GET /articles/<stem> reads segment JSON directly | Always consistent with authoritative JSON; no DB state dependency | ✓ Good |
 | `GET /search` serves HTML page; `GET /api/search` returns JSON | Avoids route conflict; clean content-type split | ✓ Good |
 | article-highlight-rect uses `style.display = 'block'` (not `''`) | CSS rule sets display:none; empty string removes inline override but CSS wins | ✓ Good |
+| lxml proxy recycling fix — materialise `all_strings = list(root.iter(...))` once | Each `iter()` call creates new proxy objects; `id(elem)` keys are unstable across calls | ✓ Good |
+| `#word-list` inner container isolates word span injection from `#wc-settings` slider | `renderWords()` innerHTML replacement destroys sibling elements; inner container keeps slider alive | ✓ Good |
+| `wordById` maps original `data.words` (not displayWords) | Click-to-edit must write ALTO-original word IDs; rejoinHyphens joined word inherits first fragment ID | ✓ Good |
+| `currentBlocks` module-level state so `loadArticles()` can rebuild paraBlocks after async VLM fetch | Async VLM data arrives after initial render; second pass applies correct roles | ✓ Good |
+| VLM coordinate conversion: `bb.x * pageWidth` not `jpeg_width` | ALTO pixel space differs from JPEG dimensions when TIFF > 1600px | ✓ Good |
+| `tei.py` as standalone module, `build_tei(output_dir, stem) -> bytes` | Same pattern as `mets.py`; testable in isolation; endpoint imports and calls it | ✓ Good |
+| `output/tei/<stem>.xml` written to disk + served as HTTP attachment | File persists for reuse; browser download needs `Content-Disposition: attachment` | ✓ Good |
+| MODS header falls back to filename when `output/mets/<stem>_mets.xml` absent | METS files are not written per-stem by current pipeline; graceful degradation prevents errors | ✓ Good |
 
 ## Known Technical Debt
 
 - `ADAPTIVE_BLOCK_SIZE = 51` and `ADAPTIVE_C = 10` are informed starting points; empirical tuning against the real Zeitschriften corpus is recommended before batch production with `--adaptive-threshold`.
 - VLM reasoning models (e.g. Gemini 2.5 Pro) consume nearly all output tokens for internal reasoning, leaving insufficient tokens for JSON output — non-reasoning models (GPT-4o, Claude Sonnet) are required for structured region output.
+- VLM segmentation quality varies per page — role assignments (heading/caption/advertisement) are only as accurate as the VLM segmentation. Paragraph detection from ALTO line-spacing is independent and works reliably.
+- `output/mets/<stem>_mets.xml` is never written by the current pipeline — TEI header always uses filename-derived title fallback. A future phase adding per-stem METS writing would unlock MODS-derived metadata.
+- In `tei.py`, the `string_to_block` loop computes a `key` tuple that is assigned but unused; the dict is keyed by `str(id(s))`. Functionally correct (all_strings is materialized, making ids stable) but the key variable is dead code.
 
 ---
-*Last updated: 2026-03-02 — v1.6 milestone started*
+*Last updated: 2026-03-03 after v1.6 milestone*
