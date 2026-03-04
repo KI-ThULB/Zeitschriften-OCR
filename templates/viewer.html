@@ -1051,6 +1051,38 @@
       svg.querySelectorAll('.segment-region, .segment-label').forEach(el => el.remove());
     }
 
+    // Snap a VLM bounding box (0.0–1.0 fractions) to the actual ALTO words it covers.
+    // Returns {x1, y1, x2, y2} in ALTO pixel space, or null if too few words found.
+    function snapBbToWords(bb) {
+      if (!pageWidth || !pageHeight) return null;
+      const words = Object.values(wordById);
+      if (words.length === 0) return null;
+
+      // Expand the VLM box by 2% of page dimensions to catch words near edges
+      const mx = 0.02 * pageWidth;
+      const my = 0.02 * pageHeight;
+      const rx1 = bb.x * pageWidth - mx;
+      const ry1 = bb.y * pageHeight - my;
+      const rx2 = (bb.x + bb.width) * pageWidth + mx;
+      const ry2 = (bb.y + bb.height) * pageHeight + my;
+
+      // Collect words whose centre falls within the expanded box
+      const inside = words.filter(w => {
+        const cx = w.hpos + w.width  / 2;
+        const cy = w.vpos + w.height / 2;
+        return cx >= rx1 && cx <= rx2 && cy >= ry1 && cy <= ry2;
+      });
+
+      if (inside.length < 3) return null;  // too few words — keep VLM box
+
+      // Tight ALTO bounding box around the matched words
+      const x1 = Math.min(...inside.map(w => w.hpos));
+      const y1 = Math.min(...inside.map(w => w.vpos));
+      const x2 = Math.max(...inside.map(w => w.hpos + w.width));
+      const y2 = Math.max(...inside.map(w => w.vpos + w.height));
+      return { x1, y1, x2, y2 };
+    }
+
     function showSegmentRegions(regions) {
       clearSegmentRegions();
       if (!regions || regions.length === 0) return;
@@ -1062,10 +1094,23 @@
 
       regions.forEach(r => {
         const bb = r.bounding_box;
-        const x = bb.x * W;
-        const y = bb.y * H;
-        const w = bb.width * W;
-        const h = bb.height * H;
+        let x, y, w, h;
+
+        // Try to snap to actual ALTO word positions for pixel-accurate alignment
+        const snapped = snapBbToWords(bb);
+        if (snapped) {
+          // Convert ALTO pixel coords → JPEG pixel coords for SVG drawing
+          x = snapped.x1 / pageWidth  * W;
+          y = snapped.y1 / pageHeight * H;
+          w = (snapped.x2 - snapped.x1) / pageWidth  * W;
+          h = (snapped.y2 - snapped.y1) / pageHeight * H;
+        } else {
+          // Fallback: use raw VLM fractions (illustrations, ads without text)
+          x = bb.x * W;
+          y = bb.y * H;
+          w = bb.width  * W;
+          h = bb.height * H;
+        }
         const color = REGION_COLORS[r.type] || 'rgba(150,150,150,0.25)';
         const stroke = color.replace(/[\d.]+\)$/, '0.8)');  // opaque stroke
 
