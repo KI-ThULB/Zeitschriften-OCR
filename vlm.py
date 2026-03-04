@@ -23,6 +23,7 @@ SEGMENT_PROMPT = (
     'Layout notes:\n'
     '- Pages typically use multi-column layouts (2–4 columns)\n'
     '- A single article may span multiple columns; use ONE bounding box per article\n'
+    '- Each article with its own headline is a SEPARATE region — never merge two articles into one box\n'
     '- Bounding boxes must be tight to the content edges (no large blank margins inside)\n'
     '- Together, all bounding boxes should cover the entire page area\n'
     '- Columns dividers, page numbers, and running headers are not separate regions\n\n'
