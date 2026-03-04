@@ -388,6 +388,8 @@ def build_tei(output_dir: Path, stem: str) -> bytes:
         lry=str(page_height),
         facs=f'../uploads/{stem}.tif',
     )
+    etree.SubElement(surface, _t('graphic'), url=f'../uploads/{stem}.tif',   mimeType='image/tiff')
+    etree.SubElement(surface, _t('graphic'), url=f'../jpegcache/{stem}.jpg', mimeType='image/jpeg')
 
     for region in regions:
         bb = region.get('bounding_box', {})

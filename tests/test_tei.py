@@ -154,6 +154,18 @@ class TestBuildTeiFacsimile:
         assert zone.get('lrx') == '2000'   # 0.5 * 4000
         assert zone.get('lry') == '6000'   # 1.0 * 6000
 
+    def test_surface_has_tiff_and_jpeg_graphic_children(self, tmp_path):
+        """<surface> must contain two <graphic> children: TIFF then JPEG."""
+        _setup_output(tmp_path)
+        root = etree.fromstring(tei_module.build_tei(tmp_path, 'page001'))
+        surface = root.find(f'.//{{{TEI_NS}}}surface')
+        graphics = surface.findall(f'{{{TEI_NS}}}graphic')
+        assert len(graphics) == 2
+        assert graphics[0].get('url') == '../uploads/page001.tif'
+        assert graphics[0].get('mimeType') == 'image/tiff'
+        assert graphics[1].get('url') == '../jpegcache/page001.jpg'
+        assert graphics[1].get('mimeType') == 'image/jpeg'
+
     def test_no_segments_has_no_zone_elements(self, tmp_path):
         """Without VLM segments, <facsimile> has surface but no zone elements."""
         _setup_output(tmp_path, with_segments=False)
