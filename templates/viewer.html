@@ -14,9 +14,9 @@
     #sidebar .file-item { padding: 6px 10px; cursor: pointer; font-size: 0.85rem; word-break: break-all; border-bottom: 1px solid #e8e8e8; }
     #sidebar .file-item:hover { background: #e8f0fe; }
     #sidebar .file-item.active { background: #c2d7ff; font-weight: bold; }
-    #image-panel { flex: 1; overflow: hidden; position: relative; cursor: grab; background: #333; }
+    #image-panel { flex: 1; overflow: hidden; position: relative; cursor: grab; background: #333; touch-action: none; user-select: none; }
     #image-panel.dragging { cursor: grabbing; }
-    #image-container { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+    #image-container { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
     #tiff-img { display: block; }
     #overlay { position: absolute; top: 0; left: 0; pointer-events: none; }
     #text-panel { width: 380px; overflow-y: auto; padding: 12px; flex-shrink: 0; border-left: 1px solid #ccc; line-height: 1.8; }
@@ -972,39 +972,54 @@
         applyZoom(e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP, {x: e.offsetX, y: e.offsetY});
       }, {passive: false});
 
-      // Click-drag pan
-      panel.addEventListener('mousedown', (e) => {
+      // Pointer-based pan — setPointerCapture keeps drag alive outside the panel.
+      // RAF throttling: buffer the latest position and write the transform only
+      // once per display frame instead of on every raw pointermove event.
+      let rafPending = false;
+      let pendingPanX = 0;
+      let pendingPanY = 0;
+
+      panel.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
         isDragging = true;
         didPan = false;
         dragStartX = e.clientX;
         dragStartY = e.clientY;
         dragStartPanX = panX;
         dragStartPanY = panY;
+        panel.setPointerCapture(e.pointerId);
         panel.classList.add('dragging');
       });
 
-      panel.addEventListener('mousemove', (e) => {
+      panel.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
         const dx = e.clientX - dragStartX;
         const dy = e.clientY - dragStartY;
-        if (!didPan && Math.hypot(dx, dy) > 5) {
+        if (!didPan && Math.hypot(dx, dy) > 4) {
           didPan = true;
           if (editingSpan) cancelEdit();
         }
-        if (didPan) {
-          panX = dragStartPanX + dx;
-          panY = dragStartPanY + dy;
-          clampPan();
-          applyTransform();
+        if (!didPan) return;
+        pendingPanX = dragStartPanX + dx;
+        pendingPanY = dragStartPanY + dy;
+        if (!rafPending) {
+          rafPending = true;
+          requestAnimationFrame(() => {
+            panX = pendingPanX;
+            panY = pendingPanY;
+            clampPan();
+            applyTransform();
+            rafPending = false;
+          });
         }
       });
 
-      panel.addEventListener('mouseup', () => {
+      panel.addEventListener('pointerup', () => {
         isDragging = false;
         panel.classList.remove('dragging');
       });
 
-      panel.addEventListener('mouseleave', () => {
+      panel.addEventListener('pointercancel', () => {
         isDragging = false;
         panel.classList.remove('dragging');
       });
