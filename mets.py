@@ -139,20 +139,48 @@ def build_mets(output_dir: Path, issue_title: str = '') -> bytes:
     etree.SubElement(ti, _mods('title')).text = issue_title or 'Unknown Issue'
     etree.SubElement(mods_root, _mods('typeOfResource')).text = 'text'
 
-    # fileSec
+    # fileSec — three file groups per DFG Viewer newspaper profile:
+    #   MASTER   = original TIFF images
+    #   DEFAULT  = scaled JPEG derivatives (viewer images)
+    #   FULLTEXT = ALTO 2.1 XML (full-text / word coordinates)
     filesec = etree.SubElement(root, _mets('fileSec'))
-    filegrp = etree.SubElement(filesec, _mets('fileGrp'), USE='DEFAULT')
 
-    file_ids: dict[str, str] = {}
+    # MASTER — TIFFs
+    grp_master = etree.SubElement(filesec, _mets('fileGrp'), USE='MASTER')
+    # DEFAULT — JPEGs
+    grp_default = etree.SubElement(filesec, _mets('fileGrp'), USE='DEFAULT')
+    # FULLTEXT — ALTO XML
+    grp_fulltext = etree.SubElement(filesec, _mets('fileGrp'), USE='FULLTEXT')
+
+    tiff_ids: dict[str, str] = {}
+    jpeg_ids: dict[str, str] = {}
+    alto_ids: dict[str, str] = {}
+
     for i, page in enumerate(pages):
-        fid = f'FILE_alto_{i:04d}'
-        file_ids[page['stem']] = fid
-        mets_file = etree.SubElement(filegrp, _mets('file'), ID=fid, MIMETYPE='text/xml')
+        stem = page['stem']
+
+        tid = f'FILE_tiff_{i:04d}'
+        tiff_ids[stem] = tid
+        f_tiff = etree.SubElement(grp_master, _mets('file'), ID=tid, MIMETYPE='image/tiff')
         etree.SubElement(
-            mets_file,
-            _mets('FLocat'),
-            LOCTYPE='URL',
-            **{f'{{{XLINK_NS}}}href': f'alto/{page["stem"]}.xml'},
+            f_tiff, _mets('FLocat'), LOCTYPE='URL',
+            **{f'{{{XLINK_NS}}}href': f'uploads/{stem}.tif'},
+        )
+
+        jid = f'FILE_jpeg_{i:04d}'
+        jpeg_ids[stem] = jid
+        f_jpeg = etree.SubElement(grp_default, _mets('file'), ID=jid, MIMETYPE='image/jpeg')
+        etree.SubElement(
+            f_jpeg, _mets('FLocat'), LOCTYPE='URL',
+            **{f'{{{XLINK_NS}}}href': f'jpegcache/{stem}.jpg'},
+        )
+
+        aid = f'FILE_alto_{i:04d}'
+        alto_ids[stem] = aid
+        f_alto = etree.SubElement(grp_fulltext, _mets('file'), ID=aid, MIMETYPE='text/xml')
+        etree.SubElement(
+            f_alto, _mets('FLocat'), LOCTYPE='URL',
+            **{f'{{{XLINK_NS}}}href': f'alto/{stem}.xml'},
         )
 
     # LOGICAL structMap
@@ -179,7 +207,7 @@ def build_mets(output_dir: Path, issue_title: str = '') -> bytes:
         except Exception:
             continue
 
-        fid = file_ids[page['stem']]
+        fid = alto_ids[page['stem']]
         for region in seg['regions']:
             div_type = region.get('type', 'article')
             div_label = region.get('title', '')
@@ -212,6 +240,8 @@ def build_mets(output_dir: Path, issue_title: str = '') -> bytes:
             ORDER=str(i + 1),
             ORDERLABEL=str(i + 1),
         )
-        etree.SubElement(phys_div, _mets('fptr'), FILEID=file_ids[page['stem']])
+        etree.SubElement(phys_div, _mets('fptr'), FILEID=tiff_ids[page['stem']])
+        etree.SubElement(phys_div, _mets('fptr'), FILEID=jpeg_ids[page['stem']])
+        etree.SubElement(phys_div, _mets('fptr'), FILEID=alto_ids[page['stem']])
 
     return etree.tostring(root, xml_declaration=True, encoding='UTF-8', pretty_print=True)

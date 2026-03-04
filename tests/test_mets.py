@@ -143,9 +143,16 @@ class TestBuildMets:
         _setup_output(tmp_path)
         root = etree.fromstring(mets_module.build_mets(tmp_path))
         files = root.findall(f'.//{{{METS_NS}}}file')
-        assert len(files) == 1
-        assert files[0].get('ID') == 'FILE_alto_0000'
-        assert files[0].get('MIMETYPE') == 'text/xml'
+        # 3 file groups (MASTER/DEFAULT/FULLTEXT) × 1 page = 3 files
+        assert len(files) == 3
+        ids = {f.get('ID') for f in files}
+        assert 'FILE_tiff_0000' in ids
+        assert 'FILE_jpeg_0000' in ids
+        assert 'FILE_alto_0000' in ids
+        mimetypes = {f.get('ID'): f.get('MIMETYPE') for f in files}
+        assert mimetypes['FILE_tiff_0000'] == 'image/tiff'
+        assert mimetypes['FILE_jpeg_0000'] == 'image/jpeg'
+        assert mimetypes['FILE_alto_0000'] == 'text/xml'
 
     def test_both_structmaps_present(self, tmp_path):
         _setup_output(tmp_path)
@@ -203,8 +210,9 @@ class TestBuildMets:
         (alto_dir / 'page001.xml').write_bytes(ALTO_FIXTURE)
         root = etree.fromstring(mets_module.build_mets(tmp_path))
         files = root.findall(f'.//{{{METS_NS}}}file')
-        assert len(files) == 2
-        # First file in sorted order should be page001
+        # 3 file groups × 2 pages = 6 files
+        assert len(files) == 6
+        # First file (FILE_tiff_0000) should be page001 in sorted order
         flocat = files[0].find(f'{{{METS_NS}}}FLocat')
         href = list(flocat.attrib.values())
         assert any('page001' in v for v in href)
