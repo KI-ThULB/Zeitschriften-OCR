@@ -199,7 +199,7 @@ class TestSettingsModels:
 class TestSegmentUsesSettings:
 
     def _setup_jpeg(self, output_dir: Path, stem: str = 'test') -> None:
-        jpeg_dir = output_dir / 'jpegcache'
+        jpeg_dir = output_dir / 'segcache'
         jpeg_dir.mkdir(parents=True, exist_ok=True)
         (jpeg_dir / f'{stem}.jpg').write_bytes(b'FAKEJPEG')
 

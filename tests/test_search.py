@@ -243,9 +243,9 @@ def test_segment_page_auto_indexes(client, tmp_path, monkeypatch):
     ]
     monkeypatch.setattr(app_module, '_make_provider_from_settings', lambda s: mock_provider)
 
-    # Create JPEG cache entry
-    (tmp_path / 'jpegcache').mkdir()
-    (tmp_path / 'jpegcache' / 'scan_001.jpg').write_bytes(b'FAKEJPEG')
+    # Create segcache entry (high-res JPEG used by _get_seg_jpeg)
+    (tmp_path / 'segcache').mkdir()
+    (tmp_path / 'segcache' / 'scan_001.jpg').write_bytes(b'FAKEJPEG')
 
     resp = client.post('/segment/scan_001')
     assert resp.status_code == 200

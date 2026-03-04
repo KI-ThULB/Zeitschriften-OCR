@@ -17,14 +17,23 @@ from pathlib import Path
 SUPPORTED_PROVIDERS = ('claude', 'openai', 'openai_compatible')
 
 SEGMENT_PROMPT = (
-    'Analyze this newspaper page and identify distinct article regions.\n'
+    'This is a page from a historical German periodical (journal or magazine).\n'
+    'Identify ALL distinct content regions on this page. Be exhaustive — every visible text block, '
+    'heading, advertisement, illustration, and caption must be accounted for.\n\n'
+    'Layout notes:\n'
+    '- Pages typically use multi-column layouts (2–4 columns)\n'
+    '- A single article may span multiple columns; use ONE bounding box per article\n'
+    '- Bounding boxes must be tight to the content edges (no large blank margins inside)\n'
+    '- Together, all bounding boxes should cover the entire page area\n'
+    '- Columns dividers, page numbers, and running headers are not separate regions\n\n'
     'For each region output:\n'
     '  - type: one of "headline", "article", "advertisement", "illustration", "caption"\n'
-    '  - title: brief descriptive title (article headline if visible, otherwise a short description)\n'
-    '  - bounding_box: {x, y, width, height} as floats 0.0\u20131.0 (fraction of image dimensions)\n\n'
+    '  - title: the article headline if legible, otherwise a brief German-language description\n'
+    '  - bounding_box: {x, y, width, height} as floats 0.0\u20131.0 '
+    '(fraction of image dimensions, origin top-left)\n\n'
     'Respond ONLY with valid JSON:\n'
     '{"regions": [{"type": "...", "title": "...", "bounding_box": {"x": 0.0, "y": 0.0, "width": 1.0, "height": 0.2}}, ...]}\n\n'
-    'If no article regions are detectable, respond with: {"regions": []}'
+    'If no regions are detectable, respond with: {"regions": []}'
 )
 
 VALID_TYPES = frozenset({'headline', 'article', 'advertisement', 'illustration', 'caption'})
@@ -63,7 +72,7 @@ class ClaudeProvider(SegmentationProvider):
         client = anthropic.Anthropic(api_key=self.api_key)
         response = client.messages.create(
             model=self.model,
-            max_tokens=2048,
+            max_tokens=4096,
             messages=[{
                 'role': 'user',
                 'content': [
@@ -106,7 +115,7 @@ class OpenAIProvider(SegmentationProvider):
                     {'type': 'text', 'text': SEGMENT_PROMPT},
                 ],
             }],
-            max_tokens=2048,
+            max_tokens=4096,
         )
         text = response.choices[0].message.content
         return _parse_regions(text)
@@ -145,7 +154,7 @@ class OpenAICompatibleProvider(SegmentationProvider):
                     {'type': 'text', 'text': SEGMENT_PROMPT},
                 ],
             }],
-            max_tokens=2048,
+            max_tokens=4096,
         )
         text = response.choices[0].message.content
         return _parse_regions(text)
@@ -186,9 +195,13 @@ def _parse_regions(text: str) -> list[dict]:
     """Extract and validate region list from a VLM response string.
 
     Handles VLM preamble/postamble by searching for the first JSON object.
+    Strips markdown code fences (```json ... ```) before parsing.
     Filters regions with invalid type. Assigns sequential 'r{N}' IDs.
     Returns [] on any parse or validation failure — never raises.
     """
+    # Strip markdown code fences that some models wrap around JSON
+    text = re.sub(r'^```(?:json)?\s*', '', text.strip())
+    text = re.sub(r'\s*```$', '', text.strip())
     match = re.search(r'\{[\s\S]*\}', text)
     if not match:
         return []

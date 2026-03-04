@@ -118,6 +118,70 @@ def _compute_jpeg_dims(tiff_path: Path) -> tuple[int, int]:
     return w, h
 
 
+# Higher resolution cap for the JPEG sent to the VLM — more detail improves
+# bounding-box accuracy without affecting viewer performance.
+_SEG_MAX_PX = 3200
+
+
+def _get_seg_jpeg(output_dir: Path, stem: str) -> Path | None:
+    """Return path to a high-resolution JPEG for VLM segmentation.
+
+    Renders from the source TIFF to output_dir/segcache/<stem>.jpg at
+    _SEG_MAX_PX on the longest side. Caches the result; subsequent calls
+    return the cached file immediately.
+
+    Returns None if the source TIFF cannot be located.
+    """
+    seg_dir = output_dir / 'segcache'
+    seg_dir.mkdir(parents=True, exist_ok=True)
+    seg_path = seg_dir / (stem + '.jpg')
+    if seg_path.exists():
+        return seg_path
+
+    # Locate source TIFF — same lookup order as serve_image()
+    upload_dir = output_dir / UPLOAD_SUBDIR
+    tiff_path = None
+    with _job_lock:
+        job = _jobs.get(stem)
+    if job:
+        candidate = upload_dir / job['filename']
+        if candidate.exists():
+            tiff_path = candidate
+    if tiff_path is None:
+        if upload_dir.exists():
+            for candidate in upload_dir.iterdir():
+                if candidate.suffix.lower() in ('.tif', '.tiff'):
+                    if candidate.stem.lower() == stem.lower():
+                        tiff_path = candidate
+                        break
+    if tiff_path is None:
+        input_dir_str = app.config.get('INPUT_DIR')
+        if input_dir_str:
+            input_dir = Path(input_dir_str)
+            if input_dir.exists():
+                for candidate in input_dir.iterdir():
+                    if candidate.suffix.lower() in ('.tif', '.tiff'):
+                        if candidate.stem.lower() == stem.lower():
+                            tiff_path = candidate
+                            break
+    if tiff_path is None:
+        return None
+
+    img = Image.open(str(tiff_path))
+    if img.mode not in ('RGB', 'L'):
+        img = img.convert('RGB')
+    w, h = img.size
+    longest = max(w, h)
+    if longest > _SEG_MAX_PX:
+        scale = _SEG_MAX_PX / longest
+        img = img.resize(
+            (round(w * scale), round(h * scale)),
+            Image.Resampling.LANCZOS,
+        )
+    img.save(str(seg_path), format='JPEG', quality=90)
+    return seg_path
+
+
 def _ocr_worker(tiff_paths: list, output_dir: Path, lang: str, psm: int, padding: int) -> None:
     """Background worker: process each TIFF sequentially and post SSE events.
 
@@ -687,13 +751,14 @@ def list_files():
 def segment_page(stem):
     """Trigger VLM article segmentation for the given TIFF stem.
 
-    Reads JPEG from jpegcache, calls the configured VLM provider,
-    parses regions, writes output/segments/<stem>.json, returns result.
+    Renders a high-resolution JPEG (segcache/) from the source TIFF and sends
+    it to the configured VLM provider. Parses regions, writes
+    output/segments/<stem>.json, returns result.
 
     Status codes:
         200: success — {"stem", "provider", "model", "segmented_at", "regions"}
         400: path traversal in stem
-        404: JPEG not in jpegcache (open the viewer for this file first)
+        404: source TIFF not found
         503: VLM provider not configured (start app with --vlm-provider)
         502: VLM API call failed
     """
@@ -728,10 +793,10 @@ def segment_page(stem):
         provider_name = settings.get('backend', 'openai_compatible')
         model = settings.get('model', '')
 
-    jpeg_path = output_dir / 'jpegcache' / (stem + '.jpg')
-    if not jpeg_path.exists():
+    jpeg_path = _get_seg_jpeg(output_dir, stem)
+    if jpeg_path is None:
         return jsonify({
-            'error': 'image not found — open the viewer for this file first',
+            'error': 'source TIFF not found — upload the file or start the server with --input',
             'stem': stem,
         }), 404
 

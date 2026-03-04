@@ -88,7 +88,7 @@ class TestParseRegions:
 class TestSegmentPost:
 
     def _setup_jpeg(self, tmp_path, stem='page001'):
-        cache_dir = tmp_path / 'jpegcache'
+        cache_dir = tmp_path / 'segcache'
         cache_dir.mkdir(parents=True, exist_ok=True)
         jpeg_path = cache_dir / f'{stem}.jpg'
         jpeg_path.write_bytes(b'FAKEJPEG')
