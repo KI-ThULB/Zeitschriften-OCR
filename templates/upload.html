@@ -107,6 +107,36 @@
       padding: 6px 0;
       border-bottom: 1px solid #eee;
     }
+    #progress-bar-wrap {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin: 6px 0 10px 0;
+    }
+    #progress-bar-track {
+      flex: 1;
+      height: 10px;
+      background: #e0e0e0;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    #progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #1a73e8;
+      border-radius: 5px;
+      transition: width 0.3s ease;
+    }
+    #progress-bar-fill.complete {
+      background: #188038;
+    }
+    #progress-bar-label {
+      font-size: 0.8rem;
+      color: #555;
+      white-space: nowrap;
+      min-width: 72px;
+      text-align: right;
+    }
     #btn-start {
       padding: 10px 28px;
       font-size: 1rem;
@@ -232,6 +262,12 @@
 
     <section id="queue-section">
       <div id="status-line"></div>
+      <div id="progress-bar-wrap">
+        <div id="progress-bar-track">
+          <div id="progress-bar-fill"></div>
+        </div>
+        <span id="progress-bar-label"></span>
+      </div>
       <ul id="file-list"></ul>
       <button id="btn-start" disabled>Start OCR</button>
     </section>
@@ -453,12 +489,18 @@
         const link = document.createElement('a');
         link.href = '/viewer/' + encodeURIComponent(fileStem);
         link.textContent = filename;
-        const wc = (opts.wordCount !== null && opts.wordCount !== undefined)
-          ? opts.wordCount + ' words'
-          : 'skipped';
+        let detail;
+        if (opts.wordCount !== null && opts.wordCount !== undefined) {
+          detail = opts.wordCount + ' words';
+          if (opts.elapsedTime != null && opts.elapsedTime > 0) {
+            detail += ', ' + opts.elapsedTime + 's';
+          }
+        } else {
+          detail = 'skipped';
+        }
         nameSpan.innerHTML = '';
         nameSpan.appendChild(link);
-        nameSpan.appendChild(document.createTextNode(' (' + wc + ')'));
+        nameSpan.appendChild(document.createTextNode(' (' + detail + ')'));
         // Remove the x button once done
         const removeBtn = row.querySelector('.remove');
         if (removeBtn) removeBtn.remove();
@@ -477,7 +519,7 @@
     }
 
     // ---------------------------------------------------------------------------
-    // Status line
+    // Status line + progress bar
     // ---------------------------------------------------------------------------
 
     function updateStatusLine() {
@@ -489,7 +531,31 @@
       const eta = doneCount > 0
         ? Math.round(elapsed / doneCount * (totalInRun - doneCount))
         : '?';
-      statusLine.textContent = doneCount + ' / ' + totalInRun + ' files done \u2014 ETA ' + eta + 's';
+      const elapsedStr = elapsed < 60
+        ? Math.round(elapsed) + 's'
+        : Math.floor(elapsed / 60) + 'm ' + Math.round(elapsed % 60) + 's';
+      statusLine.textContent = doneCount + ' / ' + totalInRun + ' files done'
+        + ' \u2014 ' + elapsedStr + ' elapsed'
+        + ' \u2014 ETA ' + eta + 's';
+    }
+
+    function updateProgressBar() {
+      const wrap  = document.getElementById('progress-bar-wrap');
+      const fill  = document.getElementById('progress-bar-fill');
+      const label = document.getElementById('progress-bar-label');
+      if (!runActive && doneCount === 0) {
+        wrap.style.display = 'none';
+        return;
+      }
+      wrap.style.display = 'flex';
+      const pct = totalInRun > 0 ? Math.round(doneCount / totalInRun * 100) : 0;
+      fill.style.width = pct + '%';
+      label.textContent = doneCount + '\u202f/\u202f' + totalInRun + '\u2002(' + pct + '%)';
+      if (pct >= 100) {
+        fill.classList.add('complete');
+      } else {
+        fill.classList.remove('complete');
+      }
     }
 
     // ---------------------------------------------------------------------------
@@ -580,6 +646,7 @@
       }
 
       updateStatusLine();
+      updateProgressBar();
 
       // Open SSE stream to receive per-file progress
       sse = new EventSource('/stream');
@@ -610,8 +677,10 @@
         updateRowState(filename, displayState, {
           wordCount: wordCount,
           errorMsg: d.error_msg,
+          elapsedTime: d.elapsed_time,
         });
         updateStatusLine();
+        updateProgressBar();
       });
 
       sse.addEventListener('run_complete', () => {
@@ -620,8 +689,15 @@
           sse = null;
         }
         runActive = false;
+        updateProgressBar();  // show 100% green
         statusLine.textContent = '';
         updateStartButton();
+        // Fade bar out after 3s
+        setTimeout(() => {
+          const wrap = document.getElementById('progress-bar-wrap');
+          if (wrap) wrap.style.display = 'none';
+          doneCount = 0;
+        }, 3000);
       });
 
       sse.addEventListener('error', () => {
